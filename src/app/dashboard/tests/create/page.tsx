@@ -18,6 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import React from "react";
 
 const questionSchema = z.object({
   type: z.enum(["multiple-choice", "true-false", "fill-in-the-blank"]),
@@ -49,6 +50,9 @@ const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Ch
 
 export default function CreateTestPage() {
   const { toast } = useToast();
+  const [isStartTimePickerOpen, setStartTimePickerOpen] = React.useState(false);
+  const [isEndTimePickerOpen, setEndTimePickerOpen] = React.useState(false);
+
   const form = useForm<TestFormValues>({
     resolver: zodResolver(testSchema),
     defaultValues: {
@@ -123,10 +127,76 @@ export default function CreateTestPage() {
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="startTime" render={({ field }) => (
-                        <FormItem className="flex flex-col"><FormLabel>Start Time</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-3 border-t border-border"><Input type="time" onChange={(e) => { const time = e.target.value.split(':'); if(field.value) { const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } else { const date = new Date(); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } }} /></div></PopoverContent></Popover><FormMessage /></FormItem>
+                        <FormItem className="flex flex-col"><FormLabel>Start Time</FormLabel>
+                        <Popover open={isStartTimePickerOpen} onOpenChange={setStartTimePickerOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                        {field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar mode="single" selected={field.value}
+                                    onSelect={(date) => {
+                                        if (!date) return;
+                                        const currentVal = field.value || new Date();
+                                        date.setHours(currentVal.getHours());
+                                        date.setMinutes(currentVal.getMinutes());
+                                        field.onChange(date);
+                                        setStartTimePickerOpen(false);
+                                    }}
+                                    initialFocus />
+                                <div className="p-3 border-t border-border">
+                                    <Input type="time"
+                                        value={field.value ? format(field.value, "HH:mm") : ""}
+                                        onChange={(e) => {
+                                            const time = e.target.value.split(':');
+                                            const currentFieldValue = field.value || new Date();
+                                            const newDate = new Date(currentFieldValue);
+                                            newDate.setHours(Number(time[0]), Number(time[1]));
+                                            field.onChange(newDate);
+                                        }} />
+                                </div>
+                            </PopoverContent>
+                        </Popover><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="endTime" render={({ field }) => (
-                        <FormItem className="flex flex-col"><FormLabel>End Time</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-3 border-t border-border"><Input type="time" onChange={(e) => { const time = e.target.value.split(':'); if(field.value) { const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } else { const date = new Date(); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } }} /></div></PopoverContent></Popover><FormMessage /></FormItem>
+                        <FormItem className="flex flex-col"><FormLabel>End Time</FormLabel>
+                        <Popover open={isEndTimePickerOpen} onOpenChange={setEndTimePickerOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                        {field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar mode="single" selected={field.value}
+                                    onSelect={(date) => {
+                                        if (!date) return;
+                                        const currentVal = field.value || new Date();
+                                        date.setHours(currentVal.getHours());
+                                        date.setMinutes(currentVal.getMinutes());
+                                        field.onChange(date);
+                                        setEndTimePickerOpen(false);
+                                    }}
+                                    initialFocus />
+                                <div className="p-3 border-t border-border">
+                                    <Input type="time"
+                                        value={field.value ? format(field.value, "HH:mm") : ""}
+                                        onChange={(e) => {
+                                            const time = e.target.value.split(':');
+                                            const currentFieldValue = field.value || new Date();
+                                            const newDate = new Date(currentFieldValue);
+                                            newDate.setHours(Number(time[0]), Number(time[1]));
+                                            field.onChange(newDate);
+                                        }} />
+                                </div>
+                            </PopoverContent>
+                        </Popover><FormMessage /></FormItem>
                     )} />
                 </div>
                  <FormField
@@ -256,5 +326,3 @@ export default function CreateTestPage() {
     </Form>
   );
 }
-
-    
