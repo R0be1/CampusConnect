@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardCheck } from "lucide-react";
 import { ManageExams } from "./manage-exams";
 import { EnterResults } from "./enter-results";
+import { ApproveResults } from "./approve-results";
 
 export default function ResultsPage() {
   return (
@@ -24,14 +25,7 @@ export default function ResultsPage() {
           <EnterResults />
         </TabsContent>
         <TabsContent value="approve-results">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Approvals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">The result approval interface will be available here.</p>
-            </CardContent>
-          </Card>
+          <ApproveResults />
         </TabsContent>
       </Tabs>
     </div>
