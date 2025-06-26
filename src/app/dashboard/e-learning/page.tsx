@@ -156,15 +156,16 @@ function UploadMaterialForm() {
                 </div>
 
                 {materialType === "Video" && (
-                    <div className="space-y-2">
-                        <Label htmlFor="videoUrl">Video URL</Label>
-                        <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." />
+                     <div className="space-y-2">
+                        <Label htmlFor="videoFile">Upload Video</Label>
+                        <Input id="videoFile" type="file" accept="video/*" />
+                        <p className="text-sm text-muted-foreground">Supported formats: MP4, WEBM, OGG.</p>
                     </div>
                 )}
                  {materialType === "Document" && (
                     <div className="space-y-2">
                         <Label htmlFor="documentFile">Upload Document</Label>
-                         <Input id="documentFile" type="file" />
+                         <Input id="documentFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" />
                          <p className="text-sm text-muted-foreground">Supported formats: PDF, DOCX, PPTX.</p>
                     </div>
                 )}
