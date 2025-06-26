@@ -19,6 +19,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   Tests: FileText,
   Settings: Settings,
   Profile: UserCircle,
+  "Parent Portal": UserCircle,
 };
 
 interface DashboardNavProps {
