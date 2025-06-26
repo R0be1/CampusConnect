@@ -18,7 +18,7 @@ export default function LoginPage() {
             <CardDescription>Welcome back! Please login to your account.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="m@example.com" required />
@@ -32,11 +32,16 @@ export default function LoginPage() {
                 </div>
                 <Input id="password" type="password" required />
               </div>
-              <Button asChild type="submit" className="w-full font-bold">
-                <Link href="/dashboard">Login</Link>
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm">
+              <div className="space-y-2 pt-2">
+                <Button asChild type="submit" className="w-full font-bold">
+                  <Link href="/dashboard">Staff Login</Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/portal/dashboard">Parent Portal Login</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="mt-6 text-center text-sm">
               Don't have an account?{" "}
               <Link href="#" className="text-accent hover:underline">
                 Sign up

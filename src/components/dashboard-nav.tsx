@@ -5,19 +5,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, Users, Settings, ClipboardCheck } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, DollarSign, FileText, Users, Settings, ClipboardCheck, LayoutDashboard, UserCircle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
-  Dashboard: Home,
+  Dashboard: LayoutDashboard,
   Students: Users,
   Academics: BookOpen,
   Attendance: UserCheck,
   Communication: MessageSquare,
-  Fees: CreditCard,
+  Fees: DollarSign,
   Results: ClipboardCheck,
   Tests: FileText,
   Settings: Settings,
+  Profile: UserCircle,
 };
 
 interface DashboardNavProps {
@@ -38,7 +39,7 @@ export function DashboardNav({ items, isMobile = false }: DashboardNavProps) {
       )}
       {items.map((item) => {
         const Icon = iconMap[item.label] || Home;
-        const isActive = item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href);
+        const isActive = (item.href === '/dashboard' || item.href === '/portal/dashboard') ? pathname === item.href : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}
