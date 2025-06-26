@@ -19,6 +19,7 @@ const navItems = [
   { href: '/dashboard/results', label: 'Results' },
   { href: '/dashboard/tests', label: 'Tests' },
   { href: '/dashboard/e-learning', label: 'E-Learning' },
+  { href: '/dashboard/live-sessions', label: 'Live Sessions' },
   { href: '/dashboard/settings', label: 'Settings' },
   { href: '/portal/dashboard', label: 'Parent Portal' },
   { href: '/student/dashboard', label: 'Student Portal' },

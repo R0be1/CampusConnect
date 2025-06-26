@@ -16,6 +16,7 @@ const navItems = [
   { href: '/portal/communication', label: 'Communication' },
   { href: '/portal/tests', label: 'Tests' },
   { href: '/portal/e-learning', label: 'E-Learning' },
+  { href: '/portal/live-sessions', label: 'Live Sessions' },
   { href: '/portal/profile', label: 'Profile' },
 ];
 

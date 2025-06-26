@@ -14,6 +14,7 @@ const navItems = [
   { href: '/student/attendance', label: 'Attendance' },
   { href: '/student/tests', label: 'Tests' },
   { href: '/student/e-learning', label: 'E-Learning' },
+  { href: '/student/live-sessions', label: 'Live Sessions' },
   { href: '/student/profile', label: 'Profile' },
 ];
 
