@@ -20,6 +20,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   Settings: Settings,
   Profile: UserCircle,
   "Parent Portal": UserCircle,
+  "Student Portal": UserCircle,
 };
 
 interface DashboardNavProps {
@@ -40,7 +41,9 @@ export function DashboardNav({ items, isMobile = false }: DashboardNavProps) {
       )}
       {items.map((item) => {
         const Icon = iconMap[item.label] || Home;
-        const isActive = (item.href === '/dashboard' || item.href === '/portal/dashboard') ? pathname === item.href : pathname.startsWith(item.href);
+        const isRootDashboard = item.href.endsWith('/dashboard') || item.href === '/dashboard';
+        const isActive = isRootDashboard ? pathname === item.href : pathname.startsWith(item.href);
+        
         return (
           <Link
             key={item.href}

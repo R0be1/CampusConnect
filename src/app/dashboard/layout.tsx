@@ -19,6 +19,7 @@ const navItems = [
   { href: '/dashboard/tests', label: 'Tests' },
   { href: '/dashboard/settings', label: 'Settings' },
   { href: '/portal/dashboard', label: 'Parent Portal' },
+  { href: '/student/dashboard', label: 'Student Portal' },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
