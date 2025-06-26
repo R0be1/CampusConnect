@@ -12,6 +12,7 @@ const testsData = [
   { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming", startTime: "2024-09-10T09:00:00" },
   { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active", duration: 45 },
   { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed" },
+  { id: "test-004", name: "Chemistry Basics", grade: "Grade 10", subject: "Chemistry", status: "Completed" },
 ];
 
 type Test = typeof testsData[0];

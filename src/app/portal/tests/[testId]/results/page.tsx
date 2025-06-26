@@ -3,52 +3,99 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, X, ArrowLeft } from "lucide-react";
+import { Check, X, ArrowLeft, Clock } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// Mock data - In a real app, this would be fetched based on the test submission.
-const testData = {
-  id: "test-002",
-  name: "Mechanics - Unit Test",
-  questions: [
-    {
-      id: "q1",
-      type: "multiple-choice",
-      text: "Which of the following is a vector quantity?",
-      options: ["Speed", "Distance", "Mass", "Velocity"],
-      correctAnswer: "Velocity",
-    },
-    {
-      id: "q2",
-      type: "true-false",
-      text: "Inertia is the property of a body to resist changes in its state of motion.",
-      correctAnswer: "true",
-    },
-    {
-      id: "q3",
-      type: "fill-in-the-blank",
-      text: "The rate of change of velocity is called ___.",
-      correctAnswer: "acceleration",
-    },
-    {
-      id: "q4",
-      type: "multiple-choice",
-      text: "What is the SI unit of force?",
-      options: ["Joule", "Watt", "Newton", "Pascal"],
-      correctAnswer: "Newton",
-    },
-  ],
+// Mock database of tests and their settings
+const testDatabase = {
+  "test-002": {
+    id: "test-002",
+    name: "Mechanics - Unit Test",
+    resultVisibility: "immediate",
+    endTime: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+    questions: [
+      { id: "q1", text: "Which of the following is a vector quantity?", correctAnswer: "Velocity" },
+      { id: "q2", text: "Inertia is the property of a body to resist changes in its state of motion.", correctAnswer: "true" },
+      { id: "q3", text: "The rate of change of velocity is called ___.", correctAnswer: "acceleration" },
+      { id: "q4", text: "What is the SI unit of force?", correctAnswer: "Newton" },
+    ],
+    studentAnswers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Pascal" },
+  },
+  "test-003": {
+    id: "test-003",
+    name: "American Revolution",
+    resultVisibility: "immediate",
+    endTime: "2024-08-01T12:00:00",
+    questions: [
+        { id: "q1", text: "The American Revolution was a conflict between Great Britain and thirteen of its North American colonies.", correctAnswer: "true" },
+        { id: "q2", text: "The Declaration of Independence was signed in what year?", correctAnswer: "1776" },
+    ],
+    studentAnswers: { q1: "true", q2: "1776" },
+  },
+  "test-004": {
+    id: "test-004",
+    name: "Chemistry Basics",
+    resultVisibility: "after-end-time",
+    endTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+    questions: [
+        { id: "q1", text: "What is the chemical symbol for water?", correctAnswer: "H2O" },
+        { id: "q2", text: "The pH of a neutral solution is 7.", correctAnswer: "true" },
+    ],
+    studentAnswers: { q1: "H2O", q2: "false" },
+  }
 };
 
-const studentAnswers = {
-    q1: "Velocity",
-    q2: "true",
-    q3: "acceleration",
-    q4: "Pascal", // Incorrect answer
-};
 
 export default function TestResultPage({ params }: { params: { testId: string } }) {
+  const testId = params.testId as keyof typeof testDatabase;
+  const testData = testDatabase[testId];
+
+  if (!testData) {
+    return (
+        <Card>
+            <CardHeader><CardTitle>Test Not Found</CardTitle></CardHeader>
+            <CardContent><p>The test you are looking for could not be found.</p></CardContent>
+             <CardFooter>
+                <Button asChild className="w-full">
+                    <Link href="/portal/tests"><ArrowLeft className="mr-2 h-4 w-4"/> Back to Tests</Link>
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+  }
+
+  const studentAnswers = testData.studentAnswers;
+  const areResultsVisible = () => {
+    if (testData.resultVisibility === "immediate") return true;
+    if (testData.resultVisibility === "after-end-time") {
+      return new Date() > new Date(testData.endTime);
+    }
+    return false;
+  };
+
+  if (!areResultsVisible()) {
+    return (
+      <div className="flex flex-col gap-6 items-center justify-center text-center py-20">
+        <Card className="max-w-md">
+            <CardHeader>
+                <CardTitle className="flex items-center justify-center gap-2"><Clock className="h-6 w-6"/> Results Pending</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">
+                    Results for "{testData.name}" will be available after {new Date(testData.endTime).toLocaleString()}. Please check back later.
+                </p>
+            </CardContent>
+            <CardFooter>
+                    <Button asChild className="w-full">
+                    <Link href="/portal/tests"><ArrowLeft className="mr-2 h-4 w-4"/> Back to Tests</Link>
+                </Button>
+            </CardFooter>
+            </Card>
+      </div>
+    );
+  }
+  
   const score = testData.questions.reduce((acc, question) => {
     const studentAnswer = studentAnswers[question.id as keyof typeof studentAnswers];
     return acc + (studentAnswer === question.correctAnswer ? 1 : 0);

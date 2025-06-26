@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,9 @@ const testSchema = z.object({
   startTime: z.date({ required_error: "Start time is required" }),
   endTime: z.date({ required_error: "End time is required" }),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute."),
+  resultVisibility: z.enum(["immediate", "after-end-time"], {
+    required_error: "You must select a result visibility option.",
+  }),
   questions: z.array(questionSchema).min(1, "At least one question is required."),
 });
 
@@ -49,6 +52,7 @@ export default function CreateTestPage() {
     defaultValues: {
       name: "",
       questions: [],
+      resultVisibility: "immediate",
     },
   });
 
@@ -122,6 +126,37 @@ export default function CreateTestPage() {
                         <FormItem className="flex flex-col"><FormLabel>End Time</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP HH:mm") : <span>Pick a date and time</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /><div className="p-3 border-t border-border"><Input type="time" onChange={(e) => { const time = e.target.value.split(':'); if(field.value) { const date = new Date(field.value); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } else { const date = new Date(); date.setHours(Number(time[0]), Number(time[1])); field.onChange(date); } }} /></div></PopoverContent></Popover><FormMessage /></FormItem>
                     )} />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="resultVisibility"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3 rounded-lg border p-4">
+                            <FormLabel>Result Visibility</FormLabel>
+                            <FormDescription>Choose when students can see their results after completing the test.</FormDescription>
+                            <FormControl>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-col space-y-1"
+                                >
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="immediate" /></FormControl>
+                                        <FormLabel className="font-normal">
+                                            Immediately after submitting
+                                        </FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="after-end-time" /></FormControl>
+                                        <FormLabel className="font-normal">
+                                            After the test end time has passed
+                                        </FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </CardContent>
         </Card>
         
