@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FileUp, Info } from "lucide-react";
+import { FileUp, Info, Search } from "lucide-react";
 
 // Placeholder data
 const examsForSelection = [
@@ -31,15 +31,21 @@ const studentsForResults: Record<string, {id: string, name: string, score: strin
 export function EnterResults() {
     const [selectedExam, setSelectedExam] = useState<string | null>(null);
     const [students, setStudents] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const handleExamSelect = (examId: string) => {
         setSelectedExam(examId);
         setStudents(studentsForResults[examId] || []);
+        setSearchTerm("");
     };
     
     const handleScoreChange = (studentId: string, score: string) => {
         setStudents(students.map(s => s.id === studentId ? {...s, score} : s));
-    }
+    };
+
+    const filteredStudents = students.filter(student =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <Card>
@@ -63,38 +69,59 @@ export function EnterResults() {
                 </div>
 
                 {selectedExam && (
-                    <div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Student ID</TableHead>
-                                    <TableHead>Student Name</TableHead>
-                                    <TableHead>Score</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {students.map(student => (
-                                    <TableRow key={student.id}>
-                                        <TableCell className="font-mono">{student.id.toUpperCase()}</TableCell>
-                                        <TableCell className="font-medium">{student.name}</TableCell>
-                                        <TableCell>
-                                            <Input 
-                                                type="number" 
-                                                placeholder="Enter score" 
-                                                className="w-32"
-                                                value={student.score}
-                                                onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                                             />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={student.status === 'Approved' ? 'default' : 'secondary'}>{student.status}</Badge>
-                                        </TableCell>
+                    <div className="space-y-4">
+                        <div className="relative max-w-sm">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="searchStudent"
+                                placeholder="Search by student name..."
+                                className="pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="border rounded-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Student ID</TableHead>
+                                        <TableHead>Student Name</TableHead>
+                                        <TableHead>Score</TableHead>
+                                        <TableHead>Status</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                         <div className="flex justify-end mt-6">
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredStudents.length > 0 ? (
+                                        filteredStudents.map(student => (
+                                            <TableRow key={student.id}>
+                                                <TableCell className="font-mono">{student.id.toUpperCase()}</TableCell>
+                                                <TableCell className="font-medium">{student.name}</TableCell>
+                                                <TableCell>
+                                                    <Input 
+                                                        type="number" 
+                                                        placeholder="Enter score" 
+                                                        className="w-32"
+                                                        value={student.score}
+                                                        onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                     />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={student.status === 'Approved' ? 'default' : 'secondary'}>{student.status}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center">
+                                                No students found.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                         <div className="flex justify-end">
                             <Button>
                                 <FileUp className="mr-2 h-4 w-4" />
                                 Submit for Approval
