@@ -28,44 +28,47 @@ const initialParticipants = [
 
 export default function TeacherSessionPage({ params }: { params: { sessionId: string } }) {
     const [participants, setParticipants] = useState(initialParticipants);
-    const [isSharing, setIsSharing] = useState(false);
-    const [isCameraOn, setIsCameraOn] = useState(false);
+    const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     
     const videoRef = useRef<HTMLVideoElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
     const cameraVideoRef = useRef<HTMLVideoElement>(null);
-    const cameraStreamRef = useRef<MediaStream | null>(null);
     
     const { toast } = useToast();
 
+    const isSharing = !!screenStream;
+    const isCameraOn = !!cameraStream;
     const raisedHands = participants.filter(p => p.handRaised);
 
+    // Effect for screen sharing
     useEffect(() => {
-        if (isSharing && videoRef.current && streamRef.current) {
-            videoRef.current.srcObject = streamRef.current;
-        }
-    }, [isSharing]);
-
-    const handleStopSharing = useCallback(() => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-        }
-        streamRef.current = null;
-        if (videoRef.current) {
+        if (videoRef.current && screenStream) {
+            videoRef.current.srcObject = screenStream;
+        } else if (videoRef.current) {
             videoRef.current.srcObject = null;
         }
-        setIsSharing(false);
-    }, []);
+    }, [screenStream]);
+
+    // Effect for camera
+    useEffect(() => {
+        if (cameraVideoRef.current && cameraStream) {
+            cameraVideoRef.current.srcObject = cameraStream;
+        } else if (cameraVideoRef.current) {
+            cameraVideoRef.current.srcObject = null;
+        }
+    }, [cameraStream]);
+
+    const handleStopSharing = useCallback(() => {
+        screenStream?.getTracks().forEach(track => track.stop());
+        setScreenStream(null);
+    }, [screenStream]);
 
     const handleShareScreen = useCallback(async () => {
+        if (isSharing) return;
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            streamRef.current = stream;
-            setIsSharing(true);
-            
-            stream.getVideoTracks()[0].addEventListener('ended', () => {
-                handleStopSharing();
-            });
+            stream.getVideoTracks()[0].addEventListener('ended', handleStopSharing);
+            setScreenStream(stream);
         } catch (err) {
             console.error("Error sharing screen: ", err);
             toast({
@@ -74,26 +77,16 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 description: "Could not start screen sharing. Please ensure you have granted the necessary permissions.",
             });
         }
-    }, [toast, handleStopSharing]);
+    }, [isSharing, toast, handleStopSharing]);
 
     const handleToggleCamera = useCallback(async () => {
-        if (isCameraOn) {
-            if (cameraStreamRef.current) {
-                cameraStreamRef.current.getTracks().forEach(track => track.stop());
-                cameraStreamRef.current = null;
-            }
-            if (cameraVideoRef.current) {
-                cameraVideoRef.current.srcObject = null;
-            }
-            setIsCameraOn(false);
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                if (cameraVideoRef.current) {
-                    cameraVideoRef.current.srcObject = stream;
-                }
-                cameraStreamRef.current = stream;
-                setIsCameraOn(true);
+                setCameraStream(stream);
             } catch (err) {
                 console.error("Error accessing camera: ", err);
                 toast({
@@ -103,7 +96,15 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 });
             }
         }
-    }, [isCameraOn, toast]);
+    }, [cameraStream, toast]);
+
+    // Cleanup streams on component unmount
+    useEffect(() => {
+        return () => {
+            screenStream?.getTracks().forEach(track => track.stop());
+            cameraStream?.getTracks().forEach(track => track.stop());
+        };
+    }, [screenStream, cameraStream]);
 
     return (
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start h-[calc(100vh-100px)]">
@@ -125,7 +126,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 <Card className="flex-1 mt-6 flex flex-col relative">
                     <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
                         {isSharing ? (
-                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay />
+                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay playsInline />
                         ) : (
                             <div className="text-center text-muted-foreground p-4">
                                 <Monitor className="h-16 w-16 mx-auto" />
@@ -134,7 +135,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                             </div>
                         )}
                         <div className="absolute bottom-4 right-4 h-32 w-48 md:h-40 md:w-56 z-10">
-                           <video ref={cameraVideoRef} className={cn("w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background", !isCameraOn && "hidden")} autoPlay muted />
+                           <video ref={cameraVideoRef} className={cn("w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background", !isCameraOn && "hidden")} autoPlay muted playsInline />
                         </div>
                     </CardContent>
                     <CardHeader className="border-t">
