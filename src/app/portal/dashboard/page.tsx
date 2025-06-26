@@ -1,10 +1,12 @@
 
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, BookOpen, CalendarDays, DollarSign, MessageCircle, User } from "lucide-react";
+import Link from "next/link";
 
 // Mock Data for a parent viewing their child "John Doe"
 const student = {
@@ -79,8 +81,10 @@ export default function ParentDashboardPage() {
                         </Table>
                     </CardContent>
                     <CardFooter>
-                         <Button variant="outline" className="w-full">
-                            View Detailed Report Card <ArrowRight className="ml-2 h-4 w-4" />
+                         <Button asChild variant="outline" className="w-full">
+                            <Link href="/portal/academics">
+                                View Detailed Performance <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
                         </Button>
                     </CardFooter>
                 </Card>
