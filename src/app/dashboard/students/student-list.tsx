@@ -8,32 +8,92 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { StudentForm, StudentRegistrationFormValues } from "./student-form";
 
-const studentsData = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', email: 'john.doe@example.com' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', email: 'alice.smith@example.com' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', email: 'bob.johnson@example.com' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', email: 'charlie.brown@example.com' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'diana.prince@example.com' },
+type Student = {
+    id: string;
+    name: string;
+    grade: string;
+    section: string;
+    parentName: string;
+    email: string;
+};
+
+const studentsData: Student[] = [
+  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', email: 'jane.doe@example.com' },
+  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', email: 'robert.smith@example.com' },
+  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', email: 'mary.johnson@example.com' },
+  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', email: 'lucy.brown@example.com' },
+  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'hippolyta.prince@example.com' },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 
 export function StudentList() {
+    const [students, setStudents] = useState<Student[]>(studentsData);
+    const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
 
-    const filteredStudents = studentsData.filter(student => {
+    const filteredStudents = students.filter(student => {
         const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || student.section === sectionFilter;
         return nameMatch && gradeMatch && sectionMatch;
     });
+
+    const handleEditSubmit = (data: StudentRegistrationFormValues) => {
+        if (!editingStudent) return;
+        
+        const updatedStudent: Student = {
+            id: editingStudent.id,
+            name: `${data.studentFirstName} ${data.studentLastName}`,
+            grade: data.grade,
+            section: data.section,
+            parentName: `${data.parentFirstName} ${data.parentLastName}`,
+            email: data.parentEmail,
+        };
+
+        setStudents(currentStudents => 
+            currentStudents.map(s => (s.id === editingStudent.id ? updatedStudent : s))
+        );
+        
+        setEditingStudent(null); // Close the dialog
+        alert("Student information updated!");
+    };
+
+    const getInitialFormValues = (student: Student | null): Partial<StudentRegistrationFormValues> | undefined => {
+        if (!student) return undefined;
+        
+        const studentNameParts = student.name.split(' ');
+        const parentNameParts = student.parentName.split(' ');
+
+        return {
+            studentFirstName: studentNameParts[0] || "",
+            studentLastName: studentNameParts.slice(1).join(' ') || "",
+            grade: student.grade,
+            section: student.section,
+            parentFirstName: parentNameParts[0] || "",
+            parentLastName: parentNameParts.slice(1).join(' ') || "",
+            parentEmail: student.email,
+            // Mocking other required fields for the form
+            studentDob: new Date('2008-01-01'),
+            studentGender: 'Male',
+            parentRelation: 'Father',
+            parentPhone: '1234567890',
+            addressLine1: '123 Mock Street',
+            city: 'Mockville',
+            state: 'MC',
+            zipCode: '12345',
+        };
+    }
     
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -98,27 +158,10 @@ export function StudentList() {
                   <TableCell>{student.section}</TableCell>
                   <TableCell>{student.parentName}</TableCell>
                   <TableCell className="text-right">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit Student</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Student Information</DialogTitle>
-                          <DialogDescription>
-                            Make changes to {student.name}'s profile. Click save when you're done.
-                            <br/><br/>
-                            (This is a placeholder. The full edit form can be implemented next.)
-                          </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <Button type="submit">Save Changes</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                    <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Student</span>
+                    </Button>
                     <Button variant="ghost" size="icon">
                       <Trash2 className="h-4 w-4 text-destructive" />
                       <span className="sr-only">Delete Student</span>
@@ -136,5 +179,26 @@ export function StudentList() {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={!!editingStudent} onOpenChange={(isOpen) => !isOpen && setEditingStudent(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Edit Student Information</DialogTitle>
+                <DialogDescription>
+                Make changes to {editingStudent?.name}'s profile. Click save when you're done.
+                </DialogDescription>
+            </DialogHeader>
+            {editingStudent && (
+                <div className="py-4">
+                    <StudentForm 
+                        initialData={getInitialFormValues(editingStudent)} 
+                        onSubmit={handleEditSubmit} 
+                        submitButtonText="Save Changes" 
+                    />
+                </div>
+            )}
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
