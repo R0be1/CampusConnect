@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,12 +18,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 // Placeholder data
 const examsData = [
-  { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40 },
-  { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60 },
-  { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20 },
-  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50 },
-  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70 },
-  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30 },
+  { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40, gradingType: 'Decimal' },
+  { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60, gradingType: 'Decimal' },
+  { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20, gradingType: 'Decimal' },
+  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50, gradingType: 'Letter' },
+  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70, gradingType: 'Decimal' },
+  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30, gradingType: 'Letter' },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -107,6 +108,18 @@ export default function ManageExamsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="weightage">Weightage (%)</Label>
                                         <Input id="weightage" type="number" placeholder="e.g., 40" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gradingType">Grading Type</Label>
+                                        <Select>
+                                            <SelectTrigger id="gradingType">
+                                                <SelectValue placeholder="Select Grading Type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Decimal">Decimal</SelectItem>
+                                                <SelectItem value="Letter">Letter Grade</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
@@ -269,6 +282,7 @@ export default function ManageExamsPage() {
                                     <TableHead>Section</TableHead>
                                     <TableHead>Subject</TableHead>
                                     <TableHead>Weightage (%)</TableHead>
+                                    <TableHead>Grading Type</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -281,6 +295,7 @@ export default function ManageExamsPage() {
                                             <TableCell>{exam.section}</TableCell>
                                             <TableCell>{exam.subject}</TableCell>
                                             <TableCell>{exam.weightage}%</TableCell>
+                                            <TableCell>{exam.gradingType}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button variant="ghost" size="icon" onClick={() => handleEditClick(exam)}>
                                                     <Pencil className="h-4 w-4" />
@@ -311,7 +326,7 @@ export default function ManageExamsPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             No exams found for the selected filters.
                                         </TableCell>
                                     </TableRow>
@@ -335,6 +350,18 @@ export default function ManageExamsPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="editWeightage">Weightage (%)</Label>
                                 <Input id="editWeightage" type="number" defaultValue={editingExam?.weightage} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor={`edit-gradingType-${editingExam?.id}`}>Grading Type</Label>
+                                <Select defaultValue={editingExam?.gradingType}>
+                                    <SelectTrigger id={`edit-gradingType-${editingExam?.id}`}>
+                                        <SelectValue placeholder="Select Grading Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Decimal">Decimal</SelectItem>
+                                        <SelectItem value="Letter">Letter Grade</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">

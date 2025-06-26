@@ -35,12 +35,12 @@ type StudentResult = {
 
 // Placeholder data
 const examsForSelection = [
-  { id: 'exam1', name: 'Mid-term Exam (Grade 10, Section A, Mathematics)' },
-  { id: 'exam2', name: 'Final Exam (Grade 10, Section A, Mathematics)' },
-  { id: 'exam3', name: 'Unit Test 1 (Grade 9, Section B, Science)' },
-  { id: 'exam4', name: 'Mid-term Exam (Grade 9, Section B, History)' },
-  { id: 'exam5', name: 'Final Exam (Grade 11, Section C, Physics)' },
-  { id: 'exam6', name: 'Unit Test 2 (Grade 10, Section C, Chemistry)' },
+  { id: 'exam1', name: 'Mid-term Exam (Grade 10, Section A, Mathematics)', gradingType: 'Decimal' },
+  { id: 'exam2', name: 'Final Exam (Grade 10, Section A, Mathematics)', gradingType: 'Decimal' },
+  { id: 'exam3', name: 'Unit Test 1 (Grade 9, Section B, Science)', gradingType: 'Decimal' },
+  { id: 'exam4', name: 'Mid-term Exam (Grade 9, Section B, History)', gradingType: 'Letter' },
+  { id: 'exam5', name: 'Final Exam (Grade 11, Section C, Physics)', gradingType: 'Decimal' },
+  { id: 'exam6', name: 'Unit Test 2 (Grade 10, Section C, Chemistry)', gradingType: 'Letter' },
 ];
 
 const studentsForResults: Record<string, StudentResult[]> = {
@@ -61,9 +61,13 @@ const studentsForResults: Record<string, StudentResult[]> = {
         { id: 's005', name: 'Diana Prince', score: '', status: 'Pending' },
         { id: 's008', name: 'Clark Kent', score: '99', status: 'Approved' },
     ],
+     exam4: [
+      { id: 's002', name: 'Alice Smith', score: 'B+', status: 'Pending Approval' },
+      { id: 's005', name: 'Diana Prince', score: '', status: 'Pending' },
+    ],
     exam6: [
-      { id: 's010', name: 'Tony Stark', score: '100', status: 'Pending Approval' },
-      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Re-approval' },
+      { id: 's010', name: 'Tony Stark', score: 'A+', status: 'Pending Approval' },
+      { id: 's011', name: 'Steve Rogers', score: 'A', status: 'Pending Re-approval' },
     ]
 };
 
@@ -134,6 +138,9 @@ export default function EnterResultsPage() {
                 return 'secondary';
         }
     }
+
+    const selectedExamDetails = examsForSelection.find(exam => exam.id === selectedExam);
+    const gradingType = selectedExamDetails?.gradingType || 'Decimal';
 
     return (
         <div className="flex flex-col gap-6">
@@ -224,14 +231,25 @@ export default function EnterResultsPage() {
                                                     <TableCell className="font-mono">{student.id.toUpperCase()}</TableCell>
                                                     <TableCell className="font-medium">{student.name}</TableCell>
                                                     <TableCell>
-                                                        <Input 
-                                                            type="number" 
-                                                            placeholder="Enter score" 
-                                                            className="w-32"
-                                                            value={student.score}
-                                                            onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                                                            disabled={isSubmitting || !['Pending', 'Approved'].includes(student.status)}
-                                                        />
+                                                        {gradingType === 'Decimal' ? (
+                                                            <Input 
+                                                                type="number" 
+                                                                placeholder="Enter score" 
+                                                                className="w-32"
+                                                                value={student.score}
+                                                                onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                                disabled={isSubmitting || !['Pending', 'Approved'].includes(student.status)}
+                                                            />
+                                                        ) : (
+                                                            <Input 
+                                                                type="text" 
+                                                                placeholder="Enter grade" 
+                                                                className="w-32"
+                                                                value={student.score}
+                                                                onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                                disabled={isSubmitting || !['Pending', 'Approved'].includes(student.status)}
+                                                            />
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center">
