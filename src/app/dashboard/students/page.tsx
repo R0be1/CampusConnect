@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon, UserPlus } from "lucide-react";
 import { format } from "date-fns";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const studentRegistrationSchema = z.object({
   // Student info
@@ -58,7 +59,6 @@ type StudentRegistrationFormValues = z.infer<typeof studentRegistrationSchema>;
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
-const genders = ['Male', 'Female', 'Other'];
 const relations = ['Father', 'Mother', 'Guardian'];
 
 export default function StudentRegistrationPage() {
@@ -190,16 +190,38 @@ export default function StudentRegistrationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {genders.map(gender => <SelectItem key={gender} value={gender}>{gender}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex items-center space-x-4 pt-2"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Male" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Male
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Female" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Female
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Other" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Other
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
