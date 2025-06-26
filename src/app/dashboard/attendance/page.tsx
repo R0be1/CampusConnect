@@ -48,6 +48,7 @@ export default function AttendancePage() {
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
   const [attendance, setAttendance] = useState<AttendanceState>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +131,7 @@ export default function AttendancePage() {
             </div>
              <div className="space-y-1">
                <Label>Date</Label>
-               <Popover>
+               <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                   <PopoverTrigger asChild>
                       <Button
                           variant={"outline"}
@@ -140,7 +141,17 @@ export default function AttendancePage() {
                           {date ? format(date, "PPP") : <span>Pick a date</span>}
                       </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={setDate} initialFocus /></PopoverContent>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar 
+                        mode="single" 
+                        selected={date} 
+                        onSelect={(newDate) => {
+                            setDate(newDate);
+                            setIsDatePickerOpen(false);
+                        }} 
+                        initialFocus 
+                    />
+                    </PopoverContent>
               </Popover>
             </div>
             <Button onClick={handleFetchStudents} disabled={!selectedGrade || !selectedSection || isLoading}>
