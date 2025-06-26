@@ -1,13 +1,15 @@
 
 "use client"
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Monitor, Hand, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { ArrowLeft, Monitor, Hand, Mic, Video } from "lucide-react";
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from "@/hooks/use-toast";
+
 
 // Mock Data
 const sessionDetails = {
@@ -25,8 +27,47 @@ const initialParticipants = [
 
 export default function TeacherSessionPage({ params }: { params: { sessionId: string } }) {
     const [participants, setParticipants] = useState(initialParticipants);
+    const [isSharing, setIsSharing] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const { toast } = useToast();
 
     const raisedHands = participants.filter(p => p.handRaised);
+
+    const handleShareScreen = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+            streamRef.current = stream;
+            setIsSharing(true);
+            
+            // Listen for when the user stops sharing via the browser's native UI
+            stream.getVideoTracks()[0].addEventListener('ended', () => {
+                setIsSharing(false);
+                streamRef.current = null;
+            });
+        } catch (err) {
+            console.error("Error sharing screen: ", err);
+            toast({
+                variant: "destructive",
+                title: "Screen Share Failed",
+                description: "Could not start screen sharing. Please ensure you have granted the necessary permissions.",
+            });
+        }
+    }, [toast]);
+
+    const handleStopSharing = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsSharing(false);
+    }, []);
 
     return (
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start h-[calc(100vh-100px)]">
@@ -46,18 +87,30 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 </Card>
 
                 <Card className="flex-1 mt-6 flex flex-col">
-                    <CardContent className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg">
-                        <div className="text-center text-muted-foreground">
-                            <Monitor className="h-16 w-16 mx-auto" />
-                            <p className="mt-4 font-semibold">Your screen share will appear here.</p>
-                            <p className="text-sm">Click the "Share Screen" button below to begin.</p>
-                        </div>
+                    <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
+                        {isSharing ? (
+                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay />
+                        ) : (
+                            <div className="text-center text-muted-foreground p-4">
+                                <Monitor className="h-16 w-16 mx-auto" />
+                                <p className="mt-4 font-semibold">Your screen share will appear here.</p>
+                                <p className="text-sm">Click the "Share Screen" button below to begin.</p>
+                            </div>
+                        )}
                     </CardContent>
                     <CardHeader className="border-t">
                         <div className="flex justify-center items-center gap-4">
                             <Button size="lg" variant="outline"><Mic className="mr-2" /> Mute</Button>
                             <Button size="lg" variant="outline"><Video className="mr-2" /> Start Camera</Button>
-                            <Button size="lg"><Monitor className="mr-2" /> Share Screen</Button>
+                             {isSharing ? (
+                                <Button size="lg" variant="destructive" onClick={handleStopSharing}>
+                                    <Monitor className="mr-2" /> Stop Sharing
+                                </Button>
+                            ) : (
+                                <Button size="lg" onClick={handleShareScreen}>
+                                    <Monitor className="mr-2" /> Share Screen
+                                </Button>
+                            )}
                         </div>
                     </CardHeader>
                 </Card>
