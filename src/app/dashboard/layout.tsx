@@ -1,3 +1,5 @@
+'use client';
+
 import { ReactNode } from 'react';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { School, UserCircle } from 'lucide-react';
