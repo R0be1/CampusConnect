@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,9 +95,9 @@ const paymentHistoryData = [
 ];
 
 const feeStructureData = [
-    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500' },
-    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150' },
-    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300' },
+    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee' },
+    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None' },
+    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee' },
 ];
 
 const penaltyData = [
@@ -287,6 +288,22 @@ export default function FeesPage() {
                             </Select>
                           </div>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="feePenalty">Penalty Rule</Label>
+                            <Select>
+                              <SelectTrigger id="feePenalty">
+                                <SelectValue placeholder="Select a rule" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="None">None</SelectItem>
+                                {penaltyData.map((p) => (
+                                  <SelectItem key={p.id} value={p.name}>
+                                    {p.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                       </div>
                       <DialogFooter>
                         <Button type="submit">Save Scheme</Button>
@@ -303,6 +320,7 @@ export default function FeesPage() {
                       <TableHead>Grade</TableHead>
                       <TableHead>Section</TableHead>
                       <TableHead>Amount</TableHead>
+                      <TableHead>Penalty Rule</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -313,6 +331,7 @@ export default function FeesPage() {
                         <TableCell>{fee.grade}</TableCell>
                         <TableCell>{fee.section}</TableCell>
                         <TableCell>{fee.amount}</TableCell>
+                        <TableCell>{fee.penalty}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon">
                             <Pencil className="h-4 w-4" />
