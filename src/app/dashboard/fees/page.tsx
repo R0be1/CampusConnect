@@ -55,10 +55,12 @@ import {
   DollarSign,
   FileText,
   History,
+  Info,
   Pencil,
   PlusCircle,
   Trash2,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const invoicesData = [
   {
@@ -69,6 +71,7 @@ const invoicesData = [
     status: "Overdue",
     lateFee: "$125.00",
     total: "$2,625.00",
+    lateFeeDetails: "5% one-time penalty on base amount of $2,500.00."
   },
   {
     id: "INV-002",
@@ -78,6 +81,7 @@ const invoicesData = [
     status: "Overdue",
     lateFee: "$5.00",
     total: "$20.00",
+    lateFeeDetails: "$1 per day for 5 overdue days."
   },
   {
     id: "INV-003",
@@ -87,6 +91,7 @@ const invoicesData = [
     status: "Pending",
     lateFee: "$0.00",
     total: "$150.00",
+    lateFeeDetails: null,
   },
 ];
 
@@ -141,6 +146,7 @@ export default function FeesPage() {
   };
 
   return (
+    <TooltipProvider>
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold font-headline">Fee Management</h1>
       <Tabs defaultValue="invoices">
@@ -188,8 +194,22 @@ export default function FeesPage() {
                       <TableCell>{invoice.item}</TableCell>
                       <TableCell>{invoice.amount}</TableCell>
                       <TableCell className={invoice.lateFee !== '$0.00' ? 'text-destructive font-medium' : ''}>
-                        {invoice.lateFee}
-                      </TableCell>
+                          {invoice.lateFee !== '$0.00' && invoice.lateFeeDetails ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-1 cursor-help">
+                                  {invoice.lateFee}
+                                  <Info className="h-3 w-3" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{invoice.lateFeeDetails}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            invoice.lateFee
+                          )}
+                        </TableCell>
                       <TableCell className="font-semibold">{invoice.total}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>
@@ -709,5 +729,6 @@ export default function FeesPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }
