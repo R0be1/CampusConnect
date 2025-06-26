@@ -25,9 +25,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, UserPlus } from "lucide-react";
+import { CalendarIcon, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StudentList } from "./student-list";
 
 const studentRegistrationSchema = z.object({
   // Student info
@@ -61,7 +63,7 @@ const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 const relations = ['Father', 'Mother', 'Guardian'];
 
-export default function StudentRegistrationPage() {
+function StudentRegistrationForm() {
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(studentRegistrationSchema),
     defaultValues: {
@@ -88,12 +90,7 @@ export default function StudentRegistrationPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <UserPlus className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Student Registration</h1>
-      </div>
-      <Form {...form}>
+    <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card>
             <CardHeader>
@@ -441,6 +438,28 @@ export default function StudentRegistrationPage() {
           </div>
         </form>
       </Form>
+  )
+}
+
+export default function StudentsPage() {
+  return (
+    <div className="flex flex-col gap-6">
+       <div className="flex items-center gap-4">
+        <Users className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold font-headline">Student Management</h1>
+      </div>
+      <Tabs defaultValue="view-students">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="view-students">View Students</TabsTrigger>
+            <TabsTrigger value="register-student">Register New Student</TabsTrigger>
+        </TabsList>
+        <TabsContent value="view-students">
+            <StudentList />
+        </TabsContent>
+        <TabsContent value="register-student">
+          <StudentRegistrationForm />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,15 +1,16 @@
+
 // src/components/dashboard-nav.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, UserPlus, Settings } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, Users, Settings } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
   Dashboard: Home,
-  Students: UserPlus,
+  Students: Users,
   Academics: BookOpen,
   Attendance: UserCheck,
   Communication: MessageSquare,
