@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Monitor, Hand, Mic, Video } from "lucide-react";
@@ -40,18 +40,31 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
 
     const raisedHands = participants.filter(p => p.handRaised);
 
+    useEffect(() => {
+        if (isSharing && videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+        }
+    }, [isSharing]);
+
+    const handleStopSharing = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        streamRef.current = null;
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsSharing(false);
+    }, []);
+
     const handleShareScreen = useCallback(async () => {
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             streamRef.current = stream;
             setIsSharing(true);
             
             stream.getVideoTracks()[0].addEventListener('ended', () => {
-                setIsSharing(false);
-                streamRef.current = null;
+                handleStopSharing();
             });
         } catch (err) {
             console.error("Error sharing screen: ", err);
@@ -61,18 +74,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 description: "Could not start screen sharing. Please ensure you have granted the necessary permissions.",
             });
         }
-    }, [toast]);
-
-    const handleStopSharing = useCallback(() => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-        if (videoRef.current) {
-            videoRef.current.srcObject = null;
-        }
-        setIsSharing(false);
-    }, []);
+    }, [toast, handleStopSharing]);
 
     const handleToggleCamera = useCallback(async () => {
         if (isCameraOn) {
