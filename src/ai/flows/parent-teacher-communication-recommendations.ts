@@ -19,10 +19,11 @@ const CommunicationRecommendationsInputSchema = z.object({
 export type CommunicationRecommendationsInput = z.infer<typeof CommunicationRecommendationsInputSchema>;
 
 const CommunicationRecommendationsOutputSchema = z.object({
+  subject: z.string().describe('A concise and professional subject line for the communication.'),
+  messageBody: z.string().describe('A detailed message body drafted for the parent, incorporating the key talking points.'),
   communicationStrategy: z.string().describe('Recommended communication strategy based on the student data.'),
   communicationFrequency: z.string().describe('Recommended frequency of communication with the parents (e.g., weekly, monthly).'),
   communicationMethods: z.array(z.string()).describe('Recommended communication methods (e.g., email, phone call, in-person meeting).'),
-  talkingPoints: z.array(z.string()).describe('Suggested talking points for the teacher to discuss with the parents.'),
 });
 export type CommunicationRecommendationsOutput = z.infer<typeof CommunicationRecommendationsOutputSchema>;
 
@@ -34,13 +35,16 @@ const prompt = ai.definePrompt({
   name: 'communicationRecommendationsPrompt',
   input: {schema: CommunicationRecommendationsInputSchema},
   output: {schema: CommunicationRecommendationsOutputSchema},
-  prompt: `You are an AI assistant designed to analyze student data and recommend optimal parent-teacher communication strategies.
+  prompt: `You are an AI assistant designed to help teachers draft professional and effective communications to parents.
 
-  Based on the following student data, provide a communication strategy, recommended frequency, methods, and talking points for the teacher to use when communicating with the parents.
+  Based on the following student data, generate a communication draft. This includes a subject line and a full message body.
+  Also provide a recommended communication strategy, frequency, and methods.
 
   Student Performance Data: {{{studentPerformanceData}}}
   Student Behavioral Data: {{{studentBehavioralData}}}
   Communication History: {{{communicationHistory}}}
+
+  The tone should be professional, empathetic, and clear. The goal is to build a positive parent-teacher partnership.
 
   Follow the schema provided, and make sure your answer is a valid JSON.
 `,
