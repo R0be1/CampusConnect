@@ -64,23 +64,29 @@ const invoicesData = [
   {
     id: "INV-001",
     item: "Tuition Fee - Grade 10",
-    amount: "$2,500",
+    amount: "$2,500.00",
     dueDate: "2024-08-01",
-    status: "Pending",
+    status: "Overdue",
+    lateFee: "$125.00",
+    total: "$2,625.00",
   },
   {
     id: "INV-002",
-    item: "Late Fee - Library Book",
-    amount: "$15",
+    item: "Library Book Fine",
+    amount: "$15.00",
     dueDate: "2024-07-25",
     status: "Overdue",
+    lateFee: "$5.00",
+    total: "$20.00",
   },
   {
     id: "INV-003",
     item: "Lab Fee - Chemistry",
-    amount: "$150",
-    dueDate: "2024-08-01",
+    amount: "$150.00",
+    dueDate: "2024-09-01",
     status: "Pending",
+    lateFee: "$0.00",
+    total: "$150.00",
   },
 ];
 
@@ -167,10 +173,12 @@ export default function FeesPage() {
                   <TableRow>
                     <TableHead>Invoice ID</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>Base Amount</TableHead>
+                    <TableHead>Late Fee</TableHead>
+                    <TableHead>Total Amount</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Action</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -179,6 +187,10 @@ export default function FeesPage() {
                       <TableCell className="font-medium">{invoice.id}</TableCell>
                       <TableCell>{invoice.item}</TableCell>
                       <TableCell>{invoice.amount}</TableCell>
+                      <TableCell className={invoice.lateFee !== '$0.00' ? 'text-destructive font-medium' : ''}>
+                        {invoice.lateFee}
+                      </TableCell>
+                      <TableCell className="font-semibold">{invoice.total}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>
                         <Badge
@@ -191,7 +203,7 @@ export default function FeesPage() {
                           {invoice.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <Button size="sm">
                           <CreditCard className="mr-2 h-4 w-4" /> Pay Now
                         </Button>
@@ -699,5 +711,3 @@ export default function FeesPage() {
     </div>
   );
 }
-
-    
