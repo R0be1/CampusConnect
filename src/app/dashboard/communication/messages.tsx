@@ -10,12 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Send, Sparkles, User, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Send, Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { getRecommendationsAction } from "./actions";
 
 const studentsData = [
   { id: 's001', name: 'John Doe', parentName: 'Jane Doe', parentEmail: 'jane.doe@example.com' },
@@ -29,17 +27,11 @@ const formSchema = z.object({
     studentId: z.string().min(1, "Please select a student."),
     subject: z.string().min(1, "Subject is required."),
     message: z.string().min(10, "Message must be at least 10 characters."),
-    // AI fields
-    studentPerformanceData: z.string().optional(),
-    studentBehavioralData: z.string().optional(),
-    communicationHistory: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 export function CommunicationComposer() {
-    const [useAI, setUseAI] = useState(false);
-    const [isGenerating, setIsGenerating] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -49,29 +41,6 @@ export function CommunicationComposer() {
 
     const selectedStudentId = form.watch("studentId");
     const selectedStudent = studentsData.find(s => s.id === selectedStudentId);
-
-    const handleGenerateDraft = async () => {
-        const aiInputs = form.getValues();
-        if (!aiInputs.studentPerformanceData || !aiInputs.studentBehavioralData || !aiInputs.communicationHistory) {
-            form.setError("studentPerformanceData", { message: "Please fill out all AI input fields to generate a draft." });
-            return;
-        }
-
-        setIsGenerating(true);
-        const result = await getRecommendationsAction({
-            studentPerformanceData: aiInputs.studentPerformanceData,
-            studentBehavioralData: aiInputs.studentBehavioralData,
-            communicationHistory: aiInputs.communicationHistory,
-        });
-
-        if ('error' in result) {
-            console.error(result.error);
-        } else if (result) {
-            form.setValue("subject", result.subject, { shouldValidate: true });
-            form.setValue("message", result.messageBody, { shouldValidate: true });
-        }
-        setIsGenerating(false);
-    };
 
     const onSubmit = (data: FormData) => {
         setIsSending(true);
@@ -148,38 +117,6 @@ export function CommunicationComposer() {
                         <Label htmlFor="message">Message</Label>
                         <Textarea id="message" {...form.register("message")} className="min-h-[150px]" placeholder="Write your message here..."/>
                         {form.formState.errors.message && <p className="text-destructive text-sm">{form.formState.errors.message.message}</p>}
-                    </div>
-                    
-                    <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-accent" />
-                                <Label htmlFor="use-ai" className="font-semibold">AI Assistance</Label>
-                            </div>
-                            <Switch id="use-ai" checked={useAI} onCheckedChange={setUseAI} />
-                        </div>
-                        {useAI && (
-                            <div className="space-y-4 animate-in fade-in-50">
-                                <p className="text-sm text-muted-foreground">Provide context below for the AI to generate a message draft.</p>
-                                <div>
-                                    <Label htmlFor="studentPerformanceData">Student Performance Data</Label>
-                                    <Textarea id="studentPerformanceData" {...form.register("studentPerformanceData")} placeholder="e.g., Grades: Math A, Science B. Attendance: 95%..." />
-                                </div>
-                                <div>
-                                    <Label htmlFor="studentBehavioralData">Student Behavioral Data</Label>
-                                    <Textarea id="studentBehavioralData" {...form.register("studentBehavioralData")} placeholder="e.g., Consistently participates in class. Occasionally disruptive..." />
-                                </div>
-                                <div>
-                                    <Label htmlFor="communicationHistory">Previous Communication</Label>
-                                    <Textarea id="communicationHistory" {...form.register("communicationHistory")} placeholder="e.g., Emailed parents on 03/15 about missing homework..."/>
-                                </div>
-                                {form.formState.errors.studentPerformanceData && <p className="text-destructive text-sm">{form.formState.errors.studentPerformanceData.message}</p>}
-                                <Button type="button" variant="secondary" onClick={handleGenerateDraft} disabled={isGenerating}>
-                                    {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Generate Draft
-                                </Button>
-                            </div>
-                        )}
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end">
