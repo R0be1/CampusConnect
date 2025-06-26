@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 // Placeholder data
@@ -29,7 +30,13 @@ const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
 
+type Exam = typeof examsData[0];
+
 export function ManageExams() {
+    const [exams, setExams] = useState<Exam[]>(examsData);
+    const [editingExam, setEditingExam] = useState<Exam | null>(null);
+
+    // State for Add New Exam dialog
     const [gradeOpen, setGradeOpen] = useState(false);
     const [selectedGrade, setSelectedGrade] = useState("");
 
@@ -39,14 +46,35 @@ export function ManageExams() {
     const [subjectOpen, setSubjectOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState("");
 
+    // State for Edit Exam dialog
+    const [editGradeOpen, setEditGradeOpen] = useState(false);
+    const [editSelectedGrade, setEditSelectedGrade] = useState("");
+
+    const [editSectionOpen, setEditSectionOpen] = useState(false);
+    const [editSelectedSection, setEditSelectedSection] = useState("");
+
+    const [editSubjectOpen, setEditSubjectOpen] = useState(false);
+    const [editSelectedSubject, setEditSelectedSubject] = useState("");
+
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
 
-    const filteredExams = examsData.filter(exam => {
+    const filteredExams = exams.filter(exam => {
         const gradeMatch = gradeFilter === 'all' || exam.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || exam.section === sectionFilter;
         return gradeMatch && sectionMatch;
     });
+
+    const handleDelete = (id: string) => {
+        setExams(currentExams => currentExams.filter(exam => exam.id !== id));
+    };
+
+    const handleEditClick = (exam: Exam) => {
+        setEditingExam(exam);
+        setEditSelectedGrade(exam.grade);
+        setEditSelectedSection(exam.section);
+        setEditSelectedSubject(exam.subject);
+    };
 
     return (
         <Card>
@@ -235,8 +263,30 @@ export function ManageExams() {
                                         <TableCell>{exam.subject}</TableCell>
                                         <TableCell>{exam.weightage}%</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(exam)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete this exam definition.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(exam.id)}>
+                                                            Continue
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -251,6 +301,132 @@ export function ManageExams() {
                     </Table>
                 </div>
             </CardContent>
+
+             <Dialog open={!!editingExam} onOpenChange={(isOpen) => !isOpen && setEditingExam(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Exam Definition</DialogTitle>
+                        <DialogDescription>Make changes to the exam details below.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="editExamName">Exam Name</Label>
+                            <Input id="editExamName" defaultValue={editingExam?.name} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="editWeightage">Weightage (%)</Label>
+                            <Input id="editWeightage" type="number" defaultValue={editingExam?.weightage} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Grade</Label>
+                                <Popover open={editGradeOpen} onOpenChange={setEditGradeOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" role="combobox" aria-expanded={editGradeOpen} className="w-full justify-between font-normal">
+                                            {editSelectedGrade ? editSelectedGrade : "Select Grade..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search grade..." />
+                                            <CommandList>
+                                                <CommandEmpty>No grade found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {grades.map((grade) => (
+                                                        <CommandItem
+                                                            key={grade}
+                                                            value={grade}
+                                                            onSelect={() => {
+                                                                setEditSelectedGrade(grade === editSelectedGrade ? "" : grade);
+                                                                setEditGradeOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4", editSelectedGrade === grade ? "opacity-100" : "opacity-0")} />
+                                                            {grade}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Section</Label>
+                                <Popover open={editSectionOpen} onOpenChange={setEditSectionOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" role="combobox" aria-expanded={editSectionOpen} className="w-full justify-between font-normal">
+                                            {editSelectedSection ? editSelectedSection : "Select Section..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search section..." />
+                                            <CommandList>
+                                                <CommandEmpty>No section found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {sections.map((section) => (
+                                                        <CommandItem
+                                                            key={section}
+                                                            value={section}
+                                                            onSelect={() => {
+                                                                setEditSelectedSection(section === editSelectedSection ? "" : section);
+                                                                setEditSectionOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4", editSelectedSection === section ? "opacity-100" : "opacity-0")} />
+                                                            {section}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Subject</Label>
+                                <Popover open={editSubjectOpen} onOpenChange={setEditSubjectOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" role="combobox" aria-expanded={editSubjectOpen} className="w-full justify-between font-normal">
+                                        {editSelectedSubject ? editSelectedSubject : "Select Subject..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search subject..." />
+                                        <CommandList>
+                                            <CommandEmpty>No subject found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {subjects.map((subject) => (
+                                                    <CommandItem
+                                                        key={subject}
+                                                        value={subject}
+                                                        onSelect={() => {
+                                                            setEditSelectedSubject(subject === editSelectedSubject ? "" : subject);
+                                                            setEditSubjectOpen(false);
+                                                        }}
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", editSelectedSubject === subject ? "opacity-100" : "opacity-0")} />
+                                                        {subject}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" onClick={() => setEditingExam(null)}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }
