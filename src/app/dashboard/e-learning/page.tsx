@@ -14,13 +14,15 @@ import { BookCopy, PlusCircle, Upload, Pencil, Trash2, Video, FileText, Search }
 
 // Mock Data
 const materialsData = [
-    { id: 'mat001', title: 'Introduction to Algebra', subject: 'Mathematics', type: 'Video', date: '2024-08-10' },
-    { id: 'mat002', title: 'The Fall of Rome - Reading Material', subject: 'History', type: 'Document', date: '2024-08-09' },
-    { id: 'mat003', title: 'Photosynthesis Explained', subject: 'Science', type: 'Video', date: '2024-08-08' },
-    { id: 'mat004', title: 'Periodic Table PDF', subject: 'Science', type: 'Document', date: '2024-08-07' },
+    { id: 'mat001', title: 'Introduction to Algebra', subject: 'Mathematics', grade: 'Grade 10', type: 'Video', date: '2024-08-10' },
+    { id: 'mat002', title: 'The Fall of Rome - Reading Material', subject: 'History', grade: 'Grade 9', type: 'Document', date: '2024-08-09' },
+    { id: 'mat003', title: 'Photosynthesis Explained', subject: 'Science', grade: 'Grade 11', type: 'Video', date: '2024-08-08' },
+    { id: 'mat004', title: 'Periodic Table PDF', subject: 'Science', grade: 'Grade 11', type: 'Document', date: '2024-08-07' },
 ];
 
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
+const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
+
 
 function ManageMaterials() {
     const [materials, setMaterials] = useState(materialsData);
@@ -49,6 +51,7 @@ function ManageMaterials() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Title</TableHead>
+                                <TableHead>Grade</TableHead>
                                 <TableHead>Subject</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Upload Date</TableHead>
@@ -59,6 +62,7 @@ function ManageMaterials() {
                             {filteredMaterials.map(mat => (
                                 <TableRow key={mat.id}>
                                     <TableCell className="font-medium">{mat.title}</TableCell>
+                                    <TableCell>{mat.grade}</TableCell>
                                     <TableCell>{mat.subject}</TableCell>
                                     <TableCell className="flex items-center gap-2">
                                         {mat.type === 'Video' ? <Video className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
@@ -96,7 +100,14 @@ function UploadMaterialForm() {
                     <Label htmlFor="description">Description</Label>
                     <Textarea id="description" placeholder="A brief summary of the material." />
                 </div>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="grade">Grade</Label>
+                        <Select>
+                            <SelectTrigger id="grade"><SelectValue placeholder="Select a grade" /></SelectTrigger>
+                            <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="subject">Subject</Label>
                         <Select>

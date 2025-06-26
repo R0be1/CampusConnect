@@ -11,11 +11,11 @@ import { Badge } from "@/components/ui/badge";
 
 // Mock Data
 const materialsData = [
-    { id: 'mat001', title: 'Introduction to Algebra', description: 'A foundational video covering the basics of algebraic expressions and equations.', subject: 'Mathematics', type: 'Video', url: '#' },
-    { id: 'mat002', title: 'The Fall of Rome - Reading Material', description: 'A detailed PDF document exploring the factors that led to the collapse of the Western Roman Empire.', subject: 'History', type: 'Document', url: '#' },
-    { id: 'mat003', title: 'Photosynthesis Explained', description: 'This video breaks down the complex process of photosynthesis into easy-to-understand steps.', subject: 'Science', type: 'Video', url: '#' },
-    { id: 'mat004', title: 'Periodic Table PDF', description: 'A high-resolution, printable PDF of the periodic table of elements.', subject: 'Science', type: 'Document', url: '#' },
-    { id: 'mat005', title: 'Shakespeare\'s Sonnets', description: 'A collection of William Shakespeare\'s sonnets with analysis.', subject: 'English', type: 'Document', url: '#' },
+    { id: 'mat001', title: 'Introduction to Algebra', description: 'A foundational video covering the basics of algebraic expressions and equations.', subject: 'Mathematics', grade: 'Grade 10', type: 'Video', url: '#' },
+    { id: 'mat002', title: 'The Fall of Rome - Reading Material', description: 'A detailed PDF document exploring the factors that led to the collapse of the Western Roman Empire.', subject: 'History', grade: 'Grade 9', type: 'Document', url: '#' },
+    { id: 'mat003', title: 'Photosynthesis Explained', description: 'This video breaks down the complex process of photosynthesis into easy-to-understand steps.', subject: 'Science', grade: 'Grade 11', type: 'Video', url: '#' },
+    { id: 'mat004', title: 'Periodic Table PDF', description: 'A high-resolution, printable PDF of the periodic table of elements.', subject: 'Science', grade: 'Grade 11', type: 'Document', url: '#' },
+    { id: 'mat005', title: 'Shakespeare\'s Sonnets', description: 'A collection of William Shakespeare\'s sonnets with analysis.', subject: 'English', grade: 'Grade 10', type: 'Document', url: '#' },
 ];
 
 const subjects = ['All Subjects', 'Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
@@ -71,7 +71,10 @@ export default function ELearningStudentPage() {
                                         {mat.type === 'Video' ? <Video className="h-5 w-5 mt-1 text-primary" /> : <FileText className="h-5 w-5 mt-1 text-primary" />}
                                         <span>{mat.title}</span>
                                     </CardTitle>
-                                    <Badge variant="outline" className="w-fit">{mat.subject}</Badge>
+                                     <div className="flex flex-wrap gap-2 pt-1">
+                                      <Badge variant="outline" className="w-fit">{mat.grade}</Badge>
+                                      <Badge variant="secondary" className="w-fit">{mat.subject}</Badge>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="flex-1">
                                     <p className="text-sm text-muted-foreground">{mat.description}</p>
