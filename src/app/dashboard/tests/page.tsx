@@ -1,4 +1,7 @@
 
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,16 +12,32 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-const testsData = [
+const initialTestsData = [
   { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming" },
   { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active" },
   { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed" },
 ];
 
+type Test = typeof initialTestsData[0];
+
 export default function TestsPage() {
+  const [tests, setTests] = useState<Test[]>(initialTestsData);
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "Active": return "default";
@@ -26,6 +45,16 @@ export default function TestsPage() {
       case "Completed": return "outline";
       default: return "secondary";
     }
+  };
+  
+  const handleStatusChange = (testId: string, newStatus: Test['status']) => {
+    setTests(currentTests => currentTests.map(test => 
+      test.id === testId ? { ...test, status: newStatus } : test
+    ));
+  };
+  
+  const handleDelete = (testId: string) => {
+      setTests(currentTests => currentTests.filter(test => test.id !== testId));
   };
 
   return (
@@ -59,7 +88,7 @@ export default function TestsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {testsData.map((test) => (
+                {tests.map((test) => (
                   <TableRow key={test.id}>
                     <TableCell className="font-medium">{test.name}</TableCell>
                     <TableCell>{test.grade}</TableCell>
@@ -77,7 +106,74 @@ export default function TestsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Submissions</DropdownMenuItem>
                           <DropdownMenuItem>Edit Test</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Delete Test</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                           {test.status === 'Upcoming' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Activate Test</DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Activate this test?</AlertDialogTitle>
+                                  <AlertDialogDescription>Students will be able to begin taking this exam. This action can be reversed.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(test.id, 'Active')}>Activate</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          {test.status === 'Active' && (
+                             <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>End Test</DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>End this test?</AlertDialogTitle>
+                                  <AlertDialogDescription>Students will no longer be able to submit answers. This can be reversed.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(test.id, 'Completed')}>End Test</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          {test.status === 'Completed' && (
+                             <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Re-activate Test</DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Re-activate this test?</AlertDialogTitle>
+                                  <AlertDialogDescription>This will change the status to 'Active', allowing students to take the exam again.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(test.id, 'Active')}>Re-activate</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          <DropdownMenuSeparator />
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Delete Test</DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>This action cannot be undone. This will permanently delete the test and all associated submissions.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDelete(test.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -91,3 +187,4 @@ export default function TestsPage() {
     </div>
   );
 }
+
