@@ -41,8 +41,8 @@ export function CommunicationComposer() {
     const [isSending, setIsSending] = useState(false);
     const [open, setOpen] = useState(false);
 
-    const [selectedGrade, setSelectedGrade] = useState("");
-    const [selectedSection, setSelectedSection] = useState("");
+    const [selectedGrade, setSelectedGrade] = useState("all");
+    const [selectedSection, setSelectedSection] = useState("all");
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -58,8 +58,8 @@ export function CommunicationComposer() {
     }, [selectedGrade, selectedSection, form]);
     
     const filteredStudents = studentsData.filter(student => {
-        const gradeMatch = !selectedGrade || student.grade === selectedGrade;
-        const sectionMatch = !selectedSection || student.section === selectedSection;
+        const gradeMatch = selectedGrade === "all" || student.grade === selectedGrade;
+        const sectionMatch = selectedSection === "all" || student.section === selectedSection;
         return gradeMatch && sectionMatch;
     });
 
@@ -73,8 +73,8 @@ export function CommunicationComposer() {
             setIsSending(false);
             alert("Message sent successfully!");
             form.reset();
-            setSelectedGrade("");
-            setSelectedSection("");
+            setSelectedGrade("all");
+            setSelectedSection("all");
         }, 1000);
     };
 
@@ -92,7 +92,7 @@ export function CommunicationComposer() {
                              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                                 <SelectTrigger><SelectValue placeholder="All Grades" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All Grades</SelectItem>
+                                    <SelectItem value="all">All Grades</SelectItem>
                                     {grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                                 </SelectContent>
                             </Select>
@@ -102,7 +102,7 @@ export function CommunicationComposer() {
                             <Select value={selectedSection} onValueChange={setSelectedSection}>
                                 <SelectTrigger><SelectValue placeholder="All Sections" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All Sections</SelectItem>
+                                    <SelectItem value="all">All Sections</SelectItem>
                                     {sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
                             </Select>
