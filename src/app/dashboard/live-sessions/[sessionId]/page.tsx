@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 
 
 // Mock Data
@@ -28,8 +29,13 @@ const initialParticipants = [
 export default function TeacherSessionPage({ params }: { params: { sessionId: string } }) {
     const [participants, setParticipants] = useState(initialParticipants);
     const [isSharing, setIsSharing] = useState(false);
+    const [isCameraOn, setIsCameraOn] = useState(false);
+    
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const cameraVideoRef = useRef<HTMLVideoElement>(null);
+    const cameraStreamRef = useRef<MediaStream | null>(null);
+    
     const { toast } = useToast();
 
     const raisedHands = participants.filter(p => p.handRaised);
@@ -43,7 +49,6 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
             streamRef.current = stream;
             setIsSharing(true);
             
-            // Listen for when the user stops sharing via the browser's native UI
             stream.getVideoTracks()[0].addEventListener('ended', () => {
                 setIsSharing(false);
                 streamRef.current = null;
@@ -69,6 +74,35 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
         setIsSharing(false);
     }, []);
 
+    const handleToggleCamera = useCallback(async () => {
+        if (isCameraOn) {
+            if (cameraStreamRef.current) {
+                cameraStreamRef.current.getTracks().forEach(track => track.stop());
+                cameraStreamRef.current = null;
+            }
+            if (cameraVideoRef.current) {
+                cameraVideoRef.current.srcObject = null;
+            }
+            setIsCameraOn(false);
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                if (cameraVideoRef.current) {
+                    cameraVideoRef.current.srcObject = stream;
+                }
+                cameraStreamRef.current = stream;
+                setIsCameraOn(true);
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                toast({
+                    variant: "destructive",
+                    title: "Camera Access Denied",
+                    description: "Could not start camera. Please ensure you have granted the necessary permissions.",
+                });
+            }
+        }
+    }, [isCameraOn, toast]);
+
     return (
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start h-[calc(100vh-100px)]">
             <div className="flex flex-col h-full">
@@ -86,22 +120,27 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                     </CardHeader>
                 </Card>
 
-                <Card className="flex-1 mt-6 flex flex-col">
+                <Card className="flex-1 mt-6 flex flex-col relative">
                     <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
                         {isSharing ? (
                             <video ref={videoRef} className="w-full h-full object-contain" autoPlay />
                         ) : (
                             <div className="text-center text-muted-foreground p-4">
                                 <Monitor className="h-16 w-16 mx-auto" />
-                                <p className="mt-4 font-semibold">Your screen share will appear here.</p>
-                                <p className="text-sm">Click the "Share Screen" button below to begin.</p>
+                                <p className="mt-4 font-semibold">Your screen share or camera will appear here.</p>
+                                <p className="text-sm">Click a button below to begin.</p>
                             </div>
                         )}
+                        <div className="absolute bottom-4 right-4 h-32 w-48 md:h-40 md:w-56 z-10">
+                           <video ref={cameraVideoRef} className={cn("w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background", !isCameraOn && "hidden")} autoPlay muted />
+                        </div>
                     </CardContent>
                     <CardHeader className="border-t">
                         <div className="flex justify-center items-center gap-4">
                             <Button size="lg" variant="outline"><Mic className="mr-2" /> Mute</Button>
-                            <Button size="lg" variant="outline"><Video className="mr-2" /> Start Camera</Button>
+                            <Button size="lg" variant={isCameraOn ? "default" : "outline"} onClick={handleToggleCamera}>
+                                <Video className="mr-2" /> {isCameraOn ? 'Stop Camera' : 'Start Camera'}
+                            </Button>
                              {isSharing ? (
                                 <Button size="lg" variant="destructive" onClick={handleStopSharing}>
                                     <Monitor className="mr-2" /> Stop Sharing
