@@ -52,7 +52,6 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             
-            // This listener handles the user clicking the browser's "Stop sharing" button
             stream.getVideoTracks()[0].addEventListener('ended', () => {
                 setScreenStream(null); 
             });
@@ -87,24 +86,18 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
         }
     }, [cameraStream, toast]);
 
-    // Effect to attach streams to video elements
     useEffect(() => {
-        if (videoRef.current && screenStream) {
+        if (videoRef.current) {
             videoRef.current.srcObject = screenStream;
-        } else if (videoRef.current) {
-            videoRef.current.srcObject = null;
         }
     }, [screenStream]);
 
     useEffect(() => {
-        if (cameraVideoRef.current && cameraStream) {
+        if (cameraVideoRef.current) {
             cameraVideoRef.current.srcObject = cameraStream;
-        } else if (cameraVideoRef.current) {
-            cameraVideoRef.current.srcObject = null;
         }
     }, [cameraStream]);
 
-    // Cleanup streams on component unmount
     useEffect(() => {
         return () => {
             screenStream?.getTracks().forEach(track => track.stop());
@@ -131,15 +124,12 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
 
                 <Card className="flex-1 mt-6 flex flex-col relative">
                     <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
-                        {isSharing ? (
-                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay playsInline muted />
-                        ) : (
-                            <div className="text-center text-muted-foreground p-4">
-                                <Monitor className="h-16 w-16 mx-auto" />
-                                <p className="mt-4 font-semibold">Your screen share or camera will appear here.</p>
-                                <p className="text-sm">Click a button below to begin.</p>
-                            </div>
-                        )}
+                        <video ref={videoRef} className={cn("w-full h-full object-contain", !isSharing && "hidden")} autoPlay playsInline muted />
+                        <div className={cn("text-center text-muted-foreground p-4", isSharing && "hidden")}>
+                            <Monitor className="h-16 w-16 mx-auto" />
+                            <p className="mt-4 font-semibold">Your screen share or camera will appear here.</p>
+                            <p className="text-sm">Click a button below to begin.</p>
+                        </div>
                         <div className="absolute bottom-4 right-4 h-32 w-48 md:h-40 md:w-56 z-10">
                            <video ref={cameraVideoRef} className={cn("w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background", !isCameraOn && "hidden")} autoPlay muted playsInline />
                         </div>
