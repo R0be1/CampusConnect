@@ -9,10 +9,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FileUp, Info, Search, Check, ChevronsUpDown } from "lucide-react";
+import { FileUp, Info, Search, Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+// Define the type for a student's result
+type StudentResult = {
+  id: string;
+  name: string;
+  score: string;
+  status: 'Pending' | 'Pending Approval' | 'Approved';
+};
 
 // Placeholder data
 const examsForSelection = [
@@ -20,36 +39,58 @@ const examsForSelection = [
   { id: 'exam3', name: 'Unit Test 1 (Grade 9, Section B, Science)' },
 ];
 
-const studentsForResults: Record<string, {id: string, name: string, score: string, status: string}[]> = {
+const studentsForResults: Record<string, StudentResult[]> = {
     exam1: [
-      { id: 's001', name: 'John Doe', score: '', status: 'Pending' },
+      { id: 's001', name: 'John Doe', score: '85', status: 'Approved' },
       { id: 's003', name: 'Bob Johnson', score: '', status: 'Pending' },
+      { id: 's006', name: 'Peter Parker', score: '78', status: 'Pending Approval' },
+      { id: 's007', name: 'Bruce Wayne', score: '', status: 'Pending' },
     ],
     exam3: [
-        { id: 's002', name: 'Alice Smith', score: '', status: 'Pending' },
+        { id: 's002', name: 'Alice Smith', score: '92', status: 'Pending Approval' },
         { id: 's005', name: 'Diana Prince', score: '', status: 'Pending' },
+        { id: 's008', name: 'Clark Kent', score: '99', status: 'Approved' },
     ]
 };
 
+
 export function EnterResults() {
     const [selectedExam, setSelectedExam] = useState<string | null>(null);
-    const [students, setStudents] = useState<any[]>([]);
+    const [students, setStudents] = useState<StudentResult[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleExamSelect = (examId: string) => {
         setSelectedExam(examId);
         setStudents(studentsForResults[examId] || []);
         setSearchTerm("");
+        setIsSubmitting(false);
     };
     
     const handleScoreChange = (studentId: string, score: string) => {
         setStudents(students.map(s => s.id === studentId ? {...s, score} : s));
     };
 
+    const handleSubmitForApproval = async () => {
+        setIsSubmitting(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setStudents(prevStudents => prevStudents.map(s => {
+            // Only move students from 'Pending' to 'Pending Approval' if they have a score
+            if (s.status === 'Pending' && s.score) {
+                return { ...s, status: 'Pending Approval' };
+            }
+            return s;
+        }));
+        setIsSubmitting(false);
+    };
+
     const filteredStudents = students.filter(student =>
       student.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const hasPendingScores = students.some(s => s.status === 'Pending' && s.score);
 
     return (
         <Card>
@@ -141,10 +182,15 @@ export function EnterResults() {
                                                         className="w-32"
                                                         value={student.score}
                                                         onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                        disabled={isSubmitting || student.status !== 'Pending'}
                                                      />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant={student.status === 'Approved' ? 'default' : 'secondary'}>{student.status}</Badge>
+                                                    <Badge variant={
+                                                        student.status === 'Approved' ? 'default' :
+                                                        student.status === 'Pending Approval' ? 'outline' :
+                                                        'secondary'
+                                                    }>{student.status}</Badge>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -159,10 +205,32 @@ export function EnterResults() {
                             </Table>
                         </div>
                          <div className="flex justify-end">
-                            <Button>
-                                <FileUp className="mr-2 h-4 w-4" />
-                                Submit for Approval
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button disabled={isSubmitting || !hasPendingScores}>
+                                        {isSubmitting ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <FileUp className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action will submit all entered scores for this exam for approval. You will not be able to edit them afterwards.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleSubmitForApproval}>
+                                            Confirm and Submit
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     </div>
                 )}
