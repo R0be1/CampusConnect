@@ -30,103 +30,85 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
     
     // UI State
     const [participants, setParticipants] = useState(initialParticipants);
-    const [isSharingScreen, setIsSharingScreen] = useState(false);
-    const [isCameraOn, setIsCameraOn] = useState(false);
-
-    // Refs for video elements and the actual MediaStream objects
-    const screenVideoRef = useRef<HTMLVideoElement>(null);
+    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+    const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+    
     const cameraVideoRef = useRef<HTMLVideoElement>(null);
-    const screenStreamRef = useRef<MediaStream | null>(null);
-    const cameraStreamRef = useRef<MediaStream | null>(null);
+    const screenVideoRef = useRef<HTMLVideoElement>(null);
+    
+    const isCameraOn = !!cameraStream;
+    const isSharingScreen = !!screenStream;
     
     const raisedHands = participants.filter(p => p.handRaised);
 
-    // --- Cleanup function to be used on stop and unmount ---
-    const stopScreenShare = () => {
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach(track => track.stop());
-            screenStreamRef.current = null;
-        }
-        if (screenVideoRef.current) {
-            screenVideoRef.current.srcObject = null;
-        }
-        setIsSharingScreen(false);
-    };
-
-    const stopCamera = () => {
-        if (cameraStreamRef.current) {
-            cameraStreamRef.current.getTracks().forEach(track => track.stop());
-            cameraStreamRef.current = null;
-        }
-        if (cameraVideoRef.current) {
-            cameraVideoRef.current.srcObject = null;
-        }
-        setIsCameraOn(false);
-    };
-    
-    // Effect for component unmount to ensure all streams are stopped
+    // --- Stream handling effects ---
     useEffect(() => {
-        return () => {
-            stopScreenShare();
-            stopCamera();
-        };
-    }, []);
+        if (cameraVideoRef.current) {
+            cameraVideoRef.current.srcObject = cameraStream;
+        }
+    }, [cameraStream]);
+    
+    useEffect(() => {
+        if (screenVideoRef.current) {
+            screenVideoRef.current.srcObject = screenStream;
+        }
+    }, [screenStream]);
+
 
     // --- Handlers ---
-    const handleShareScreen = async () => {
-        if (isSharingScreen) {
-            stopScreenShare();
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            screenStreamRef.current = stream;
-            
-            if (screenVideoRef.current) {
-                screenVideoRef.current.srcObject = stream;
-            }
-
-            stream.getVideoTracks()[0].addEventListener('ended', () => {
-                stopScreenShare();
-            });
-            
-            setIsSharingScreen(true);
-        } catch (err) {
-            console.error("Error sharing screen: ", err);
-            toast({
-                variant: "destructive",
-                title: "Screen Share Failed",
-                description: "Could not start screen sharing. Please ensure you have granted the necessary permissions.",
-            });
-            setIsSharingScreen(false);
-        }
-    };
-
     const handleToggleCamera = async () => {
         if (isCameraOn) {
-            stopCamera();
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            cameraStreamRef.current = stream;
-            
-            if (cameraVideoRef.current) {
-                cameraVideoRef.current.srcObject = stream;
+            cameraStream?.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                setCameraStream(stream);
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                toast({
+                    variant: "destructive",
+                    title: "Camera Access Denied",
+                    description: "Could not start camera. Please grant permission in your browser.",
+                });
             }
-            setIsCameraOn(true);
-        } catch (err) {
-            console.error("Error accessing camera: ", err);
-            toast({
-                variant: "destructive",
-                title: "Camera Access Denied",
-                description: "Could not start camera. Please ensure you have granted the necessary permissions.",
-            });
-            setIsCameraOn(false);
         }
     };
+    
+    const handleToggleScreenShare = async () => {
+        if (isSharingScreen) {
+            screenStream?.getTracks().forEach(track => track.stop());
+            setScreenStream(null);
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                
+                // When user clicks the browser's "Stop sharing" button
+                stream.getVideoTracks()[0].addEventListener('ended', () => {
+                    setScreenStream(null);
+                });
+
+                setScreenStream(stream);
+            } catch (err) {
+                console.error("Error sharing screen: ", err);
+                toast({
+                    variant: "destructive",
+                    title: "Screen Share Failed",
+                    description: "Could not start screen sharing. Please grant permission.",
+                });
+            }
+        }
+    };
+
+    // --- Cleanup on unmount ---
+    useEffect(() => {
+        return () => {
+            cameraStream?.getTracks().forEach(track => track.stop());
+            screenStream?.getTracks().forEach(track => track.stop());
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     return (
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start h-[calc(100vh-100px)]">
@@ -147,10 +129,8 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
 
                 <Card className="flex-1 mt-6 flex flex-col relative">
                     <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
-                        {/* Always render the video tag to avoid ref issues */}
-                        <video ref={screenVideoRef} className={cn("w-full h-full object-contain", !isSharingScreen && "hidden")} autoPlay playsInline muted />
+                        <video ref={screenVideoRef} className={!isSharingScreen ? "hidden" : "w-full h-full object-contain"} autoPlay playsInline muted />
                         
-                        {/* Show placeholder only when not sharing */}
                         {!isSharingScreen && (
                             <div className="text-center text-muted-foreground p-4">
                                 <Monitor className="h-16 w-16 mx-auto" />
@@ -160,8 +140,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                         )}
 
                         <div className="absolute bottom-4 right-4 h-32 w-48 md:h-40 md:w-56 z-10">
-                           {/* Always render the video tag for camera */}
-                           <video ref={cameraVideoRef} className={cn("w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background", !isCameraOn && "hidden")} autoPlay muted playsInline />
+                           <video ref={cameraVideoRef} className={!isCameraOn ? "hidden" : "w-full h-full object-cover rounded-md bg-muted/50 border-2 border-background"} autoPlay muted playsInline />
                         </div>
                     </CardContent>
                     <CardHeader className="border-t">
@@ -172,7 +151,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                                 <Video className="mr-2" /> {isCameraOn ? 'Stop Camera' : 'Start Camera'}
                             </Button>
                              
-                            <Button size="lg" variant={isSharingScreen ? "destructive" : "default"} onClick={handleShareScreen}>
+                            <Button size="lg" variant={isSharingScreen ? "destructive" : "default"} onClick={handleToggleScreenShare}>
                                 <Monitor className="mr-2" /> {isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
                             </Button>
                         </div>
