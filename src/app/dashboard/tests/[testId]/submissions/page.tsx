@@ -1,16 +1,18 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart2, Eye, FileText, Check, X } from "lucide-react";
+import { ArrowLeft, BarChart2, Eye, FileText, Check, X, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-// Mock data for a specific test's submissions, now including questions and individual answers.
-const testsWithSubmissions = {
+// Mock data for a specific test's submissions, now including questions, individual answers, and status.
+const initialTestsWithSubmissions = {
   "test-001": {
     name: "Algebra II - Mid-term",
     questions: [
@@ -28,8 +30,8 @@ const testsWithSubmissions = {
       { id: "q4", text: "What is the SI unit of force?", correctAnswer: "Newton" },
     ],
     submissions: [
-      { studentId: "s001", studentName: "John Doe", score: "3/4", percentage: 75, submittedAt: "2024-08-10 10:15 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Pascal" } },
-      { studentId: "s005", studentName: "Diana Prince", score: "4/4", percentage: 100, submittedAt: "2024-08-10 10:22 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Newton" } },
+      { studentId: "s001", studentName: "John Doe", score: "3/4", percentage: 75, submittedAt: "2024-08-10 10:15 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Pascal" }, status: 'Awaiting Approval' as const },
+      { studentId: "s005", studentName: "Diana Prince", score: "4/4", percentage: 100, submittedAt: "2024-08-10 10:22 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Newton" }, status: 'Graded' as const },
     ],
   },
   "test-003": {
@@ -39,16 +41,43 @@ const testsWithSubmissions = {
         { id: "q2", text: "The Declaration of Independence was signed in what year?", correctAnswer: "1776" },
       ],
       submissions: [
-        { studentId: "s002", studentName: "Alice Smith", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:30 AM", answers: { q1: "true", q2: "1776" } },
-        { studentId: "s008", studentName: "Clark Kent", score: "1/2", percentage: 50, submittedAt: "2024-08-05 09:32 AM", answers: { q1: "true", q2: "1775" } },
-        { studentId: "s009", studentName: "Tony Stark", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:35 AM", answers: { q1: "true", q2: "1776" } },
+        { studentId: "s002", studentName: "Alice Smith", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:30 AM", answers: { q1: "true", q2: "1776" }, status: 'Awaiting Approval' as const },
+        { studentId: "s008", studentName: "Clark Kent", score: "1/2", percentage: 50, submittedAt: "2024-08-05 09:32 AM", answers: { q1: "true", q2: "1775" }, status: 'Awaiting Approval' as const },
+        { studentId: "s009", studentName: "Tony Stark", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:35 AM", answers: { q1: "true", q2: "1776" }, status: 'Graded' as const },
       ]
   }
 };
 
+type Submission = (typeof initialTestsWithSubmissions)["test-002"]["submissions"][0];
+
 export default function TestSubmissionsPage({ params }: { params: { testId: string } }) {
-  const testId = params.testId as keyof typeof testsWithSubmissions;
-  const testData = testsWithSubmissions[testId];
+  const testId = params.testId as keyof typeof initialTestsWithSubmissions;
+  const [tests, setTests] = useState(initialTestsWithSubmissions);
+  const testData = tests[testId];
+
+  const [openDialogs, setOpenDialogs] = useState<Record<string, boolean>>({});
+
+  const handleApprove = (studentId: string) => {
+    setTests(currentTests => {
+        const newSubmissions = currentTests[testId].submissions.map(sub => {
+            if (sub.studentId === studentId) {
+                return { ...sub, status: 'Graded' as const };
+            }
+            return sub;
+        });
+
+        const newTestData = {
+            ...currentTests[testId],
+            submissions: newSubmissions
+        };
+
+        return {
+            ...currentTests,
+            [testId]: newTestData
+        };
+    });
+    setOpenDialogs(prev => ({ ...prev, [studentId]: false })); // Close the dialog
+  };
 
   if (!testData) {
     return (
@@ -72,11 +101,22 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
     ? testData.submissions.reduce((acc, sub) => acc + sub.percentage, 0) / testData.submissions.length
     : 0;
 
+  const getStatusBadge = (status: Submission['status']) => {
+    switch (status) {
+      case 'Graded':
+        return <Badge variant="default">Graded</Badge>;
+      case 'Awaiting Approval':
+        return <Badge variant="outline">Awaiting Approval</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Test Submissions</h1>
+          <h1 className="text-3xl font-bold font-headline">Test Submissions & Approval</h1>
           <p className="text-muted-foreground">Viewing results for: <span className="font-semibold text-foreground">{testData.name}</span></p>
         </div>
         <Button asChild variant="outline">
@@ -111,7 +151,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
       <Card>
         <CardHeader>
           <CardTitle>Student Results</CardTitle>
-          <CardDescription>A list of all students who have completed this test.</CardDescription>
+          <CardDescription>Review and approve submissions. Once graded, the results become final.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg">
@@ -122,6 +162,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
                   <TableHead>Score</TableHead>
                   <TableHead>Percentage</TableHead>
                   <TableHead>Submitted At</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -133,12 +174,13 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
                       <TableCell>{submission.score}</TableCell>
                       <TableCell>{submission.percentage}%</TableCell>
                       <TableCell>{submission.submittedAt}</TableCell>
+                      <TableCell>{getStatusBadge(submission.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Dialog>
+                        <Dialog open={openDialogs[submission.studentId] || false} onOpenChange={(isOpen) => setOpenDialogs(prev => ({...prev, [submission.studentId]: isOpen}))}>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
                               <Eye className="mr-2 h-4 w-4" />
-                              View Answers
+                              {submission.status === 'Graded' ? 'View Graded' : 'Review & Approve'}
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-3xl">
@@ -173,6 +215,17 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
                                 );
                               })}
                             </div>
+                             <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Close</Button>
+                                </DialogClose>
+                                {submission.status === 'Awaiting Approval' && (
+                                    <Button onClick={() => handleApprove(submission.studentId)}>
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Approve & Finalize Grade
+                                    </Button>
+                                )}
+                            </DialogFooter>
                           </DialogContent>
                         </Dialog>
                       </TableCell>
@@ -180,7 +233,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
                   ))
                 ) : (
                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={6} className="h-24 text-center">
                         No submissions received for this test yet.
                       </TableCell>
                     </TableRow>
