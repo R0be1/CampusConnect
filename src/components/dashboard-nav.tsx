@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare, DollarSign, ClipboardList, Users, Settings, ClipboardCheck, LayoutDashboard, UserCircle } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, DollarSign, ClipboardList, Users, Settings, ClipboardCheck, LayoutDashboard, UserCircle, BookCopy } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -17,6 +17,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   Fees: DollarSign,
   Results: ClipboardCheck,
   Tests: ClipboardList,
+  'E-Learning': BookCopy,
   Settings: Settings,
   Profile: UserCircle,
   "Parent Portal": UserCircle,

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ReactNode } from 'react';
@@ -12,6 +13,7 @@ const navItems = [
   { href: '/student/academics', label: 'Academics' },
   { href: '/student/attendance', label: 'Attendance' },
   { href: '/student/tests', label: 'Tests' },
+  { href: '/student/e-learning', label: 'E-Learning' },
   { href: '/student/profile', label: 'Profile' },
 ];
 

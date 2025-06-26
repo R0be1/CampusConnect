@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ReactNode } from 'react';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/dashboard/fees', label: 'Fees' },
   { href: '/dashboard/results', label: 'Results' },
   { href: '/dashboard/tests', label: 'Tests' },
+  { href: '/dashboard/e-learning', label: 'E-Learning' },
   { href: '/dashboard/settings', label: 'Settings' },
   { href: '/portal/dashboard', label: 'Parent Portal' },
   { href: '/student/dashboard', label: 'Student Portal' },
