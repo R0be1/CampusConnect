@@ -1,33 +1,111 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, DollarSign, FileText, History } from "lucide-react";
+import {
+  CreditCard,
+  DollarSign,
+  FileText,
+  History,
+  Pencil,
+  PlusCircle,
+  Trash2,
+} from "lucide-react";
 
 const invoicesData = [
-  { id: 'INV-001', item: 'Tuition Fee - Grade 10', amount: '$2,500', dueDate: '2024-08-01', status: 'Pending' },
-  { id: 'INV-002', item: 'Late Fee - Library Book', amount: '$15', dueDate: '2024-07-25', status: 'Overdue' },
-  { id: 'INV-003', item: 'Lab Fee - Chemistry', amount: '$150', dueDate: '2024-08-01', status: 'Pending' },
+  {
+    id: "INV-001",
+    item: "Tuition Fee - Grade 10",
+    amount: "$2,500",
+    dueDate: "2024-08-01",
+    status: "Pending",
+  },
+  {
+    id: "INV-002",
+    item: "Late Fee - Library Book",
+    amount: "$15",
+    dueDate: "2024-07-25",
+    status: "Overdue",
+  },
+  {
+    id: "INV-003",
+    item: "Lab Fee - Chemistry",
+    amount: "$150",
+    dueDate: "2024-08-01",
+    status: "Pending",
+  },
 ];
 
 const paymentHistoryData = [
-    { id: 'TRN-123', date: '2024-04-15', description: 'Tuition Fee - Spring Semester', amount: '$2,500', status: 'Completed' },
-    { id: 'TRN-124', date: '2024-02-10', description: 'Book Purchase', amount: '$250', status: 'Completed' },
-    { id: 'TRN-125', date: '2024-01-20', description: 'Bus Fee - January', amount: '$100', status: 'Completed' },
+  {
+    id: "TRN-123",
+    date: "2024-04-15",
+    description: "Tuition Fee - Spring Semester",
+    amount: "$2,500",
+    status: "Completed",
+  },
+  {
+    id: "TRN-124",
+    date: "2024-02-10",
+    description: "Book Purchase",
+    amount: "$250",
+    status: "Completed",
+  },
+  {
+    id: "TRN-125",
+    date: "2024-01-20",
+    description: "Bus Fee - January",
+    amount: "$100",
+    status: "Completed",
+  },
 ];
 
 const feeStructureData = [
-    { category: 'Tuition', grade: 'Grade 9', amount: '$2,300 / semester' },
-    { category: 'Tuition', grade: 'Grade 10', amount: '$2,500 / semester' },
-    { category: 'Tuition', grade: 'Grade 11-12', amount: '$300 / credit hour' },
-    { category: 'Lab Fee', grade: 'All Science Classes', amount: '$150 / semester' },
+    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500' },
+    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150' },
+    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300' },
 ];
 
 const penaltyData = [
-    { type: 'Late Tuition Fee', rule: 'After due date', penalty: '5% of outstanding amount' },
-    { type: 'Late Library Book', rule: 'Per day overdue', penalty: '$1 / day' },
+    { id: 'p1', name: 'Standard Late Fee', gracePeriod: 3, penaltyType: 'Percentage', value: '5%', frequency: 'One-Time' },
+    { id: 'p2', name: 'Library Book Overdue', gracePeriod: 0, penaltyType: 'Fixed', value: '$1', frequency: 'Per Day' },
 ];
+
+const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
+const sections = ["A", "B", "C", "D", "All"];
 
 export default function FeesPage() {
   return (
@@ -48,12 +126,14 @@ export default function FeesPage() {
             Fee Structure
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="invoices">
           <Card>
             <CardHeader>
               <CardTitle>Outstanding Invoices</CardTitle>
-              <CardDescription>Here are the current unpaid invoices for your account.</CardDescription>
+              <CardDescription>
+                Here are the current unpaid invoices for your account.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -75,7 +155,13 @@ export default function FeesPage() {
                       <TableCell>{invoice.amount}</TableCell>
                       <TableCell>{invoice.dueDate}</TableCell>
                       <TableCell>
-                        <Badge variant={invoice.status === 'Overdue' ? 'destructive' : 'secondary'}>
+                        <Badge
+                          variant={
+                            invoice.status === "Overdue"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
                           {invoice.status}
                         </Badge>
                       </TableCell>
@@ -96,7 +182,9 @@ export default function FeesPage() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              <CardDescription>A record of all your past transactions.</CardDescription>
+              <CardDescription>
+                A record of all your past transactions.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -128,60 +216,247 @@ export default function FeesPage() {
         </TabsContent>
 
         <TabsContent value="structure">
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Fee Schemes</CardTitle>
-                        <CardDescription>Fee structure based on grade level and credit hours.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead>Category</TableHead>
-                                <TableHead>Basis</TableHead>
-                                <TableHead>Amount</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {feeStructureData.map((fee) => (
-                                <TableRow key={fee.category + fee.grade}>
-                                <TableCell className="font-medium">{fee.category}</TableCell>
-                                <TableCell>{fee.grade}</TableCell>
-                                <TableCell>{fee.amount}</TableCell>
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Penalty Rules</CardTitle>
-                        <CardDescription>Dynamically defined penalties for late payments and other infractions.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Rule</TableHead>
-                                <TableHead>Penalty</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {penaltyData.map((penalty) => (
-                                <TableRow key={penalty.type}>
-                                <TableCell className="font-medium">{penalty.type}</TableCell>
-                                <TableCell>{penalty.rule}</TableCell>
-                                <TableCell>{penalty.penalty}</TableCell>
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
+          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Fee Schemes</CardTitle>
+                    <CardDescription>
+                      Define fee structures for different grades and sections.
+                    </CardDescription>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Scheme
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Fee Scheme</DialogTitle>
+                        <DialogDescription>
+                          Fill in the details for the new fee structure.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="feeName">Fee Name</Label>
+                          <Input
+                            id="feeName"
+                            placeholder="e.g., Term One Payment"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="feeAmount">Amount</Label>
+                          <Input
+                            id="feeAmount"
+                            type="number"
+                            placeholder="e.g., 2500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="feeGrade">Grade</Label>
+                            <Select>
+                              <SelectTrigger id="feeGrade">
+                                <SelectValue placeholder="Select Grade" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {grades.map((g) => (
+                                  <SelectItem key={g} value={g}>
+                                    {g}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="feeSection">Section</Label>
+                            <Select>
+                              <SelectTrigger id="feeSection">
+                                <SelectValue placeholder="Select Section" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sections.map((s) => (
+                                  <SelectItem key={s} value={s}>
+                                    {s}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit">Save Scheme</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fee Name</TableHead>
+                      <TableHead>Grade</TableHead>
+                      <TableHead>Section</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feeStructureData.map((fee) => (
+                      <TableRow key={fee.id}>
+                        <TableCell className="font-medium">{fee.name}</TableCell>
+                        <TableCell>{fee.grade}</TableCell>
+                        <TableCell>{fee.section}</TableCell>
+                        <TableCell>{fee.amount}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Penalty Rules</CardTitle>
+                    <CardDescription>
+                      Define penalties for late payments.
+                    </CardDescription>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Rule
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Penalty Rule</DialogTitle>
+                        <DialogDescription>
+                          Define the conditions and charges for late fees.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="ruleName">Rule Name</Label>
+                          <Input
+                            id="ruleName"
+                            placeholder="e.g., Standard Tuition Late Fee"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="gracePeriod">
+                            Grace Period (days)
+                          </Label>
+                          <Input
+                            id="gracePeriod"
+                            type="number"
+                            placeholder="e.g., 3"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Penalty Type</Label>
+                          <RadioGroup
+                            defaultValue="percentage"
+                            className="flex gap-4 pt-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="percentage"
+                                id="r_percentage"
+                              />
+                              <Label htmlFor="r_percentage">Percentage</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="fixed" id="r_fixed" />
+                              <Label htmlFor="r_fixed">Fixed Amount</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="penaltyValue">Penalty Value</Label>
+                          <Input
+                            id="penaltyValue"
+                            type="number"
+                            placeholder="5 (for 5%) or 10 (for $10)"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="penaltyFrequency">
+                            Penalty Frequency
+                          </Label>
+                          <Select>
+                            <SelectTrigger id="penaltyFrequency">
+                              <SelectValue placeholder="Select Frequency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">Per Day</SelectItem>
+                              <SelectItem value="one-time">
+                                One-Time Flat Fee
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit">Save Rule</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Rule Name</TableHead>
+                      <TableHead>Grace Period</TableHead>
+                      <TableHead>Penalty</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {penaltyData.map((penalty) => (
+                      <TableRow key={penalty.id}>
+                        <TableCell className="font-medium">
+                          {penalty.name}
+                        </TableCell>
+                        <TableCell>{penalty.gracePeriod} days</TableCell>
+                        <TableCell>
+                          {penalty.penaltyType === "Fixed"
+                            ? penalty.value
+                            : `${penalty.value} of amount`}
+                        </TableCell>
+                        <TableCell>{penalty.frequency}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
