@@ -9,10 +9,10 @@ import { ClipboardList, ArrowRight, Clock, CheckCircle, Ban } from "lucide-react
 import Link from "next/link";
 
 const testsData = [
-  { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming", startTime: "2024-09-10T09:00:00" },
-  { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active", duration: 45 },
-  { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed" },
-  { id: "test-004", name: "Chemistry Basics", grade: "Grade 10", subject: "Chemistry", status: "Completed" },
+  { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming", type: "Standard" as const, startTime: "2024-09-10T09:00:00" },
+  { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active", type: "Standard" as const, duration: 45 },
+  { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed", type: "Standard" as const },
+  { id: "test-004", name: "Practice Test: Chemistry", grade: "Grade 10", subject: "Chemistry", status: "Active", type: "Mock" as const },
 ];
 
 type Test = typeof testsData[0];
@@ -51,31 +51,30 @@ export default function StudentTestsPage() {
         {testsData.map((test) => (
           <Card key={test.id} className="flex flex-col">
             <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle>{test.name}</CardTitle>
-                    <Badge variant={getStatusVariant(test.status) as any}>{test.status}</Badge>
+                <div className="flex items-start justify-between">
+                    <div className="flex-1 pr-2">
+                        <CardTitle>{test.name}</CardTitle>
+                        <CardDescription className="mt-1">{test.subject} - {test.grade}</CardDescription>
+                    </div>
+                    <Badge variant={test.type === 'Mock' ? 'secondary' : 'outline'}>{test.type}</Badge>
                 </div>
-                <CardDescription>{test.subject} - {test.grade}</CardDescription>
             </CardHeader>
             <CardContent>
-                {test.status === 'Upcoming' && (
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>Starts on: {new Date(test.startTime).toLocaleString()}</span>
-                    </div>
-                )}
-                 {test.status === 'Completed' && (
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>You have completed this test.</span>
-                    </div>
-                )}
+                <div className="flex items-center text-sm text-muted-foreground">
+                    <Badge variant={getStatusVariant(test.status) as any} className="flex-shrink-0">
+                        {getStatusIcon(test.status)}
+                        <span className="ml-2">{test.status}</span>
+                    </Badge>
+                    {test.status === 'Upcoming' && (
+                        <span className="ml-2">on {new Date(test.startTime).toLocaleDateString()}</span>
+                    )}
+                </div>
             </CardContent>
             <CardFooter className="mt-auto">
                 {test.status === 'Active' && (
                     <Button asChild className="w-full">
                         <Link href={`/student/tests/${test.id}`}>
-                            Start Exam <ArrowRight className="ml-2 h-4 w-4" />
+                            {test.type === 'Mock' ? 'Start Practice' : 'Start Exam'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                     </Button>
                 )}
@@ -96,3 +95,5 @@ export default function StudentTestsPage() {
     </div>
   );
 }
+
+    

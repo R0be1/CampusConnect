@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart2, Eye, FileText, Check, X, CheckCircle } from "lucide-react";
+import { ArrowLeft, BarChart2, Eye, FileText, Check, X, CheckCircle, Info } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -21,12 +21,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 
 // Mock data for a specific test's submissions, now including questions, individual answers, and status.
 const initialTestsWithSubmissions = {
   "test-001": {
     name: "Algebra II - Mid-term",
+    isMock: false,
     questions: [
         { id: "q1", text: "Solve for x: 2x + 3 = 7", correctAnswer: "2" },
         { id: "q2", text: "What is the formula for the area of a circle?", correctAnswer: "pi * r^2" },
@@ -35,6 +37,7 @@ const initialTestsWithSubmissions = {
   },
   "test-002": {
     name: "Mechanics - Unit Test",
+    isMock: false,
     questions: [
       { id: "q1", text: "Which of the following is a vector quantity?", correctAnswer: "Velocity" },
       { id: "q2", text: "Inertia is the property of a body to resist changes in its state of motion.", correctAnswer: "true" },
@@ -48,6 +51,7 @@ const initialTestsWithSubmissions = {
   },
   "test-003": {
       name: "American Revolution",
+      isMock: false,
       questions: [
         { id: "q1", text: "The American Revolution was a conflict between Great Britain and thirteen of its North American colonies.", correctAnswer: "true" },
         { id: "q2", text: "The Declaration of Independence was signed in what year?", correctAnswer: "1776" },
@@ -57,6 +61,12 @@ const initialTestsWithSubmissions = {
         { studentId: "s008", studentName: "Clark Kent", score: "1/2", percentage: 50, submittedAt: "2024-08-05 09:32 AM", answers: { q1: "true", q2: "1775" }, status: 'Awaiting Approval' as const },
         { studentId: "s009", studentName: "Tony Stark", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:35 AM", answers: { q1: "true", q2: "1776" }, status: 'Graded' as const },
       ]
+  },
+  "test-004": {
+    name: "Practice Test: Chemistry",
+    isMock: true,
+    questions: [],
+    submissions: []
   }
 };
 
@@ -128,6 +138,32 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
         </CardContent>
       </Card>
     );
+  }
+  
+  if (testData.isMock) {
+     return (
+       <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold font-headline">Test Submissions & Approval</h1>
+              <p className="text-muted-foreground">Viewing results for: <span className="font-semibold text-foreground">{testData.name}</span></p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/dashboard/tests">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Test List
+              </Link>
+            </Button>
+        </div>
+        <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Mock Exam</AlertTitle>
+            <AlertDescription>
+                This is a mock exam for student practice. Submissions are not recorded or approved.
+            </AlertDescription>
+        </Alert>
+       </div>
+     )
   }
 
   const averageScore = testData.submissions.length > 0
@@ -303,3 +339,5 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
     </div>
   );
 }
+
+    

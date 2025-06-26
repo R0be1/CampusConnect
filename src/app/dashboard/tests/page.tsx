@@ -28,9 +28,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const initialTestsData = [
-  { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming" },
-  { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active" },
-  { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed" },
+  { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming", type: "Standard" as const },
+  { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active", type: "Standard" as const },
+  { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed", type: "Standard" as const },
+  { id: "test-004", name: "Practice Test: Chemistry", grade: "Grade 10", subject: "Chemistry", status: "Active", type: "Mock" as const },
 ];
 
 type Test = typeof initialTestsData[0];
@@ -83,6 +84,7 @@ export default function TestsPage() {
                   <TableHead>Test Name</TableHead>
                   <TableHead>Grade</TableHead>
                   <TableHead>Subject</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -94,10 +96,13 @@ export default function TestsPage() {
                     <TableCell>{test.grade}</TableCell>
                     <TableCell>{test.subject}</TableCell>
                     <TableCell>
+                      <Badge variant={test.type === 'Mock' ? 'secondary' : 'outline'}>{test.type}</Badge>
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={getStatusVariant(test.status) as any}>{test.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                       <Button asChild variant="outline" size="sm" disabled={test.status === 'Upcoming'}>
+                       <Button asChild variant="outline" size="sm" disabled={test.status === 'Upcoming' || test.type === 'Mock'}>
                           <Link href={`/dashboard/tests/${test.id}/submissions`}>View Submissions</Link>
                        </Button>
                        <DropdownMenu>
@@ -109,7 +114,7 @@ export default function TestsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>Edit Test</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                           {test.status === 'Upcoming' && (
+                           {test.status === 'Upcoming' && test.type === 'Standard' && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Activate Test</DropdownMenuItem>
@@ -126,7 +131,7 @@ export default function TestsPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
-                          {test.status === 'Active' && (
+                          {test.status === 'Active' && test.type === 'Standard' && (
                              <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>End Test</DropdownMenuItem>
@@ -143,7 +148,7 @@ export default function TestsPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
-                          {test.status === 'Completed' && (
+                          {test.status === 'Completed' && test.type === 'Standard' && (
                              <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Re-activate Test</DropdownMenuItem>
@@ -160,7 +165,7 @@ export default function TestsPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
-                          <DropdownMenuSeparator />
+                           {test.type === 'Standard' && <DropdownMenuSeparator />}
                            <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Delete Test</DropdownMenuItem>
@@ -189,3 +194,5 @@ export default function TestsPage() {
     </div>
   );
 }
+
+    

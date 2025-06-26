@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 
 const questionSchema = z.object({
   type: z.enum(["multiple-choice", "true-false", "fill-in-the-blank"]),
@@ -33,6 +34,7 @@ const testSchema = z.object({
   startTime: z.date({ required_error: "Start time is required" }),
   endTime: z.date({ required_error: "End time is required" }),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute."),
+  isMockExam: z.boolean().default(false),
   resultVisibility: z.enum(["immediate", "after-end-time"], {
     required_error: "You must select a result visibility option.",
   }),
@@ -51,6 +53,7 @@ export default function CreateTestPage() {
     resolver: zodResolver(testSchema),
     defaultValues: {
       name: "",
+      isMockExam: false,
       questions: [],
       resultVisibility: "immediate",
     },
@@ -128,16 +131,39 @@ export default function CreateTestPage() {
                 </div>
                  <FormField
                     control={form.control}
+                    name="isMockExam"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">
+                                    Mock Exam
+                                </FormLabel>
+                                <FormDescription>
+                                    Mock exams are for student practice. Results are not recorded or sent for approval.
+                                </FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
                     name="resultVisibility"
                     render={({ field }) => (
                         <FormItem className="space-y-3 rounded-lg border p-4">
                             <FormLabel>Result Visibility</FormLabel>
-                            <FormDescription>Choose when students can see their results after completing the test.</FormDescription>
+                            <FormDescription>Choose when students can see their results after completing the test. Mock exams always show results immediately.</FormDescription>
                             <FormControl>
                                 <RadioGroup
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
                                     className="flex flex-col space-y-1"
+                                    disabled={form.watch('isMockExam')}
                                 >
                                     <FormItem className="flex items-center space-x-3 space-y-0">
                                         <FormControl><RadioGroupItem value="immediate" /></FormControl>
@@ -230,3 +256,5 @@ export default function CreateTestPage() {
     </Form>
   );
 }
+
+    

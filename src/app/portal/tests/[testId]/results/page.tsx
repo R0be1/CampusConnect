@@ -3,15 +3,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, X, ArrowLeft, Clock } from "lucide-react";
+import { Check, X, ArrowLeft, Clock, Info } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Mock database of tests and their settings
 const testDatabase = {
   "test-002": {
     id: "test-002",
     name: "Mechanics - Unit Test",
+    type: "Standard",
     resultVisibility: "immediate",
     endTime: new Date(Date.now() - 86400000).toISOString(), // Yesterday
     questions: [
@@ -25,6 +27,7 @@ const testDatabase = {
   "test-003": {
     id: "test-003",
     name: "American Revolution",
+    type: "Standard",
     resultVisibility: "immediate",
     endTime: "2024-08-01T12:00:00",
     questions: [
@@ -35,7 +38,8 @@ const testDatabase = {
   },
   "test-004": {
     id: "test-004",
-    name: "Chemistry Basics",
+    name: "Practice Test: Chemistry",
+    type: "Mock",
     resultVisibility: "after-end-time",
     endTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
     questions: [
@@ -67,6 +71,7 @@ export default function TestResultPage({ params }: { params: { testId: string } 
 
   const studentAnswers = testData.studentAnswers;
   const areResultsVisible = () => {
+    if (testData.type === 'Mock') return true;
     if (testData.resultVisibility === "immediate") return true;
     if (testData.resultVisibility === "after-end-time") {
       return new Date() > new Date(testData.endTime);
@@ -105,6 +110,15 @@ export default function TestResultPage({ params }: { params: { testId: string } 
 
   return (
     <div className="flex flex-col gap-6">
+      {testData.type === 'Mock' && (
+        <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Practice Results</AlertTitle>
+            <AlertDescription>
+              This was a mock exam. The results are for practice and have not been recorded.
+            </AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl font-headline">Results: {testData.name}</CardTitle>
@@ -151,3 +165,5 @@ export default function TestResultPage({ params }: { params: { testId: string } 
     </div>
   );
 }
+
+    
