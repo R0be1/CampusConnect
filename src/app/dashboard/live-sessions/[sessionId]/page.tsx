@@ -30,40 +30,38 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
     
     // UI State
     const [participants, setParticipants] = useState(initialParticipants);
-    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-    const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+    const [isCameraOn, setIsCameraOn] = useState(false);
+    const [isSharingScreen, setIsSharingScreen] = useState(false);
     
     const cameraVideoRef = useRef<HTMLVideoElement>(null);
     const screenVideoRef = useRef<HTMLVideoElement>(null);
-    
-    const isCameraOn = !!cameraStream;
-    const isSharingScreen = !!screenStream;
-    
-    const raisedHands = participants.filter(p => p.handRaised);
 
-    // --- Stream handling effects ---
+    // This ref will hold the actual stream objects to avoid re-renders
+    const streamsRef = useRef<{ camera?: MediaStream; screen?: MediaStream }>({});
+
+    // Cleanup effect to stop all streams when the component unmounts
     useEffect(() => {
-        if (cameraVideoRef.current) {
-            cameraVideoRef.current.srcObject = cameraStream;
-        }
-    }, [cameraStream]);
-    
-    useEffect(() => {
-        if (screenVideoRef.current) {
-            screenVideoRef.current.srcObject = screenStream;
-        }
-    }, [screenStream]);
+        return () => {
+            Object.values(streamsRef.current).forEach(stream => {
+                stream?.getTracks().forEach(track => track.stop());
+            });
+        };
+    }, []);
 
-
-    // --- Handlers ---
     const handleToggleCamera = async () => {
-        if (isCameraOn) {
-            cameraStream?.getTracks().forEach(track => track.stop());
-            setCameraStream(null);
+        if (streamsRef.current.camera) {
+            streamsRef.current.camera.getTracks().forEach(track => track.stop());
+            streamsRef.current.camera = undefined;
+            if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+            setIsCameraOn(false);
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                setCameraStream(stream);
+                streamsRef.current.camera = stream;
+                if (cameraVideoRef.current) {
+                    cameraVideoRef.current.srcObject = stream;
+                }
+                setIsCameraOn(true);
             } catch (err) {
                 console.error("Error accessing camera: ", err);
                 toast({
@@ -74,24 +72,31 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
             }
         }
     };
-    
+
     const handleToggleScreenShare = async () => {
-        if (isSharingScreen) {
-            screenStream?.getTracks().forEach(track => track.stop());
-            setScreenStream(null);
+        if (streamsRef.current.screen) {
+            streamsRef.current.screen.getTracks().forEach(track => track.stop());
+            streamsRef.current.screen = undefined;
+            if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
+            setIsSharingScreen(false);
         } else {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
                 
-                // When user clicks the browser's "Stop sharing" button
                 stream.getVideoTracks()[0].addEventListener('ended', () => {
-                    setScreenStream(null);
+                    streamsRef.current.screen = undefined;
+                    if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
+                    setIsSharingScreen(false);
                 });
 
-                setScreenStream(stream);
+                streamsRef.current.screen = stream;
+                if (screenVideoRef.current) {
+                    screenVideoRef.current.srcObject = stream;
+                }
+                setIsSharingScreen(true);
             } catch (err) {
                 console.error("Error sharing screen: ", err);
-                toast({
+                 toast({
                     variant: "destructive",
                     title: "Screen Share Failed",
                     description: "Could not start screen sharing. Please grant permission.",
@@ -100,14 +105,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
         }
     };
 
-    // --- Cleanup on unmount ---
-    useEffect(() => {
-        return () => {
-            cameraStream?.getTracks().forEach(track => track.stop());
-            screenStream?.getTracks().forEach(track => track.stop());
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const raisedHands = participants.filter(p => p.handRaised);
 
 
     return (
