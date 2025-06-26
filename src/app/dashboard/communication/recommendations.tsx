@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { getCommunicationRecommendations, CommunicationRecommendationsInput, CommunicationRecommendationsOutput } from "@/ai/flows/parent-teacher-communication-recommendations";
+import type { CommunicationRecommendationsInput, CommunicationRecommendationsOutput } from "@/ai/flows/parent-teacher-communication-recommendations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, MessageSquare, Phone, Users, List, Lightbulb } from "lucide-react";
+import { getRecommendationsAction } from "./actions";
 
 const formSchema = z.object({
   studentPerformanceData: z.string().min(10, "Please provide more details on student performance."),
@@ -18,17 +19,6 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-async function getRecommendationsAction(data: CommunicationRecommendationsInput): Promise<CommunicationRecommendationsOutput | { error: string }> {
-  "use server";
-  try {
-    const result = await getCommunicationRecommendations(data);
-    return result;
-  } catch (e: any) {
-    console.error(e);
-    return { error: e.message || "Failed to get recommendations." };
-  }
-}
 
 export function CommunicationRecommendations() {
   const [loading, setLoading] = useState(false);

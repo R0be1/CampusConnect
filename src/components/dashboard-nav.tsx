@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -12,6 +12,8 @@ const iconMap: { [key: string]: React.ElementType } = {
   Academics: BookOpen,
   Attendance: UserCheck,
   Communication: MessageSquare,
+  Fees: CreditCard,
+  Tests: FileText,
 };
 
 interface DashboardNavProps {
