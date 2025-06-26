@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { DashboardNav } from '@/components/dashboard-nav';
-import { School, UserCircle, Bell, LogOut, Menu } from 'lucide-react';
+import { School, UserCircle, Bell, LogOut, Menu, ClipboardList } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/portal/attendance', label: 'Attendance' },
   { href: '/portal/fees', label: 'Fees' },
   { href: '/portal/communication', label: 'Communication' },
+  { href: '/portal/tests', label: 'Tests' },
   { href: '/portal/profile', label: 'Profile' },
 ];
 
