@@ -1,4 +1,7 @@
 
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -94,13 +108,13 @@ const paymentHistoryData = [
   },
 ];
 
-const feeStructureData = [
+const initialFeeStructureData = [
     { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee' },
     { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None' },
     { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee' },
 ];
 
-const penaltyData = [
+const initialPenaltyData = [
     { id: 'p1', name: 'Standard Late Fee', gracePeriod: 3, penaltyType: 'Percentage', value: '5%', frequency: 'One-Time' },
     { id: 'p2', name: 'Library Book Overdue', gracePeriod: 0, penaltyType: 'Fixed', value: '$1', frequency: 'Per Day' },
 ];
@@ -109,6 +123,17 @@ const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ["A", "B", "C", "D", "All"];
 
 export default function FeesPage() {
+  const [feeSchemes, setFeeSchemes] = useState(initialFeeStructureData);
+  const [penalties, setPenalties] = useState(initialPenaltyData);
+
+  const handleDeleteScheme = (id: string) => {
+    setFeeSchemes(feeSchemes.filter(scheme => scheme.id !== id));
+  };
+
+  const handleDeletePenalty = (id: string) => {
+    setPenalties(penalties.filter(penalty => penalty.id !== id));
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold font-headline">Fee Management</h1>
@@ -296,7 +321,7 @@ export default function FeesPage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="None">None</SelectItem>
-                                {penaltyData.map((p) => (
+                                {penalties.map((p) => (
                                   <SelectItem key={p.id} value={p.name}>
                                     {p.name}
                                   </SelectItem>
@@ -325,7 +350,7 @@ export default function FeesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {feeStructureData.map((fee) => (
+                    {feeSchemes.map((fee) => (
                       <TableRow key={fee.id}>
                         <TableCell className="font-medium">{fee.name}</TableCell>
                         <TableCell>{fee.grade}</TableCell>
@@ -402,7 +427,7 @@ export default function FeesPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="None">None</SelectItem>
-                                      {penaltyData.map((p) => (
+                                      {penalties.map((p) => (
                                         <SelectItem key={p.id} value={p.name}>
                                           {p.name}
                                         </SelectItem>
@@ -416,9 +441,27 @@ export default function FeesPage() {
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this fee scheme.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteScheme(fee.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -529,7 +572,7 @@ export default function FeesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {penaltyData.map((penalty) => (
+                    {penalties.map((penalty) => (
                       <TableRow key={penalty.id}>
                         <TableCell className="font-medium">
                           {penalty.name}
@@ -622,9 +665,27 @@ export default function FeesPage() {
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                           <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this penalty rule.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeletePenalty(penalty.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -638,3 +699,5 @@ export default function FeesPage() {
     </div>
   );
 }
+
+    
