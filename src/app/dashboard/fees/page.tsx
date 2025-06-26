@@ -333,9 +333,89 @@ export default function FeesPage() {
                         <TableCell>{fee.amount}</TableCell>
                         <TableCell>{fee.penalty}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                           <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Fee Scheme</DialogTitle>
+                                <DialogDescription>
+                                  Make changes to the fee structure.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-feeName-${fee.id}`}>Fee Name</Label>
+                                  <Input
+                                    id={`edit-feeName-${fee.id}`}
+                                    defaultValue={fee.name}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-feeAmount-${fee.id}`}>Amount</Label>
+                                  <Input
+                                    id={`edit-feeAmount-${fee.id}`}
+                                    type="number"
+                                    defaultValue={fee.amount.replace(/[$,]/g, '')}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`edit-feeGrade-${fee.id}`}>Grade</Label>
+                                    <Select defaultValue={fee.grade}>
+                                      <SelectTrigger id={`edit-feeGrade-${fee.id}`}>
+                                        <SelectValue placeholder="Select Grade" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {grades.map((g) => (
+                                          <SelectItem key={g} value={g}>
+                                            {g}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`edit-feeSection-${fee.id}`}>Section</Label>
+                                    <Select defaultValue={fee.section}>
+                                      <SelectTrigger id={`edit-feeSection-${fee.id}`}>
+                                        <SelectValue placeholder="Select Section" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {sections.map((s) => (
+                                          <SelectItem key={s} value={s}>
+                                            {s}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-feePenalty-${fee.id}`}>Penalty Rule</Label>
+                                  <Select defaultValue={fee.penalty}>
+                                    <SelectTrigger id={`edit-feePenalty-${fee.id}`}>
+                                      <SelectValue placeholder="Select a rule" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="None">None</SelectItem>
+                                      {penaltyData.map((p) => (
+                                        <SelectItem key={p.id} value={p.name}>
+                                          {p.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit">Save Changes</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                           <Button variant="ghost" size="icon">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -462,9 +542,86 @@ export default function FeesPage() {
                         </TableCell>
                         <TableCell>{penalty.frequency}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Penalty Rule</DialogTitle>
+                                <DialogDescription>
+                                  Make changes to this penalty rule.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-ruleName-${penalty.id}`}>Rule Name</Label>
+                                  <Input
+                                    id={`edit-ruleName-${penalty.id}`}
+                                    defaultValue={penalty.name}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-gracePeriod-${penalty.id}`}>
+                                    Grace Period (days)
+                                  </Label>
+                                  <Input
+                                    id={`edit-gracePeriod-${penalty.id}`}
+                                    type="number"
+                                    defaultValue={penalty.gracePeriod}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Penalty Type</Label>
+                                  <RadioGroup
+                                    defaultValue={penalty.penaltyType.toLowerCase()}
+                                    className="flex gap-4 pt-2"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem
+                                        value="percentage"
+                                        id={`r_edit_percentage-${penalty.id}`}
+                                      />
+                                      <Label htmlFor={`r_edit_percentage-${penalty.id}`}>Percentage</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem value="fixed" id={`r_edit_fixed-${penalty.id}`} />
+                                      <Label htmlFor={`r_edit_fixed-${penalty.id}`}>Fixed Amount</Label>
+                                    </div>
+                                  </RadioGroup>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-penaltyValue-${penalty.id}`}>Penalty Value</Label>
+                                  <Input
+                                    id={`edit-penaltyValue-${penalty.id}`}
+                                    type="number"
+                                    defaultValue={penalty.value.replace(/[$,%]/g, '')}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-penaltyFrequency-${penalty.id}`}>
+                                    Penalty Frequency
+                                  </Label>
+                                  <Select defaultValue={penalty.frequency === 'Per Day' ? 'daily' : 'one-time'}>
+                                    <SelectTrigger id={`edit-penaltyFrequency-${penalty.id}`}>
+                                      <SelectValue placeholder="Select Frequency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="daily">Per Day</SelectItem>
+                                      <SelectItem value="one-time">
+                                        One-Time Flat Fee
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit">Save Changes</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                           <Button variant="ghost" size="icon">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
