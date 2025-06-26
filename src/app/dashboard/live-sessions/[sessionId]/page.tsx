@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Monitor, Hand, Mic, Video } from "lucide-react";
@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
-import { cn } from '@/lib/utils';
 
 // Mock Data
 const sessionDetails = {
@@ -36,73 +35,16 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
     const cameraVideoRef = useRef<HTMLVideoElement>(null);
     const screenVideoRef = useRef<HTMLVideoElement>(null);
 
-    // This ref will hold the actual stream objects to avoid re-renders
-    const streamsRef = useRef<{ camera?: MediaStream; screen?: MediaStream }>({});
-
-    // Cleanup effect to stop all streams when the component unmounts
-    useEffect(() => {
-        return () => {
-            Object.values(streamsRef.current).forEach(stream => {
-                stream?.getTracks().forEach(track => track.stop());
-            });
-        };
-    }, []);
-
-    const handleToggleCamera = async () => {
-        if (streamsRef.current.camera) {
-            streamsRef.current.camera.getTracks().forEach(track => track.stop());
-            streamsRef.current.camera = undefined;
-            if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
-            setIsCameraOn(false);
-        } else {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                streamsRef.current.camera = stream;
-                if (cameraVideoRef.current) {
-                    cameraVideoRef.current.srcObject = stream;
-                }
-                setIsCameraOn(true);
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-                toast({
-                    variant: "destructive",
-                    title: "Camera Access Denied",
-                    description: "Could not start camera. Please grant permission in your browser.",
-                });
-            }
-        }
+    const handleToggleCamera = () => {
+        console.log("Toggle Camera clicked!");
+        setIsCameraOn(prev => !prev);
+        toast({ title: "Camera Button Clicked!", description: "Functionality will be added next." });
     };
 
-    const handleToggleScreenShare = async () => {
-        if (streamsRef.current.screen) {
-            streamsRef.current.screen.getTracks().forEach(track => track.stop());
-            streamsRef.current.screen = undefined;
-            if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
-            setIsSharingScreen(false);
-        } else {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                
-                stream.getVideoTracks()[0].addEventListener('ended', () => {
-                    streamsRef.current.screen = undefined;
-                    if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
-                    setIsSharingScreen(false);
-                });
-
-                streamsRef.current.screen = stream;
-                if (screenVideoRef.current) {
-                    screenVideoRef.current.srcObject = stream;
-                }
-                setIsSharingScreen(true);
-            } catch (err) {
-                console.error("Error sharing screen: ", err);
-                 toast({
-                    variant: "destructive",
-                    title: "Screen Share Failed",
-                    description: "Could not start screen sharing. Please grant permission.",
-                });
-            }
-        }
+    const handleToggleScreenShare = () => {
+        console.log("Toggle Screen Share clicked!");
+        setIsSharingScreen(prev => !prev);
+        toast({ title: "Share Screen Button Clicked!", description: "Functionality will be added next." });
     };
 
     const raisedHands = participants.filter(p => p.handRaised);
