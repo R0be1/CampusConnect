@@ -84,8 +84,8 @@ export default function StudentTestsPage() {
                     </Button>
                 )}
                  {test.status === 'Completed' && (
-                    <Button variant="outline" className="w-full">
-                        View Results
+                    <Button variant="outline" className="w-full" asChild>
+                        <Link href={`/portal/tests/${test.id}/results`}>View Results</Link>
                     </Button>
                 )}
             </CardFooter>

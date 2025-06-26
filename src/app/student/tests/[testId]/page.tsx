@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -93,6 +93,7 @@ const Timer = ({ durationInMinutes, onTimeUp }: { durationInMinutes: number, onT
 
 
 export default function ExamPage({ params }: { params: { testId: string } }) {
+  const router = useRouter();
   const form = useForm<ExamFormValues>({
     defaultValues: {
       answers: testData.questions.map(q => ({ questionId: q.id, answer: "" })),
@@ -101,12 +102,13 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
 
   const onSubmit = (data: ExamFormValues) => {
     console.log("Submitting exam:", data);
-    alert("Exam submitted successfully! (Check console for answers)");
-    // Here you would redirect or show a results summary page
+    // Here you would typically save the answers and then redirect.
+    router.push(`/student/tests/${params.testId}/results`);
   };
 
   const handleTimeUp = () => {
-    alert("Time's up! Submitting your exam automatically.");
+    // This is a failsafe. You might want to show a modal first.
+    console.log("Time's up! Submitting automatically.");
     form.handleSubmit(onSubmit)();
   };
 
