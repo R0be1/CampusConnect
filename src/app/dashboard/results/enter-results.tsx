@@ -1,15 +1,18 @@
+
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FileUp, Info, Search } from "lucide-react";
+import { FileUp, Info, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 // Placeholder data
 const examsForSelection = [
@@ -32,6 +35,7 @@ export function EnterResults() {
     const [selectedExam, setSelectedExam] = useState<string | null>(null);
     const [students, setStudents] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [open, setOpen] = useState(false);
 
     const handleExamSelect = (examId: string) => {
         setSelectedExam(examId);
@@ -55,17 +59,50 @@ export function EnterResults() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="max-w-md space-y-2">
-                    <Label htmlFor="selectExam">Select Exam</Label>
-                    <Select onValueChange={handleExamSelect}>
-                        <SelectTrigger id="selectExam">
-                            <SelectValue placeholder="Select an exam..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {examsForSelection.map(exam => (
-                                <SelectItem key={exam.id} value={exam.id}>{exam.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Label>Select Exam</Label>
+                    <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-full justify-between"
+                            >
+                            {selectedExam
+                                ? examsForSelection.find((exam) => exam.id === selectedExam)?.name
+                                : "Select an exam..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search for an exam..." />
+                                <CommandList>
+                                    <CommandEmpty>No exam found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {examsForSelection.map((exam) => (
+                                            <CommandItem
+                                                key={exam.id}
+                                                value={exam.name}
+                                                onSelect={() => {
+                                                    handleExamSelect(exam.id);
+                                                    setOpen(false);
+                                                }}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedExam === exam.id ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {exam.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                 </div>
 
                 {selectedExam && (
