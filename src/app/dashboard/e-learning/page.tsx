@@ -27,22 +27,45 @@ const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 function ManageMaterials() {
     const [materials, setMaterials] = useState(materialsData);
     const [searchTerm, setSearchTerm] = useState("");
+    const [gradeFilter, setGradeFilter] = useState("all");
 
-    const filteredMaterials = materials.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredMaterials = materials.filter(m => {
+        const titleMatch = m.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const gradeMatch = gradeFilter === 'all' || m.grade === gradeFilter;
+        return titleMatch && gradeMatch;
+    });
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Manage Learning Materials</CardTitle>
                 <CardDescription>View, edit, or delete existing e-learning resources.</CardDescription>
-                <div className="relative pt-2">
-                    <Search className="absolute left-2.5 top-4.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search by title..." 
-                        className="pl-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
+                     <div className="flex-1 space-y-1">
+                        <Label htmlFor="search-title">Search by Title</Label>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="search-title" 
+                                placeholder="Search..." 
+                                className="pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                     <div className="flex-1 space-y-1">
+                        <Label htmlFor="grade-filter">Filter by Grade</Label>
+                        <Select onValueChange={setGradeFilter} defaultValue="all">
+                            <SelectTrigger id="grade-filter">
+                                <SelectValue placeholder="All Grades" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Grades</SelectItem>
+                                {grades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
@@ -78,6 +101,11 @@ function ManageMaterials() {
                         </TableBody>
                     </Table>
                 </div>
+                {filteredMaterials.length === 0 && (
+                    <div className="text-center p-8 text-muted-foreground mt-4">
+                        No materials match the current filters.
+                    </div>
+                )}
             </CardContent>
         </Card>
     )
