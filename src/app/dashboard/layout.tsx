@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dashboard/students', label: 'Students' },
   { href: '/dashboard/academics', label: 'Academics' },
   { href: '/dashboard/attendance', label: 'Attendance' },
   { href: '/dashboard/communication', label: 'Communication' },

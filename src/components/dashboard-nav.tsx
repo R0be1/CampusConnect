@@ -4,11 +4,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, UserPlus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
   Dashboard: Home,
+  Students: UserPlus,
   Academics: BookOpen,
   Attendance: UserCheck,
   Communication: MessageSquare,
