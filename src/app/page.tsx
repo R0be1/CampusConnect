@@ -36,6 +36,9 @@ export default function LoginPage() {
                 <Button asChild type="submit" className="w-full font-bold">
                   <Link href="/dashboard">Staff Login</Link>
                 </Button>
+                 <Button asChild variant="outline" className="w-full">
+                  <Link href="/student/dashboard">Student Login</Link>
+                </Button>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/portal/dashboard">Parent Portal Login</Link>
                 </Button>
