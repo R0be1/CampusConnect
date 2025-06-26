@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Pencil, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Check, ChevronsUpDown, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -56,13 +56,15 @@ export function ManageExams() {
     const [editSubjectOpen, setEditSubjectOpen] = useState(false);
     const [editSelectedSubject, setEditSelectedSubject] = useState("");
 
+    const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
 
     const filteredExams = exams.filter(exam => {
+        const nameMatch = exam.name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || exam.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || exam.section === sectionFilter;
-        return gradeMatch && sectionMatch;
+        return nameMatch && gradeMatch && sectionMatch;
     });
 
     const handleDelete = (id: string) => {
@@ -213,8 +215,21 @@ export function ManageExams() {
                         </DialogContent>
                     </Dialog>
                 </div>
-                <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row">
-                    <div className="flex-1 space-y-1">
+                <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="examSearch">Search by Name</Label>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="examSearch"
+                                placeholder="e.g., Mid-term..."
+                                className="pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-1">
                         <Label htmlFor="gradeFilter">Filter by Grade</Label>
                         <Select onValueChange={setGradeFilter} defaultValue="all">
                             <SelectTrigger id="gradeFilter">
@@ -226,7 +241,7 @@ export function ManageExams() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex-1 space-y-1">
+                    <div className="space-y-1">
                         <Label htmlFor="sectionFilter">Filter by Section</Label>
                         <Select onValueChange={setSectionFilter} defaultValue="all">
                             <SelectTrigger id="sectionFilter">
