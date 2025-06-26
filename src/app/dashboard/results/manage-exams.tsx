@@ -12,12 +12,17 @@ import { PlusCircle, Pencil, Trash2, Check, ChevronsUpDown } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 // Placeholder data
 const examsData = [
   { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40 },
   { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60 },
   { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20 },
+  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50 },
+  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70 },
+  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30 },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -33,6 +38,15 @@ export function ManageExams() {
 
     const [subjectOpen, setSubjectOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState("");
+
+    const [gradeFilter, setGradeFilter] = useState("all");
+    const [sectionFilter, setSectionFilter] = useState("all");
+
+    const filteredExams = examsData.filter(exam => {
+        const gradeMatch = gradeFilter === 'all' || exam.grade === gradeFilter;
+        const sectionMatch = sectionFilter === 'all' || exam.section === sectionFilter;
+        return gradeMatch && sectionMatch;
+    });
 
     return (
         <Card>
@@ -171,35 +185,71 @@ export function ManageExams() {
                         </DialogContent>
                     </Dialog>
                 </div>
+                <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row">
+                    <div className="flex-1 space-y-1">
+                        <Label htmlFor="gradeFilter">Filter by Grade</Label>
+                        <Select onValueChange={setGradeFilter} defaultValue="all">
+                            <SelectTrigger id="gradeFilter">
+                                <SelectValue placeholder="Filter by grade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Grades</SelectItem>
+                                {grades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <Label htmlFor="sectionFilter">Filter by Section</Label>
+                        <Select onValueChange={setSectionFilter} defaultValue="all">
+                            <SelectTrigger id="sectionFilter">
+                                <SelectValue placeholder="Filter by section" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sections</SelectItem>
+                                {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Exam Name</TableHead>
-                            <TableHead>Grade</TableHead>
-                            <TableHead>Section</TableHead>
-                            <TableHead>Subject</TableHead>
-                            <TableHead>Weightage (%)</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {examsData.map((exam) => (
-                            <TableRow key={exam.id}>
-                                <TableCell className="font-medium">{exam.name}</TableCell>
-                                <TableCell>{exam.grade}</TableCell>
-                                <TableCell>{exam.section}</TableCell>
-                                <TableCell>{exam.subject}</TableCell>
-                                <TableCell>{exam.weightage}%</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                </TableCell>
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Exam Name</TableHead>
+                                <TableHead>Grade</TableHead>
+                                <TableHead>Section</TableHead>
+                                <TableHead>Subject</TableHead>
+                                <TableHead>Weightage (%)</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredExams.length > 0 ? (
+                                filteredExams.map((exam) => (
+                                    <TableRow key={exam.id}>
+                                        <TableCell className="font-medium">{exam.name}</TableCell>
+                                        <TableCell>{exam.grade}</TableCell>
+                                        <TableCell>{exam.section}</TableCell>
+                                        <TableCell>{exam.subject}</TableCell>
+                                        <TableCell>{exam.weightage}%</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        No exams found for the selected filters.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );
