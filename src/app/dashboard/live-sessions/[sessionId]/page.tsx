@@ -40,34 +40,23 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
     const isCameraOn = !!cameraStream;
     const raisedHands = participants.filter(p => p.handRaised);
 
-    // Effect for screen sharing
-    useEffect(() => {
-        if (videoRef.current && screenStream) {
-            videoRef.current.srcObject = screenStream;
-        } else if (videoRef.current) {
-            videoRef.current.srcObject = null;
+    const handleStopSharing = () => {
+        if (screenStream) {
+            screenStream.getTracks().forEach(track => track.stop());
+            setScreenStream(null);
         }
-    }, [screenStream]);
+    };
 
-    // Effect for camera
-    useEffect(() => {
-        if (cameraVideoRef.current && cameraStream) {
-            cameraVideoRef.current.srcObject = cameraStream;
-        } else if (cameraVideoRef.current) {
-            cameraVideoRef.current.srcObject = null;
-        }
-    }, [cameraStream]);
-
-    const handleStopSharing = useCallback(() => {
-        screenStream?.getTracks().forEach(track => track.stop());
-        setScreenStream(null);
-    }, [screenStream]);
-
-    const handleShareScreen = useCallback(async () => {
+    const handleShareScreen = async () => {
         if (isSharing) return;
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            stream.getVideoTracks()[0].addEventListener('ended', handleStopSharing);
+            
+            // This listener handles the user clicking the browser's "Stop sharing" button
+            stream.getVideoTracks()[0].addEventListener('ended', () => {
+                setScreenStream(null); 
+            });
+
             setScreenStream(stream);
         } catch (err) {
             console.error("Error sharing screen: ", err);
@@ -77,7 +66,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 description: "Could not start screen sharing. Please ensure you have granted the necessary permissions.",
             });
         }
-    }, [isSharing, toast, handleStopSharing]);
+    };
 
     const handleToggleCamera = useCallback(async () => {
         if (cameraStream) {
@@ -97,6 +86,23 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
             }
         }
     }, [cameraStream, toast]);
+
+    // Effect to attach streams to video elements
+    useEffect(() => {
+        if (videoRef.current && screenStream) {
+            videoRef.current.srcObject = screenStream;
+        } else if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+    }, [screenStream]);
+
+    useEffect(() => {
+        if (cameraVideoRef.current && cameraStream) {
+            cameraVideoRef.current.srcObject = cameraStream;
+        } else if (cameraVideoRef.current) {
+            cameraVideoRef.current.srcObject = null;
+        }
+    }, [cameraStream]);
 
     // Cleanup streams on component unmount
     useEffect(() => {
@@ -126,7 +132,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 <Card className="flex-1 mt-6 flex flex-col relative">
                     <CardContent className="flex-1 flex items-center justify-center bg-black rounded-t-lg p-0">
                         {isSharing ? (
-                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay playsInline />
+                            <video ref={videoRef} className="w-full h-full object-contain" autoPlay playsInline muted />
                         ) : (
                             <div className="text-center text-muted-foreground p-4">
                                 <Monitor className="h-16 w-16 mx-auto" />
