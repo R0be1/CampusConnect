@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
 
 const initialTestsData = [
   { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming" },
@@ -37,6 +38,7 @@ type Test = typeof initialTestsData[0];
 
 export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>(initialTestsData);
+  const router = useRouter();
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -104,7 +106,7 @@ export default function TestsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Submissions</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/tests/${test.id}/submissions`)}>View Submissions</DropdownMenuItem>
                           <DropdownMenuItem>Edit Test</DropdownMenuItem>
                           <DropdownMenuSeparator />
                            {test.status === 'Upcoming' && (
@@ -187,4 +189,3 @@ export default function TestsPage() {
     </div>
   );
 }
-
