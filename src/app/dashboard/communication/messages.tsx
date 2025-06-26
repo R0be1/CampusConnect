@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,15 +13,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const studentsData = [
-  { id: 's001', name: 'John Doe', parentName: 'Jane Doe', parentEmail: 'jane.doe@example.com' },
-  { id: 's002', name: 'Alice Smith', parentName: 'Robert Smith', parentEmail: 'robert.smith@example.com' },
-  { id: 's003', name: 'Bob Johnson', parentName: 'Mary Johnson', parentEmail: 'mary.johnson@example.com' },
-  { id: 's004', name: 'Charlie Brown', parentName: 'Lucy Brown', parentEmail: 'lucy.brown@example.com' },
-  { id: 's005', name: 'Diana Prince', parentName: 'Hippolyta Prince', parentEmail: 'hippolyta.prince@example.com' },
+  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', parentEmail: 'jane.doe@example.com' },
+  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', parentEmail: 'robert.smith@example.com' },
+  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', parentEmail: 'mary.johnson@example.com' },
+  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', parentEmail: 'lucy.brown@example.com' },
+  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'B', parentName: 'Hippolyta Prince', parentEmail: 'hippolyta.prince@example.com' },
+  { id: 's006', name: 'Peter Parker', grade: 'Grade 10', section: 'A', parentName: 'May Parker', parentEmail: 'may.parker@example.com' },
+  { id: 's007', name: 'Bruce Wayne', grade: 'Grade 11', section: 'C', parentName: 'Alfred Pennyworth', parentEmail: 'alfred.pennyworth@example.com' },
 ];
+
+const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
+const sections = ['A', 'B', 'C', 'D'];
 
 const formSchema = z.object({
     studentId: z.string().min(1, "Please select a student."),
@@ -35,8 +41,26 @@ export function CommunicationComposer() {
     const [isSending, setIsSending] = useState(false);
     const [open, setOpen] = useState(false);
 
+    const [selectedGrade, setSelectedGrade] = useState("");
+    const [selectedSection, setSelectedSection] = useState("");
+
     const form = useForm<FormData>({
-        resolver: zodResolver(formSchema)
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            studentId: "",
+            subject: "",
+            message: "",
+        },
+    });
+
+    useEffect(() => {
+        form.resetField("studentId");
+    }, [selectedGrade, selectedSection, form]);
+    
+    const filteredStudents = studentsData.filter(student => {
+        const gradeMatch = !selectedGrade || student.grade === selectedGrade;
+        const sectionMatch = !selectedSection || student.section === selectedSection;
+        return gradeMatch && sectionMatch;
     });
 
     const selectedStudentId = form.watch("studentId");
@@ -49,6 +73,8 @@ export function CommunicationComposer() {
             setIsSending(false);
             alert("Message sent successfully!");
             form.reset();
+            setSelectedGrade("");
+            setSelectedSection("");
         }, 1000);
     };
 
@@ -56,10 +82,33 @@ export function CommunicationComposer() {
         <Card>
             <CardHeader>
                 <CardTitle>Compose Message</CardTitle>
-                <CardDescription>Select a student to initiate communication with their parent or guardian.</CardDescription>
+                <CardDescription>Filter by class, then select a student to initiate communication with their parent or guardian.</CardDescription>
             </CardHeader>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6 border-b pb-6">
+                         <div className="space-y-2">
+                            <Label>Filter by Grade</Label>
+                             <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                                <SelectTrigger><SelectValue placeholder="All Grades" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">All Grades</SelectItem>
+                                    {grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Filter by Section</Label>
+                            <Select value={selectedSection} onValueChange={setSelectedSection}>
+                                <SelectTrigger><SelectValue placeholder="All Sections" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">All Sections</SelectItem>
+                                    {sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
                     <div className="grid md:grid-cols-2 gap-6">
                          <div className="space-y-2">
                              <Label>Select Student</Label>
@@ -78,9 +127,9 @@ export function CommunicationComposer() {
                                             <Command>
                                                 <CommandInput placeholder="Search student..." />
                                                 <CommandList>
-                                                    <CommandEmpty>No student found.</CommandEmpty>
+                                                    <CommandEmpty>No students found for this class.</CommandEmpty>
                                                     <CommandGroup>
-                                                        {studentsData.map((student) => (
+                                                        {filteredStudents.map((student) => (
                                                             <CommandItem
                                                                 key={student.id}
                                                                 value={student.name}
