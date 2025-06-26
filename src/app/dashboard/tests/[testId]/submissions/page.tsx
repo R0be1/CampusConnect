@@ -10,6 +10,18 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 // Mock data for a specific test's submissions, now including questions, individual answers, and status.
 const initialTestsWithSubmissions = {
@@ -79,6 +91,27 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
     setOpenDialogs(prev => ({ ...prev, [studentId]: false })); // Close the dialog
   };
 
+  const handleApproveAll = () => {
+    setTests(currentTests => {
+        const newSubmissions = currentTests[testId].submissions.map(sub => {
+            if (sub.status === 'Awaiting Approval') {
+                return { ...sub, status: 'Graded' as const };
+            }
+            return sub;
+        });
+
+        const newTestData = {
+            ...currentTests[testId],
+            submissions: newSubmissions
+        };
+
+        return {
+            ...currentTests,
+            [testId]: newTestData
+        };
+    });
+  };
+
   if (!testData) {
     return (
       <Card>
@@ -100,6 +133,8 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
   const averageScore = testData.submissions.length > 0
     ? testData.submissions.reduce((acc, sub) => acc + sub.percentage, 0) / testData.submissions.length
     : 0;
+
+  const pendingSubmissionsCount = testData.submissions.filter(s => s.status === 'Awaiting Approval').length;
 
   const getStatusBadge = (status: Submission['status']) => {
     switch (status) {
@@ -242,6 +277,28 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
             </Table>
           </div>
         </CardContent>
+        <CardFooter className="flex justify-end">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button disabled={pendingSubmissionsCount === 0}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve All Pending ({pendingSubmissionsCount})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will approve all {pendingSubmissionsCount} pending submissions for this test. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleApproveAll}>Confirm & Approve All</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+        </CardFooter>
       </Card>
     </div>
   );
