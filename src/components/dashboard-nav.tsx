@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, Users, Settings } from 'lucide-react';
+import { School, Home, BookOpen, UserCheck, MessageSquare, CreditCard, FileText, Users, Settings, ClipboardCheck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -15,6 +15,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   Attendance: UserCheck,
   Communication: MessageSquare,
   Fees: CreditCard,
+  Results: ClipboardCheck,
   Tests: FileText,
   Settings: Settings,
 };
