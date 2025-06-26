@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Monitor, Hand, Mic, Video } from "lucide-react";
@@ -67,7 +67,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
         }
     };
 
-    const handleToggleCamera = useCallback(async () => {
+    const handleToggleCamera = async () => {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
             setCameraStream(null);
@@ -84,7 +84,7 @@ export default function TeacherSessionPage({ params }: { params: { sessionId: st
                 });
             }
         }
-    }, [cameraStream, toast]);
+    };
 
     useEffect(() => {
         if (videoRef.current) {
