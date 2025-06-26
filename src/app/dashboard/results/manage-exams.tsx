@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 // Placeholder data
 const examsData = [
@@ -19,10 +22,18 @@ const examsData = [
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
-// Assuming subjects are tied to grade/section, we'll use a static list for now.
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
 
 export function ManageExams() {
+    const [gradeOpen, setGradeOpen] = useState(false);
+    const [selectedGrade, setSelectedGrade] = useState("");
+
+    const [sectionOpen, setSectionOpen] = useState(false);
+    const [selectedSection, setSelectedSection] = useState("");
+
+    const [subjectOpen, setSubjectOpen] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState("");
+
     return (
         <Card>
             <CardHeader>
@@ -51,26 +62,107 @@ export function ManageExams() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="examGrade">Grade</Label>
-                                        <Select>
-                                            <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                                            <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-                                        </Select>
+                                        <Label>Grade</Label>
+                                        <Popover open={gradeOpen} onOpenChange={setGradeOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" role="combobox" aria-expanded={gradeOpen} className="w-full justify-between font-normal">
+                                                    {selectedGrade ? grades.find((g) => g === selectedGrade) : "Select Grade..."}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                                <Command>
+                                                    <CommandInput placeholder="Search grade..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>No grade found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {grades.map((grade) => (
+                                                                <CommandItem
+                                                                    key={grade}
+                                                                    value={grade}
+                                                                    onSelect={() => {
+                                                                        setSelectedGrade(grade === selectedGrade ? "" : grade);
+                                                                        setGradeOpen(false);
+                                                                    }}
+                                                                >
+                                                                    <Check className={cn("mr-2 h-4 w-4", selectedGrade === grade ? "opacity-100" : "opacity-0")} />
+                                                                    {grade}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="examSection">Section</Label>
-                                        <Select>
-                                            <SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger>
-                                            <SelectContent>{sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                                        </Select>
+                                        <Label>Section</Label>
+                                        <Popover open={sectionOpen} onOpenChange={setSectionOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" role="combobox" aria-expanded={sectionOpen} className="w-full justify-between font-normal">
+                                                    {selectedSection ? sections.find((s) => s === selectedSection) : "Select Section..."}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                                <Command>
+                                                    <CommandInput placeholder="Search section..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>No section found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {sections.map((section) => (
+                                                                <CommandItem
+                                                                    key={section}
+                                                                    value={section}
+                                                                    onSelect={() => {
+                                                                        setSelectedSection(section === selectedSection ? "" : section);
+                                                                        setSectionOpen(false);
+                                                                    }}
+                                                                >
+                                                                    <Check className={cn("mr-2 h-4 w-4", selectedSection === section ? "opacity-100" : "opacity-0")} />
+                                                                    {section}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="examSubject">Subject</Label>
-                                    <Select>
-                                        <SelectTrigger><SelectValue placeholder="Select Subject" /></SelectTrigger>
-                                        <SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                                    </Select>
+                                    <Label>Subject</Label>
+                                     <Popover open={subjectOpen} onOpenChange={setSubjectOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" role="combobox" aria-expanded={subjectOpen} className="w-full justify-between font-normal">
+                                                {selectedSubject ? subjects.find((s) => s === selectedSubject) : "Select Subject..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search subject..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No subject found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {subjects.map((subject) => (
+                                                            <CommandItem
+                                                                key={subject}
+                                                                value={subject}
+                                                                onSelect={() => {
+                                                                    setSelectedSubject(subject === selectedSubject ? "" : subject);
+                                                                    setSubjectOpen(false);
+                                                                }}
+                                                            >
+                                                                <Check className={cn("mr-2 h-4 w-4", selectedSubject === subject ? "opacity-100" : "opacity-0")} />
+                                                                {subject}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                             <DialogFooter>
