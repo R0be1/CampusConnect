@@ -86,7 +86,7 @@ export default function AcademicsPortalPage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {data.exams.map((exam) => (
+                            {[...data.exams].reverse().map((exam) => (
                               <TableRow key={exam.name}>
                                 <TableCell className="font-medium">{exam.name}</TableCell>
                                 <TableCell className="text-center font-bold">{exam.score}</TableCell>

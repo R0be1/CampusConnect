@@ -45,6 +45,8 @@ const recentCommunications = [
     { id: "msg-004", date: "2024-08-05", subject: "Parent-Teacher Meeting Schedule", sentBy: "Admin Office", unread: true },
 ];
 
+// Sort communications by date, most recent first
+recentCommunications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export default function ParentDashboardPage() {
   return (
