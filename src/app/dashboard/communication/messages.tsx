@@ -16,7 +16,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const studentsData = [
+// --- Mock Data ---
+const allStudents = [
   { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', parentEmail: 'jane.doe@example.com' },
   { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', parentEmail: 'robert.smith@example.com' },
   { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', parentEmail: 'mary.johnson@example.com' },
@@ -25,6 +26,44 @@ const studentsData = [
   { id: 's006', name: 'Peter Parker', grade: 'Grade 10', section: 'A', parentName: 'May Parker', parentEmail: 'may.parker@example.com' },
   { id: 's007', name: 'Bruce Wayne', grade: 'Grade 11', section: 'C', parentName: 'Alfred Pennyworth', parentEmail: 'alfred.pennyworth@example.com' },
 ];
+
+const allCourses = [
+    { id: 'c01', name: 'Mathematics', teacherId: 't01' },
+    { id: 'c02', name: 'History', teacherId: 't02' },
+    { id: 'c03', name: 'Science', teacherId: 't03' },
+    { id: 'c04', name: 'Advanced Mathematics', teacherId: 't01' }, // Mr. Smith also teaches this
+];
+
+const enrollments = [
+    // Mr. Smith's students (t01)
+    { studentId: 's001', courseId: 'c01' }, // John Doe in Math
+    { studentId: 's003', courseId: 'c01' }, // Bob Johnson in Math
+    { studentId: 's006', courseId: 'c01' }, // Peter Parker in Math
+    { studentId: 's004', courseId: 'c04' }, // Charlie Brown in Adv Math
+
+    // Ms. Jones' students (t02)
+    { studentId: 's002', courseId: 'c02' }, // Alice Smith in History
+    { studentId: 's005', courseId: 'c02' }, // Diana Prince in History
+
+    // Dr. Brown's students (t03)
+    { studentId: 's007', courseId: 'c03' }, // Bruce Wayne in Science
+];
+
+// Assume the logged-in teacher is 'Mr. Smith'
+const currentTeacherId = 't01';
+
+// Get the courses taught by the current teacher
+const teacherCourseIds = allCourses.filter(c => c.teacherId === currentTeacherId).map(c => c.id);
+
+// Get the IDs of students enrolled in those courses
+const teacherStudentIds = new Set(
+    enrollments.filter(e => teacherCourseIds.includes(e.courseId)).map(e => e.studentId)
+);
+
+// Get the full student objects for the current teacher
+const myStudents = allStudents.filter(s => teacherStudentIds.has(s.id));
+// --- End Mock Data ---
+
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
@@ -57,14 +96,14 @@ export function CommunicationComposer() {
         form.resetField("studentId");
     }, [selectedGrade, selectedSection, form]);
     
-    const filteredStudents = studentsData.filter(student => {
+    const filteredStudents = myStudents.filter(student => {
         const gradeMatch = selectedGrade === "all" || student.grade === selectedGrade;
         const sectionMatch = selectedSection === "all" || student.section === selectedSection;
         return gradeMatch && sectionMatch;
     });
 
     const selectedStudentId = form.watch("studentId");
-    const selectedStudent = studentsData.find(s => s.id === selectedStudentId);
+    const selectedStudent = allStudents.find(s => s.id === selectedStudentId);
 
     const onSubmit = (data: FormData) => {
         setIsSending(true);
@@ -82,7 +121,7 @@ export function CommunicationComposer() {
         <Card>
             <CardHeader>
                 <CardTitle>Compose Message</CardTitle>
-                <CardDescription>Filter by class, then select a student to initiate communication with their parent or guardian.</CardDescription>
+                <CardDescription>Filter by class, then select one of your students to communicate with their parent or guardian.</CardDescription>
             </CardHeader>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <CardContent className="space-y-6">
@@ -119,7 +158,7 @@ export function CommunicationComposer() {
                                     <Popover open={open} onOpenChange={setOpen}>
                                         <PopoverTrigger asChild>
                                             <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                                                {field.value ? studentsData.find((s) => s.id === field.value)?.name : "Select student..."}
+                                                {field.value ? allStudents.find((s) => s.id === field.value)?.name : "Select student..."}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
