@@ -16,6 +16,7 @@ import { CalendarIcon, PlusCircle, Trash2, ClipboardList, HelpCircle } from "luc
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 const questionSchema = z.object({
   type: z.enum(["multiple-choice", "true-false", "fill-in-the-blank"]),
@@ -42,6 +43,7 @@ const sections = ['A', 'B', 'C', 'D', 'All'];
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
 
 export default function CreateTestPage() {
+  const { toast } = useToast();
   const form = useForm<TestFormValues>({
     resolver: zodResolver(testSchema),
     defaultValues: {
@@ -58,8 +60,12 @@ export default function CreateTestPage() {
   const watchQuestionType = (index: number) => form.watch(`questions.${index}.type`);
 
   function onSubmit(data: TestFormValues) {
-    console.log(data);
-    alert("Test created successfully! (Check browser console for data)");
+    console.log("Test form submitted successfully with data:", data);
+    toast({
+      title: "Test Saved Successfully",
+      description: `The test "${data.name}" is now ready.`,
+    });
+    form.reset();
   }
 
   const addQuestion = (type: "multiple-choice" | "true-false" | "fill-in-the-blank") => {
@@ -70,7 +76,7 @@ export default function CreateTestPage() {
     };
     if (type === "multiple-choice") {
       newQuestion.options = ["", "", "", ""];
-      newQuestion.answer = ""; // Store index as string
+      newQuestion.answer = ""; // This will be invalid until a radio is selected
     }
     if (type === "true-false") {
       newQuestion.answer = "true";
@@ -170,7 +176,7 @@ export default function CreateTestPage() {
                         </div>
                     </Card>
                 ))}
-                 {form.formState.errors.questions && !form.formState.errors.questions.root && (
+                 {form.formState.errors.questions?.message && (
                     <p className="text-sm font-medium text-destructive">{form.formState.errors.questions.message}</p>
                  )}
                 
