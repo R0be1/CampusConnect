@@ -44,6 +44,23 @@ type AttendanceState = {
   [studentId: string]: AttendanceRecord;
 };
 
+const attendanceSeedData: Record<string, AttendanceState> = {
+  "Grade 10-A": {
+    's001': { status: 'present', notes: '' },
+    's003': { status: 'absent', notes: 'Doctor appointment' },
+    's006': { status: 'late', notes: '' },
+    's007': { status: 'present', notes: '' },
+    's009': { status: 'excused', notes: 'Family event' },
+  },
+  "Grade 9-B": {
+    's002': { status: 'present', notes: '' },
+    's005': { status: 'present', notes: '' },
+    's008': { status: 'late', notes: 'Traffic' },
+    's011': { status: 'present', notes: '' },
+  },
+};
+
+
 export default function AttendancePage() {
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
@@ -61,11 +78,17 @@ export default function AttendancePage() {
         const classKey = `${selectedGrade}-${selectedSection}`;
         const fetchedStudents = studentsByClass[classKey] || [];
         setStudents(fetchedStudents);
+
+        const seededAttendance = attendanceSeedData[classKey];
         const initialAttendance: AttendanceState = {};
+
         fetchedStudents.forEach(s => {
-          initialAttendance[s.id] = { status: 'present', notes: '' };
+          initialAttendance[s.id] = (seededAttendance && seededAttendance[s.id])
+            ? seededAttendance[s.id]
+            : { status: 'present', notes: '' };
         });
         setAttendance(initialAttendance);
+        
         setIsLoading(false);
       }, 500);
     }
