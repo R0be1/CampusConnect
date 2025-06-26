@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -28,7 +29,7 @@ type StudentResult = {
   id: string;
   name: string;
   score: string;
-  status: 'Pending' | 'Pending Approval' | 'Approved';
+  status: 'Pending' | 'Pending Approval' | 'Approved' | 'Pending Re-approval' | 'Finalized';
 };
 
 // This data should eventually come from a central store/API.
@@ -46,7 +47,7 @@ const initialStudentsData: Record<string, StudentResult[]> = {
     exam1: [
       { id: 's001', name: 'John Doe', score: '85', status: 'Approved' },
       { id: 's003', name: 'Bob Johnson', score: '65', status: 'Pending Approval' },
-      { id: 's006', name: 'Peter Parker', score: '78', status: 'Pending Approval' },
+      { id: 's006', name: 'Peter Parker', score: '78', status: 'Finalized' },
       { id: 's007', name: 'Bruce Wayne', score: '', status: 'Pending' },
     ],
     exam2: [
@@ -68,7 +69,7 @@ const initialStudentsData: Record<string, StudentResult[]> = {
     ],
     exam6: [
       { id: 's010', name: 'Tony Stark', score: '100', status: 'Pending Approval' },
-      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Approval' },
+      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Re-approval' },
     ]
 };
 
@@ -83,13 +84,13 @@ export default function ApproveResultsPage() {
     const [allStudentsData, setAllStudentsData] = useState(initialStudentsData);
 
     const examsWithPendingApprovals = examsForSelection.filter(exam =>
-        allStudentsData[exam.id]?.some(s => s.status === 'Pending Approval')
+        allStudentsData[exam.id]?.some(s => ['Pending Approval', 'Pending Re-approval'].includes(s.status))
     );
 
     const handleExamSelect = (examId: string) => {
         setSelectedExam(examId);
         const examStudents = allStudentsData[examId] || [];
-        setStudentsForApproval(examStudents.filter(s => s.status === 'Pending Approval'));
+        setStudentsForApproval(examStudents.filter(s => ['Pending Approval', 'Pending Re-approval'].includes(s.status)));
     };
     
     const handleAction = async (studentId: string, action: 'approve' | 'reject') => {
@@ -98,9 +99,18 @@ export default function ApproveResultsPage() {
         
         setAllStudentsData(prevData => {
             if (!selectedExam) return prevData;
-            const updatedExamStudents = prevData[selectedExam].map(s => 
-                s.id === studentId ? { ...s, status: action === 'approve' ? 'Approved' : 'Pending' } : s
-            );
+            const updatedExamStudents = prevData[selectedExam].map(s => {
+                if (s.id === studentId) {
+                    let newStatus: StudentResult['status'] = s.status;
+                    if (action === 'approve') {
+                        newStatus = s.status === 'Pending Approval' ? 'Approved' : 'Finalized';
+                    } else { // reject
+                        newStatus = s.status === 'Pending Approval' ? 'Pending' : 'Approved';
+                    }
+                    return { ...s, status: newStatus };
+                }
+                return s;
+            });
             return { ...prevData, [selectedExam]: updatedExamStudents };
         });
 
@@ -114,9 +124,18 @@ export default function ApproveResultsPage() {
 
         setAllStudentsData(prevData => {
             if (!selectedExam) return prevData;
-            const updatedExamStudents = prevData[selectedExam].map(s => 
-                s.status === 'Pending Approval' ? { ...s, status: action === 'approve' ? 'Approved' : 'Pending' } : s
-            );
+            const updatedExamStudents = prevData[selectedExam].map(s => {
+                if (['Pending Approval', 'Pending Re-approval'].includes(s.status)) {
+                    let newStatus: StudentResult['status'] = s.status;
+                     if (action === 'approve') {
+                        newStatus = s.status === 'Pending Approval' ? 'Approved' : 'Finalized';
+                    } else { // reject
+                        newStatus = s.status === 'Pending Approval' ? 'Pending' : 'Approved';
+                    }
+                    return { ...s, status: newStatus };
+                }
+                return s;
+            });
             return { ...prevData, [selectedExam]: updatedExamStudents };
         });
         
@@ -126,9 +145,15 @@ export default function ApproveResultsPage() {
 
     const getBadgeVariant = (status: StudentResult['status']) => {
         switch (status) {
-            case 'Approved': return 'default';
-            case 'Pending Approval': return 'outline';
-            default: return 'secondary';
+            case 'Approved':
+            case 'Finalized':
+                return 'default';
+            case 'Pending Approval': 
+                return 'outline';
+            case 'Pending Re-approval': 
+                return 'destructive';
+            default: 
+                return 'secondary';
         }
     };
 
@@ -141,7 +166,7 @@ export default function ApproveResultsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Approve Student Results</CardTitle>
-                    <CardDescription>Review and approve or reject submitted exam scores.</CardDescription>
+                    <CardDescription>Review and approve or reject submitted exam scores. You can also finalize results that have been re-submitted.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="max-w-md space-y-2">
@@ -223,7 +248,9 @@ export default function ApproveResultsPage() {
                                                                 <AlertDialogHeader>
                                                                     <AlertDialogTitle>Approve Result?</AlertDialogTitle>
                                                                     <AlertDialogDescription>
-                                                                        Are you sure you want to approve the score of {student.score} for {student.name}? This action cannot be undone.
+                                                                        Are you sure you want to approve the score of {student.score} for {student.name}? 
+                                                                        {student.status === 'Pending Re-approval' && " This result will be finalized and cannot be edited further."}
+                                                                        {student.status === 'Pending Approval' && " The teacher can make exceptional edits later, which will require re-approval."}
                                                                     </AlertDialogDescription>
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
@@ -240,7 +267,7 @@ export default function ApproveResultsPage() {
                                                                 <AlertDialogHeader>
                                                                     <AlertDialogTitle>Reject Result?</AlertDialogTitle>
                                                                     <AlertDialogDescription>
-                                                                        This will return the result to 'Pending' status, allowing the teacher to edit and resubmit it.
+                                                                        This will return the result to '{student.status === 'Pending Approval' ? 'Pending' : 'Approved'}' status, allowing the teacher to edit and resubmit it.
                                                                     </AlertDialogDescription>
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
@@ -275,7 +302,7 @@ export default function ApproveResultsPage() {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Reject All {studentsForApproval.length} Results?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will return all pending results for this exam to 'Pending' status. This action cannot be undone.
+                                                    This will return all pending results for this exam to their previous status. This action cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>

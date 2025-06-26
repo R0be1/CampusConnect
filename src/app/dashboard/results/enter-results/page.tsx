@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FileUp, Info, Search, Check, ChevronsUpDown, Loader2, ClipboardCheck } from "lucide-react";
+import { FileUp, Info, Search, Check, ChevronsUpDown, Loader2, ClipboardCheck, Lock } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ type StudentResult = {
   id: string;
   name: string;
   score: string;
-  status: 'Pending' | 'Pending Approval' | 'Approved';
+  status: 'Pending' | 'Pending Approval' | 'Approved' | 'Pending Re-approval' | 'Finalized';
 };
 
 // Placeholder data
@@ -46,7 +47,7 @@ const studentsForResults: Record<string, StudentResult[]> = {
     exam1: [
       { id: 's001', name: 'John Doe', score: '85', status: 'Approved' },
       { id: 's003', name: 'Bob Johnson', score: '65', status: 'Pending Approval' },
-      { id: 's006', name: 'Peter Parker', score: '78', status: 'Pending Approval' },
+      { id: 's006', name: 'Peter Parker', score: '78', status: 'Finalized' },
       { id: 's007', name: 'Bruce Wayne', score: '', status: 'Pending' },
     ],
     exam2: [
@@ -62,7 +63,7 @@ const studentsForResults: Record<string, StudentResult[]> = {
     ],
     exam6: [
       { id: 's010', name: 'Tony Stark', score: '100', status: 'Pending Approval' },
-      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Approval' },
+      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Re-approval' },
     ]
 };
 
@@ -70,13 +71,16 @@ const studentsForResults: Record<string, StudentResult[]> = {
 export default function EnterResultsPage() {
     const [selectedExam, setSelectedExam] = useState<string | null>(null);
     const [students, setStudents] = useState<StudentResult[]>([]);
+    const [initialStudents, setInitialStudents] = useState<StudentResult[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleExamSelect = (examId: string) => {
         setSelectedExam(examId);
-        setStudents(studentsForResults[examId] || []);
+        const examStudents = studentsForResults[examId] || [];
+        setStudents(JSON.parse(JSON.stringify(examStudents)));
+        setInitialStudents(JSON.parse(JSON.stringify(examStudents)));
         setSearchTerm("");
         setIsSubmitting(false);
     };
@@ -90,9 +94,12 @@ export default function EnterResultsPage() {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
         setStudents(prevStudents => prevStudents.map(s => {
-            // Only move students from 'Pending' to 'Pending Approval' if they have a score
+            const initialStudent = initialStudents.find(is => is.id === s.id);
             if (s.status === 'Pending' && s.score) {
                 return { ...s, status: 'Pending Approval' };
+            }
+            if (s.status === 'Approved' && s.score && s.score !== initialStudent?.score) {
+                return { ...s, status: 'Pending Re-approval' };
             }
             return s;
         }));
@@ -103,7 +110,30 @@ export default function EnterResultsPage() {
       student.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const hasPendingScores = students.some(s => s.status === 'Pending' && s.score);
+    const hasScoresToSubmit = students.some(s => {
+      if (s.status === 'Pending' && s.score) {
+        return true;
+      }
+      if (s.status === 'Approved') {
+        const initialStudent = initialStudents.find(is => is.id === s.id);
+        return s.score && s.score !== initialStudent?.score;
+      }
+      return false;
+    });
+
+    const getBadgeVariant = (status: StudentResult['status']) => {
+        switch (status) {
+            case 'Approved':
+            case 'Finalized':
+                return 'default';
+            case 'Pending Approval':
+                return 'outline';
+            case 'Pending Re-approval':
+                return 'destructive';
+            default:
+                return 'secondary';
+        }
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -200,15 +230,16 @@ export default function EnterResultsPage() {
                                                             className="w-32"
                                                             value={student.score}
                                                             onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                                                            disabled={isSubmitting || student.status !== 'Pending'}
+                                                            disabled={isSubmitting || !['Pending', 'Approved'].includes(student.status)}
                                                         />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge variant={
-                                                            student.status === 'Approved' ? 'default' :
-                                                            student.status === 'Pending Approval' ? 'outline' :
-                                                            'secondary'
-                                                        }>{student.status}</Badge>
+                                                        <div className="flex items-center">
+                                                            <Badge variant={getBadgeVariant(student.status)}>{student.status}</Badge>
+                                                            {student.status === 'Finalized' && (
+                                                                <Lock className="ml-2 h-3 w-3 text-muted-foreground" />
+                                                            )}
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
@@ -225,7 +256,7 @@ export default function EnterResultsPage() {
                             <div className="flex justify-end">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button disabled={isSubmitting || !hasPendingScores}>
+                                        <Button disabled={isSubmitting || !hasScoresToSubmit}>
                                             {isSubmitting ? (
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             ) : (
@@ -238,7 +269,7 @@ export default function EnterResultsPage() {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This action will submit all entered scores for this exam for approval. You will not be able to edit them afterwards.
+                                                This action will submit all new and edited scores for approval. You will not be able to edit them further until they are reviewed.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
