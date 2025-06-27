@@ -675,3 +675,23 @@ export async function getTeachers(schoolId: string) {
         include: { user: true }
     })
 }
+
+// --- E-Learning Data ---
+export async function getLearningMaterials(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.learningMaterial.findMany({
+        where: { schoolId },
+        include: {
+            grade: true,
+            uploader: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc',
+        }
+    });
+}

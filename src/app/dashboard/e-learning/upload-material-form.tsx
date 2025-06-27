@@ -7,22 +7,23 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileUp, Loader2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { createLearningMaterialAction } from "./actions";
+import { Grade } from "@prisma/client";
 
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 
 const uploadSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(10, "Description must be at least 10 characters."),
-  grade: z.string().min(1, "Please select a grade."),
+  gradeId: z.string().min(1, "Please select a grade."),
   subject: z.string().min(1, "Please select a subject."),
-  type: z.enum(["Video", "Document"], { required_error: "Please select a material type." }),
+  type: z.enum(["VIDEO", "DOCUMENT"], { required_error: "Please select a material type." }),
   file: z.any()
     .refine((files) => files?.length == 1, "File is required.")
     .refine((files) => files?.[0]?.size <= 5000000, `Max file size is 5MB.`),
@@ -30,8 +31,16 @@ const uploadSchema = z.object({
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
 
-export function UploadMaterialForm() {
+type UploadMaterialFormProps = {
+    grades: Grade[];
+    schoolId: string;
+    uploaderId: string;
+}
+
+export function UploadMaterialForm({ grades, schoolId, uploaderId }: UploadMaterialFormProps) {
     const { toast } = useToast();
+    const router = useRouter();
+
     const form = useForm<UploadFormValues>({
         resolver: zodResolver(uploadSchema),
         defaultValues: {
@@ -44,13 +53,22 @@ export function UploadMaterialForm() {
     const fileRef = form.register("file");
     const materialType = form.watch("type");
 
-    function onSubmit(data: UploadFormValues) {
-        console.log(data);
-        toast({
-            title: "Upload Successful",
-            description: `Material "${data.title}" has been published.`,
-        });
-        form.reset();
+    async function onSubmit(data: UploadFormValues) {
+        const result = await createLearningMaterialAction(data, schoolId, uploaderId);
+        if (result.success) {
+            toast({
+                title: "Upload Successful",
+                description: result.message,
+            });
+            form.reset();
+            router.push('/dashboard/e-learning/manage');
+        } else {
+            toast({
+                title: "Upload Failed",
+                description: result.error,
+                variant: "destructive"
+            });
+        }
     }
 
     return (
@@ -70,21 +88,21 @@ export function UploadMaterialForm() {
                         )} />
 
                         <div className="grid md:grid-cols-3 gap-6">
-                            <FormField control={form.control} name="grade" render={({ field }) => (
-                                <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                            <FormField control={form.control} name="gradeId" render={({ field }) => (
+                                <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="subject" render={({ field }) => (
                                 <FormItem><FormLabel>Subject</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a subject" /></SelectTrigger></FormControl><SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="type" render={({ field }) => (
-                                <FormItem><FormLabel>Material Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Video">Video</SelectItem><SelectItem value="Document">Document</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Material Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="VIDEO">Video</SelectItem><SelectItem value="DOCUMENT">Document</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                             )} />
                         </div>
 
                         {materialType && (
                             <FormField control={form.control} name="file" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Upload {materialType}</FormLabel>
+                                    <FormLabel>Upload {materialType === 'VIDEO' ? 'Video' : 'Document'}</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
@@ -95,14 +113,14 @@ export function UploadMaterialForm() {
                                             <Input 
                                                 id="file-upload"
                                                 type="file" 
-                                                accept={materialType === 'Video' ? "video/*" : ".pdf,.doc,.docx,.ppt,.pptx"}
+                                                accept={materialType === 'VIDEO' ? "video/*" : ".pdf,.doc,.docx,.ppt,.pptx"}
                                                 className="pl-12"
                                                 {...fileRef}
                                             />
                                         </div>
                                     </FormControl>
                                     <FormDescription>
-                                        {materialType === 'Video' ? 'Supported formats: MP4, WEBM, OGG. Max 5MB.' : 'Supported formats: PDF, DOCX, PPTX. Max 5MB.'}
+                                        {materialType === 'VIDEO' ? 'Supported formats: MP4, WEBM, OGG. Max 5MB.' : 'Supported formats: PDF, DOCX, PPTX. Max 5MB.'}
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
