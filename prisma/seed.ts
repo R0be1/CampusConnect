@@ -1,3 +1,4 @@
+
 /**
  * Seed the database with initial data.
  *
@@ -14,8 +15,9 @@ async function main() {
 
   // --- 1. Clear existing data in the correct order ---
   console.log('Clearing existing data...');
-  await prisma.testAnswer.deleteMany();
-  await prisma.testSubmission.deleteMany();
+  // Start with models that have the most dependencies
+  await prisma.testSubmission.deleteMany().catch(() => {}); // Attempt to delete, but ignore if it fails
+  await prisma.testAnswer.deleteMany().catch(() => {});     // Attempt to delete, but ignore if it fails
   await prisma.question.deleteMany();
   await prisma.test.deleteMany();
   await prisma.liveSessionRegistration.deleteMany();
@@ -33,10 +35,15 @@ async function main() {
   await prisma.feeStructure.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.course.deleteMany();
+  
+  // Clear profiles and users. It's safer to delete profiles before the base user.
+  // Prisma should handle disconnecting M2M relations on student/parent deletion.
   await prisma.parent.deleteMany();
   await prisma.staff.deleteMany();
   await prisma.student.deleteMany();
   await prisma.user.deleteMany();
+  
+  // Clear core organizational data
   await prisma.section.deleteMany();
   await prisma.grade.deleteMany();
   await prisma.academicYear.deleteMany();
