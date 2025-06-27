@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload } from "lucide-react";
+import { Upload, FileUp } from "lucide-react";
 
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -60,14 +60,28 @@ export function UploadMaterialForm() {
                 {materialType === "Video" && (
                      <div className="space-y-2">
                         <Label htmlFor="videoFile">Upload Video</Label>
-                        <Input id="videoFile" type="file" accept="video/*" />
+                        <div className="relative">
+                            <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                <Label htmlFor="videoFile" className="cursor-pointer">
+                                    <FileUp className="h-4 w-4" />
+                                </Label>
+                            </Button>
+                            <Input id="videoFile" type="file" accept="video/*" className="pl-12" />
+                        </div>
                         <p className="text-sm text-muted-foreground">Supported formats: MP4, WEBM, OGG.</p>
                     </div>
                 )}
                  {materialType === "Document" && (
                     <div className="space-y-2">
                         <Label htmlFor="documentFile">Upload Document</Label>
-                         <Input id="documentFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" />
+                        <div className="relative">
+                             <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                <Label htmlFor="documentFile" className="cursor-pointer">
+                                    <FileUp className="h-4 w-4" />
+                                </Label>
+                            </Button>
+                             <Input id="documentFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" className="pl-12" />
+                        </div>
                          <p className="text-sm text-muted-foreground">Supported formats: PDF, DOCX, PPTX.</p>
                     </div>
                 )}
