@@ -233,6 +233,7 @@ async function main() {
           totalMarks: 12,
           isMock: false,
           resultVisibility: 'IMMEDIATE',
+          status: 'COMPLETED',
           schoolId: school1.id,
           questions: {
               create: [

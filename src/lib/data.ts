@@ -237,12 +237,15 @@ export async function getGradesForStudent(studentId: string, academicYearId: str
 }
 
 export async function getScoresForStudent(studentId: string, academicYearId: string) {
-    // Note: The current schema doesn't link a Test directly to an academic year.
-    // This function fetches all test submissions for the student, regardless of year.
-    // This could be refined later if a direct link is added to the schema.
     const submissions = await prisma.testSubmission.findMany({
         where: {
             studentId,
+            test: {
+                endTime: {
+                    // This is a simplification; ideally we'd link tests to academic years
+                    // For now, let's assume tests within a certain time frame
+                }
+            }
         },
         include: {
             test: true
@@ -264,6 +267,7 @@ export async function getScoresForStudent(studentId: string, academicYearId: str
 export async function getFirstTeacher(schoolId: string) {
     return prisma.staff.findFirst({
         where: { schoolId, staffType: 'TEACHER' },
+        include: { user: true }
     });
 }
 
@@ -582,4 +586,92 @@ export async function getExamsWithPendingApprovals(schoolId: string, academicYea
             }
         },
     });
+}
+
+// --- Tests Data ---
+export async function createTestWithQuestions(data: any, schoolId: string, teacherId: string) {
+    const { questions, ...testData } = data;
+    return prisma.test.create({
+        data: {
+            ...testData,
+            schoolId,
+            teacherId,
+            duration: parseInt(testData.duration),
+            totalMarks: questions.reduce((acc: number, q: any) => acc + (q.points || 0), 0),
+            questions: {
+                create: questions.map((q: any) => ({
+                    ...q,
+                    points: parseInt(q.points) || 1
+                }))
+            }
+        }
+    });
+}
+
+export async function getTests(schoolId: string) {
+    return prisma.test.findMany({
+        where: { schoolId },
+        orderBy: { startTime: 'desc' }
+    });
+}
+
+export async function getTestWithSubmissions(testId: string) {
+    return prisma.test.findUnique({
+        where: { id: testId },
+        include: {
+            questions: true,
+            submissions: {
+                include: {
+                    student: {
+                        include: {
+                            user: true
+                        }
+                    },
+                    answers: true,
+                },
+                orderBy: {
+                    submittedAt: 'desc'
+                }
+            }
+        }
+    });
+}
+export type TestWithSubmissions = Awaited<ReturnType<typeof getTestWithSubmissions>>;
+
+export async function updateTestStatus(testId: string, status: "UPCOMING" | "ACTIVE" | "COMPLETED") {
+    return prisma.test.update({
+        where: { id: testId },
+        data: { status }
+    });
+}
+
+export async function deleteTest(testId: string) {
+    // This will cascade delete questions and submissions due to the schema
+    return prisma.test.delete({
+        where: { id: testId }
+    });
+}
+
+export async function approveTestSubmission(submissionId: string) {
+    return prisma.testSubmission.update({
+        where: { id: submissionId },
+        data: { status: 'GRADED' }
+    });
+}
+
+export async function approveAllTestSubmissions(testId: string) {
+    return prisma.testSubmission.updateMany({
+        where: { testId, status: 'AWAITING_APPROVAL' },
+        data: { status: 'GRADED' }
+    });
+}
+
+export async function getTeachers(schoolId: string) {
+    return prisma.staff.findMany({
+        where: {
+            schoolId: schoolId,
+            staffType: 'TEACHER'
+        },
+        include: { user: true }
+    })
 }
