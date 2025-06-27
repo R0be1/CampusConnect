@@ -9,19 +9,72 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
+import type { NavItem } from '@/components/dashboard-nav';
 
-const navItems = [
+
+const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/students', label: 'Students' },
+  { 
+    label: 'Students', 
+    subItems: [
+      { href: '/dashboard/students/list', label: 'View Roster' },
+      { href: '/dashboard/students/register', label: 'Register New' },
+    ]
+  },
   { href: '/dashboard/academics', label: 'Academics' },
-  { href: '/dashboard/attendance', label: 'Attendance' },
-  { href: '/dashboard/communication', label: 'Communication' },
-  { href: '/dashboard/fees', label: 'Fees' },
-  { href: '/dashboard/results', label: 'Results' },
-  { href: '/dashboard/tests', label: 'Tests' },
-  { href: '/dashboard/e-learning', label: 'E-Learning' },
+  { 
+    label: 'Attendance',
+    subItems: [
+      { href: '/dashboard/attendance/mark', label: 'Mark Attendance' },
+      { href: '/dashboard/attendance/records', label: 'View Records' },
+    ]
+  },
+  { 
+    label: 'Communication',
+    subItems: [
+      { href: '/dashboard/communication/compose', label: 'Compose Message' },
+      { href: '/dashboard/communication/history', label: 'View History' },
+    ]
+  },
+  { 
+    label: 'Fees',
+    subItems: [
+      { href: '/dashboard/fees/invoices', label: 'Invoices' },
+      { href: '/dashboard/fees/history', label: 'Payment History' },
+      { href: '/dashboard/fees/structure', label: 'Fee Structure' },
+    ]
+  },
+  { 
+    label: 'Results',
+    subItems: [
+      { href: '/dashboard/results/manage-exams', label: 'Manage Exams' },
+      { href: '/dashboard/results/enter-results', label: 'Enter Results' },
+      { href: '/dashboard/results/approve-results', label: 'Approve Results' },
+    ]
+  },
+  { 
+    label: 'Tests',
+    subItems: [
+        { href: '/dashboard/tests', label: 'Manage Tests' },
+        { href: '/dashboard/tests/create', label: 'Create New Test' },
+    ]
+  },
+  { 
+    label: 'E-Learning',
+    subItems: [
+        { href: '/dashboard/e-learning/manage', label: 'Manage Materials' },
+        { href: '/dashboard/e-learning/upload', label: 'Upload New' },
+    ]
+  },
   { href: '/dashboard/live-sessions', label: 'Live Sessions' },
-  { href: '/dashboard/settings', label: 'Settings' },
+  { 
+    label: 'Settings',
+    subItems: [
+      { href: '/dashboard/settings/courses', label: 'Courses' },
+      { href: '/dashboard/settings/grades-sections', label: 'Grades & Sections' },
+      { href: '/dashboard/settings/academic-year', label: 'Academic Year' },
+    ]
+  },
   { href: '/portal/dashboard', label: 'Parent Portal' },
   { href: '/student/dashboard', label: 'Student Portal' },
 ];
@@ -47,7 +100,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
               <span className="font-headline text-xl">CampusConnect</span>
             </Link>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <DashboardNav items={navItems} />
           </div>
         </div>
