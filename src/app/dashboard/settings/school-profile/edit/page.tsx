@@ -77,10 +77,26 @@ function SchoolForm({ school }: SchoolFormProps) {
     const [phone, setPhone] = useState(school.phone);
     const [address, setAddress] = useState(school.address);
     const [logoUrl, setLogoUrl] = useState(school.logoUrl);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
 
     const handleSave = () => {
-        // In a real app, this would be an API call to update the school.
-        // Here we just show a toast and navigate back.
+        if (!name.trim()) {
+            toast({ title: "Validation Error", description: "School Name is required.", variant: "destructive" });
+            return;
+        }
+        if (!accountName.trim()) {
+            toast({ title: "Validation Error", description: "Account Name is required.", variant: "destructive" });
+            return;
+        }
+        if (!branch.trim()) {
+            toast({ title: "Validation Error", description: "Branch is required.", variant: "destructive" });
+            return;
+        }
+        if (!contactPerson.trim()) {
+            toast({ title: "Validation Error", description: "Contact Person is required.", variant: "destructive" });
+            return;
+        }
+
         const updatedSchool = { id: school.id, name, accountName, branch, contactPerson, phone, address, logoUrl };
         console.log("Saving school data:", updatedSchool);
         toast({ title: "School Profile Updated", description: "Your school's details have been saved." });
@@ -113,6 +129,7 @@ function SchoolForm({ school }: SchoolFormProps) {
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
+                                        setLogoFile(file);
                                         setLogoUrl(URL.createObjectURL(file));
                                     }
                                 }}

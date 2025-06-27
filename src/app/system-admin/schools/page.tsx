@@ -94,6 +94,7 @@ export default function SchoolsPage() {
                                 <TableHead>Account Name</TableHead>
                                 <TableHead>Branch</TableHead>
                                 <TableHead>Contact Person</TableHead>
+                                <TableHead>Phone</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -107,6 +108,7 @@ export default function SchoolsPage() {
                                     <TableCell className="font-mono text-xs">{school.accountName}</TableCell>
                                     <TableCell>{school.branch}</TableCell>
                                     <TableCell>{school.contactPerson}</TableCell>
+                                    <TableCell>{school.phone}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" onClick={() => setEditingSchool(school)}><Pencil className="h-4 w-4" /></Button>
                                         <AlertDialog>
@@ -154,6 +156,7 @@ type SchoolFormProps = {
 }
 
 function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
+    const { toast } = useToast();
     const [name, setName] = useState(school?.name || '');
     const [accountName, setAccountName] = useState(school?.accountName || '');
     const [branch, setBranch] = useState(school?.branch || '');
@@ -161,8 +164,26 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
     const [phone, setPhone] = useState(school?.phone || '');
     const [address, setAddress] = useState(school?.address || '');
     const [logoUrl, setLogoUrl] = useState(school?.logoUrl || '');
+    const [logoFile, setLogoFile] = useState<File | null>(null);
 
     const handleSave = () => {
+        if (!name.trim()) {
+            toast({ title: "Validation Error", description: "School Name is required.", variant: "destructive" });
+            return;
+        }
+        if (!accountName.trim()) {
+            toast({ title: "Validation Error", description: "Account Name is required.", variant: "destructive" });
+            return;
+        }
+        if (!branch.trim()) {
+            toast({ title: "Validation Error", description: "Branch is required.", variant: "destructive" });
+            return;
+        }
+        if (!contactPerson.trim()) {
+            toast({ title: "Validation Error", description: "Contact Person is required.", variant: "destructive" });
+            return;
+        }
+
         const data = { name, accountName, branch, contactPerson, phone, address, logoUrl };
         if (school?.id) {
             onSave({ ...data, id: school.id });
@@ -196,6 +217,7 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
+                                    setLogoFile(file);
                                     setLogoUrl(URL.createObjectURL(file));
                                 }
                             }}
