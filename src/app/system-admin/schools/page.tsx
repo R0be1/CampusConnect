@@ -181,7 +181,24 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
                     <div className="space-y-2"><Label>Contact Person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Mr. John Appleseed" /></div>
                 </div>
                 <div className="space-y-2"><Label>Contact Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address of the school" /></div>
-                <div className="space-y-2"><Label>Logo URL</Label><Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." /></div>
+                <div className="space-y-2">
+                    <Label htmlFor="logoFile">School Logo</Label>
+                    <div className="flex items-center gap-6">
+                        <Image src={logoUrl || 'https://placehold.co/64x64.png'} alt="Logo Preview" width={64} height={64} className="rounded-md border bg-muted" data-ai-hint="logo" />
+                        <Input 
+                            id="logoFile"
+                            type="file" 
+                            accept="image/*" 
+                            className="max-w-xs"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    setLogoUrl(URL.createObjectURL(file));
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={onClose}>Cancel</Button>
