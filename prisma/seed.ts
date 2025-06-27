@@ -26,12 +26,12 @@ async function main() {
   await prisma.learningMaterial.deleteMany().catch(() => {});
   await prisma.communication.deleteMany().catch(() => {});
   await prisma.result.deleteMany().catch(() => {});
-  await prisma.exam.deleteMany().catch(() => {});
   await prisma.attendance.deleteMany().catch(() => {});
   await prisma.feePayment.deleteMany().catch(() => {});
   await prisma.concessionAssignment.deleteMany().catch(() => {});
   await prisma.feeInvoice.deleteMany().catch(() => {});
   await prisma.concession.deleteMany().catch(() => {});
+  await prisma.penaltyTier.deleteMany().catch(() => {});
   await prisma.feeStructure.deleteMany().catch(() => {});
   await prisma.penaltyRule.deleteMany().catch(() => {});
   await prisma.enrollment.deleteMany().catch(() => {});
@@ -192,7 +192,7 @@ async function main() {
   const penaltyRule = await prisma.penaltyRule.create({ data: { name: 'Standard Late Fee', gracePeriod: 5, schoolId: school1.id }});
   const tuitionFee = await prisma.feeStructure.create({ data: { name: 'Tuition Fee - Fall Semester', amount: 2500, interval: 'ONE_TIME', schoolId: school1.id, penaltyRuleId: penaltyRule.id }});
   const siblingDiscount = await prisma.concession.create({ data: { name: 'Sibling Discount', type: 'PERCENTAGE', value: 10, description: 'For families with multiple children', schoolId: school1.id }});
-  await prisma.feeInvoice.create({
+  const feeInvoice = await prisma.feeInvoice.create({
       data: {
           studentId: student1.id,
           feeStructureId: tuitionFee.id,
@@ -201,6 +201,18 @@ async function main() {
           dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
           status: 'OVERDUE'
       }
+  });
+
+  await prisma.feePayment.create({
+    data: {
+        invoiceId: feeInvoice.id,
+        amount: 500, // Partial payment
+        paymentDate: new Date(),
+        method: 'BANK_TRANSFER',
+        status: 'PENDING_VERIFICATION',
+        reference: 'TRN-SEED-123',
+        schoolId: school1.id
+    }
   });
   console.log('Finished creating fee structures.');
 
@@ -219,6 +231,7 @@ async function main() {
           totalMarks: 12,
           isMock: false,
           resultVisibility: 'IMMEDIATE',
+          schoolId: school1.id,
           questions: {
               create: [
                   {

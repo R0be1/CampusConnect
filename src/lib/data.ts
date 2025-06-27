@@ -5,6 +5,7 @@
 import { StudentRegistrationFormValues } from '@/app/dashboard/students/student-form';
 import prisma from './prisma';
 import bcrypt from 'bcrypt';
+import { differenceInDays } from 'date-fns';
 
 export async function getDashboardStats(schoolId: string) {
   if (!schoolId) {
@@ -456,3 +457,107 @@ export async function getCommunicationHistory(senderId: string) {
 }
 
 export type CommunicationHistoryData = Awaited<ReturnType<typeof getCommunicationHistory>>;
+
+
+// --- Fees Data ---
+
+export async function getFeeStructures(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.feeStructure.findMany({
+        where: { schoolId },
+        include: { penaltyRule: true },
+        orderBy: { name: 'asc' },
+    });
+}
+
+export async function getPenaltyRules(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.penaltyRule.findMany({
+        where: { schoolId },
+        include: { tiers: true },
+        orderBy: { name: 'asc' },
+    });
+}
+
+export async function getConcessions(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.concession.findMany({
+        where: { schoolId },
+        include: { feeStructures: true },
+        orderBy: { name: 'asc' },
+    });
+}
+
+export async function getConcessionAssignments(schoolId: string, academicYearId: string) {
+    if (!schoolId || !academicYearId) return [];
+    return prisma.concessionAssignment.findMany({
+        where: { student: { schoolId }, academicYearId },
+        include: { student: { include: { user: true } }, concession: true },
+    });
+}
+
+export async function getInvoicesForStudent(studentId: string) {
+    const invoices = await prisma.feeInvoice.findMany({
+        where: { studentId },
+        include: {
+            feeStructure: {
+                include: {
+                    penaltyRule: {
+                        include: {
+                            tiers: true,
+                        },
+                    },
+                },
+            },
+            concessionAssignments: {
+                include: {
+                    concession: true,
+                },
+            },
+        },
+        orderBy: { dueDate: 'asc' },
+    });
+    
+    // This is a simplified calculation for demonstration
+    return invoices.map(invoice => {
+        let lateFee = 0;
+        const daysOverdue = differenceInDays(new Date(), invoice.dueDate);
+
+        if (invoice.status === 'OVERDUE' && invoice.feeStructure.penaltyRule && daysOverdue > invoice.feeStructure.penaltyRule.gracePeriod) {
+            lateFee = 20; // Simplified late fee
+        }
+
+        const concession = invoice.concessionAssignments[0]?.concession;
+        let concessionAmount = 0;
+        if (concession) {
+            concessionAmount = concession.type === 'FIXED' ? concession.value : (invoice.amount * concession.value) / 100;
+        }
+
+        return {
+            ...invoice,
+            lateFee,
+            concession: concession ? { name: concession.name, amount: concessionAmount } : null,
+            lateFeeDetails: lateFee > 0 ? 'Standard late fee applied.' : null,
+        }
+    });
+}
+
+export async function getPaymentHistory(studentId: string) {
+    return prisma.feePayment.findMany({
+        where: {
+            invoice: {
+                studentId: studentId,
+            }
+        },
+        include: {
+            invoice: {
+                include: {
+                    feeStructure: true,
+                },
+            },
+        },
+        orderBy: {
+            paymentDate: 'desc',
+        },
+    });
+}

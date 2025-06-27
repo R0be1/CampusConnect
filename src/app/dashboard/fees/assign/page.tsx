@@ -1,209 +1,51 @@
 
-"use client";
+import { redirect } from "next/navigation";
+import AssignClientPage from "./assign-client";
+import { getCurrentAcademicYear, getFirstSchool, getStudentsWithDetails, getConcessions, getConcessionAssignments } from "@/lib/data";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Trash2, UserPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAcademicYear } from "@/context/academic-year-context";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const studentsData: { id: string, name: string, grade: string, section: string }[] = [];
-const concessionSchemes: { id: string, name: string }[] = [];
-const initialAssignedConcessions: { id: string, studentId: string, studentName: string, concessionId: string, concessionName: string, academicYear: string }[] = [];
+export default async function AssignConcessionPage() {
+    const school = await getFirstSchool();
+    if (!school) redirect('/system-admin/schools');
 
-export default function AssignConcessionPage() {
-    const { toast } = useToast();
-    const { selectedYear } = useAcademicYear();
-    const [assignedConcessions, setAssignedConcessions] = useState(initialAssignedConcessions);
+    const academicYear = await getCurrentAcademicYear(school.id);
+    if (!academicYear) {
+        return <Alert><Info className="h-4 w-4" /><AlertTitle>No Academic Year</AlertTitle><AlertDescription>Please set a current academic year in settings.</AlertDescription></Alert>
+    }
 
-    // Form State
-    const [studentOpen, setStudentOpen] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
-
-    const [concessionOpen, setConcessionOpen] = useState(false);
-    const [selectedConcession, setSelectedConcession] = useState<string | null>(null);
+    const students = await getStudentsWithDetails(school.id);
+    const concessions = await getConcessions(school.id);
+    const assignments = await getConcessionAssignments(school.id, academicYear.id);
     
-    const filteredAssignments = assignedConcessions.filter(a => a.academicYear === selectedYear);
+    const formattedStudents = students.map(s => ({
+        id: s.id,
+        name: `${s.user.firstName} ${s.user.lastName}`,
+        grade: s.grade.name,
+        section: s.section.name,
+    }));
 
-    const handleAssign = () => {
-        if (!selectedStudent || !selectedConcession) return;
+    const formattedConcessions = concessions.map(c => ({
+        id: c.id,
+        name: c.name,
+    }));
 
-        const student = studentsData.find(s => s.id === selectedStudent);
-        const concession = concessionSchemes.find(c => c.id === selectedConcession);
-
-        if (!student || !concession) return;
-
-        const newAssignment = {
-            id: `ac-${Date.now()}`,
-            studentId: student.id,
-            studentName: student.name,
-            concessionId: concession.id,
-            concessionName: concession.name,
-            academicYear: selectedYear,
-        };
-
-        setAssignedConcessions(prev => [...prev, newAssignment]);
-        
-        toast({
-            title: "Concession Assigned",
-            description: `${concession.name} has been assigned to ${student.name}.`
-        });
-
-        // Reset form
-        setSelectedStudent(null);
-        setSelectedConcession(null);
-    };
-    
-    const handleDelete = (id: string) => {
-        setAssignedConcessions(assignedConcessions.filter(a => a.id !== id));
-    };
+    const formattedAssignments = assignments.map(a => ({
+        id: a.id,
+        studentId: a.studentId,
+        studentName: `${a.student.user.firstName} ${a.student.user.lastName}`,
+        concessionId: a.concessionId,
+        concessionName: a.concession.name,
+        academicYear: academicYear.name,
+    }));
 
     return (
-        <div className="grid gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Assign Concession to Student</CardTitle>
-                    <CardDescription>Select a student and a concession scheme to apply for the academic year: {selectedYear}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-6 md:grid-cols-3">
-                     <div className="space-y-2">
-                        <Label>Select Student</Label>
-                        <Popover open={studentOpen} onOpenChange={setStudentOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                                    {selectedStudent ? studentsData.find(s => s.id === selectedStudent)?.name : "Select student..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search student..." />
-                                    <CommandList>
-                                        <CommandEmpty>No students found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {studentsData.map((student) => (
-                                                <CommandItem key={student.id} value={student.name} onSelect={() => { setSelectedStudent(student.id); setStudentOpen(false); }}>
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedStudent === student.id ? "opacity-100" : "opacity-0")} />
-                                                    {student.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Select Concession</Label>
-                         <Popover open={concessionOpen} onOpenChange={setConcessionOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                                    {selectedConcession ? concessionSchemes.find(s => s.id === selectedConcession)?.name : "Select concession..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search scheme..." />
-                                    <CommandList>
-                                        <CommandEmpty>No schemes found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {concessionSchemes.map((scheme) => (
-                                                <CommandItem key={scheme.id} value={scheme.name} onSelect={() => { setSelectedConcession(scheme.id); setConcessionOpen(false); }}>
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedConcession === scheme.id ? "opacity-100" : "opacity-0")} />
-                                                    {scheme.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </CardContent>
-                <CardFooter className="flex justify-end">
-                    <Button onClick={handleAssign} disabled={!selectedStudent || !selectedConcession}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Assign Concession
-                    </Button>
-                </CardFooter>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Current Assignments for {selectedYear}</CardTitle>
-                    <CardDescription>A list of all students with concessions for the selected academic year.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="border rounded-lg">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Student Name</TableHead>
-                                    <TableHead>Concession Name</TableHead>
-                                    <TableHead>Academic Year</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredAssignments.length > 0 ? filteredAssignments.map(a => (
-                                    <TableRow key={a.id}>
-                                        <TableCell className="font-medium">{a.studentName}</TableCell>
-                                        <TableCell>{a.concessionName}</TableCell>
-                                        <TableCell>{a.academicYear}</TableCell>
-                                        <TableCell className="text-right">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                        This will revoke this concession from the student for this academic year. This cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(a.id)}>Confirm</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center">
-                                            No concessions assigned for this academic year.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+       <AssignClientPage
+            studentsData={formattedStudents}
+            concessionSchemes={formattedConcessions}
+            initialAssignedConcessions={formattedAssignments}
+            academicYear={academicYear.name}
+       />
     );
 }
