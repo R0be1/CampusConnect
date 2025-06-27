@@ -17,8 +17,8 @@ async function main() {
   console.log('Clearing existing data...');
   // Using .catch() to ignore errors if a model doesn't exist in the schema.
   // This makes the script resilient to schema variations and prevents crashes.
-  await prisma.testSubmission.deleteMany().catch(() => {});
   await prisma.testAnswer.deleteMany().catch(() => {});
+  await prisma.testSubmission.deleteMany().catch(() => {});
   await prisma.question.deleteMany().catch(() => {});
   await prisma.test.deleteMany().catch(() => {});
   await prisma.liveSessionRegistration.deleteMany().catch(() => {});
@@ -32,8 +32,8 @@ async function main() {
   await prisma.feeInvoice.deleteMany().catch(() => {});
   await prisma.concessionAssignment.deleteMany().catch(() => {});
   await prisma.concession.deleteMany().catch(() => {});
-  await prisma.penaltyRule.deleteMany().catch(() => {});
   await prisma.feeStructure.deleteMany().catch(() => {});
+  await prisma.penaltyRule.deleteMany().catch(() => {});
   await prisma.enrollment.deleteMany().catch(() => {});
   await prisma.course.deleteMany().catch(() => {});
   
