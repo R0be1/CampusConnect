@@ -29,8 +29,8 @@ async function main() {
   await prisma.exam.deleteMany().catch(() => {});
   await prisma.attendance.deleteMany().catch(() => {});
   await prisma.feePayment.deleteMany().catch(() => {});
-  await prisma.feeInvoice.deleteMany().catch(() => {});
   await prisma.concessionAssignment.deleteMany().catch(() => {});
+  await prisma.feeInvoice.deleteMany().catch(() => {});
   await prisma.concession.deleteMany().catch(() => {});
   await prisma.feeStructure.deleteMany().catch(() => {});
   await prisma.penaltyRule.deleteMany().catch(() => {});
@@ -210,11 +210,13 @@ async function main() {
                   {
                       text: 'Solve for x: 2x + 4 = 10',
                       type: 'FILL_IN_THE_BLANK',
+                      options: [],
                       correctAnswer: '3'
                   },
                    {
                       text: 'Is x=5 a solution to 3x = 15?',
                       type: 'TRUE_FALSE',
+                      options: ['true', 'false'],
                       correctAnswer: 'true'
                   }
               ]
