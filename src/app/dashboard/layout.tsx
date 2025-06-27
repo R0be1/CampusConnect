@@ -2,11 +2,13 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { School, UserCircle, Menu, PanelLeft, PanelRight } from 'lucide-react';
+import { UserCircle, Menu, PanelLeft, PanelRight, School } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
+import { SchoolProvider, useSchool } from '@/context/school-context';
 import { DashboardNav, NavItem } from '@/components/dashboard-nav';
 import { cn } from '@/lib/utils';
 
@@ -95,6 +97,16 @@ function AcademicYearDisplay() {
     )
 }
 
+function SchoolDisplay({ isCollapsed }: { isCollapsed: boolean }) {
+    const { currentSchool } = useSchool();
+    return (
+         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+            <Image src={currentSchool.logoUrl} width={24} height={24} alt="School Logo" data-ai-hint="logo" className="h-6 w-6" />
+            <span className={cn("font-headline text-xl", isCollapsed && "hidden")}>{currentSchool.name}</span>
+        </Link>
+    )
+}
+
 function InnerLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -106,10 +118,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
       <div className="hidden border-r bg-muted/40 md:flex md:flex-col justify-between">
         <div>
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-              <School className="h-6 w-6 text-primary" />
-              <span className={cn("font-headline text-xl", isCollapsed && "hidden")}>CampusConnect</span>
-            </Link>
+            <SchoolDisplay isCollapsed={isCollapsed} />
           </div>
           <div className="flex-1 overflow-auto">
             <DashboardNav items={navItems} isCollapsed={isCollapsed} />
@@ -133,10 +142,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
               <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                  <School className="h-6 w-6 text-primary" />
-                  <span className="font-headline text-xl">CampusConnect</span>
-                </Link>
+                <SchoolDisplay isCollapsed={false} />
               </div>
               <nav className="flex-1 overflow-auto">
                 <DashboardNav items={navItems} isCollapsed={false} />
@@ -162,8 +168,10 @@ function InnerLayout({ children }: { children: ReactNode }) {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   
   return (
-    <AcademicYearProvider>
-      <InnerLayout>{children}</InnerLayout>
-    </AcademicYearProvider>
+    <SchoolProvider>
+      <AcademicYearProvider>
+        <InnerLayout>{children}</InnerLayout>
+      </AcademicYearProvider>
+    </SchoolProvider>
   );
 }

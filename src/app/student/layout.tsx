@@ -2,12 +2,14 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { School, UserCircle, Bell, LogOut, Menu } from 'lucide-react';
+import Image from 'next/image';
+import { UserCircle, Bell, LogOut, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { SchoolProvider, useSchool } from '@/context/school-context';
 
 const navItems = [
   { href: '/student/dashboard', label: 'Dashboard' },
@@ -19,14 +21,15 @@ const navItems = [
   { href: '/student/profile', label: 'Profile' },
 ];
 
-export default function StudentPortalLayout({ children }: { children: ReactNode }) {
+function InnerLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
+    const { currentSchool } = useSchool();
   return (
      <div className="flex min-h-screen w-full flex-col">
        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link href="/student/dashboard" className="flex items-center gap-2 text-lg font-semibold md:text-base mr-4">
-            <School className="h-6 w-6 text-primary" />
+            <Image src={currentSchool.logoUrl} width={24} height={24} alt="School Logo" data-ai-hint="logo" className="h-6 w-6" />
             <span className="font-headline text-xl">Student Portal</span>
           </Link>
            {navItems.map(item => (
@@ -43,7 +46,7 @@ export default function StudentPortalLayout({ children }: { children: ReactNode 
           <SheetContent side="left">
             <nav className="grid gap-6 text-lg font-medium p-6">
               <Link href="/student/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
-                <School className="h-6 w-6 text-primary" />
+                 <Image src={currentSchool.logoUrl} width={24} height={24} alt="School Logo" data-ai-hint="logo" className="h-6 w-6" />
                 <span className="font-headline text-xl">Student Portal</span>
               </Link>
               {navItems.map(item => (
@@ -64,7 +67,7 @@ export default function StudentPortalLayout({ children }: { children: ReactNode 
             <span className="sr-only">Toggle user menu</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link href="/">
+              <Link href="/login">
                   <LogOut className="h-4 w-4" />
                   <span className="sr-only">Logout</span>
               </Link>
@@ -77,3 +80,12 @@ export default function StudentPortalLayout({ children }: { children: ReactNode 
     </div>
   );
 }
+
+export default function StudentPortalLayout({ children }: { children: ReactNode }) {
+  return (
+    <SchoolProvider>
+        <InnerLayout>{children}</InnerLayout>
+    </SchoolProvider>
+  )
+}
+
