@@ -1,6 +1,12 @@
+
+"use client";
+
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from "@/components/ui/label";
 
 const gradesData = [
   { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
@@ -16,10 +22,27 @@ const scoresData = [
   { exam: 'Essay', subject: 'English', score: '85/100', rank: '7th' },
 ];
 
+const academicYears = ["2024-2025", "2023-2024"];
+
 export default function AcademicsPage() {
+  const [selectedYear, setSelectedYear] = useState(academicYears[0]);
+
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold font-headline">Academics</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold font-headline">Academics</h1>
+        <div className="w-48 space-y-1">
+          <Label>Academic Year</Label>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+              </SelectContent>
+          </Select>
+        </div>
+      </div>
       <Tabs defaultValue="grades">
         <TabsList>
           <TabsTrigger value="grades">Grades</TabsTrigger>
