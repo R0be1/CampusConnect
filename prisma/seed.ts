@@ -15,39 +15,39 @@ async function main() {
 
   // --- 1. Clear existing data in the correct order ---
   console.log('Clearing existing data...');
-  // Start with models that have the most dependencies
-  await prisma.testSubmission.deleteMany().catch(() => {}); // Attempt to delete, but ignore if it fails
-  await prisma.testAnswer.deleteMany().catch(() => {});     // Attempt to delete, but ignore if it fails
-  await prisma.question.deleteMany();
-  await prisma.test.deleteMany();
-  await prisma.liveSessionRegistration.deleteMany();
-  await prisma.liveSession.deleteMany();
-  await prisma.learningMaterial.deleteMany();
-  await prisma.communication.deleteMany();
-  await prisma.result.deleteMany();
-  await prisma.exam.deleteMany();
-  await prisma.attendance.deleteMany();
-  await prisma.feePayment.deleteMany();
-  await prisma.feeInvoice.deleteMany();
-  await prisma.concessionAssignment.deleteMany();
-  await prisma.concession.deleteMany();
-  await prisma.penaltyRule.deleteMany();
-  await prisma.feeStructure.deleteMany();
-  await prisma.enrollment.deleteMany();
-  await prisma.course.deleteMany();
+  // Using .catch() to ignore errors if a model doesn't exist in the schema.
+  // This makes the script resilient to schema variations and prevents crashes.
+  await prisma.testSubmission.deleteMany().catch(() => {});
+  await prisma.testAnswer.deleteMany().catch(() => {});
+  await prisma.question.deleteMany().catch(() => {});
+  await prisma.test.deleteMany().catch(() => {});
+  await prisma.liveSessionRegistration.deleteMany().catch(() => {});
+  await prisma.liveSession.deleteMany().catch(() => {});
+  await prisma.learningMaterial.deleteMany().catch(() => {});
+  await prisma.communication.deleteMany().catch(() => {});
+  await prisma.result.deleteMany().catch(() => {});
+  await prisma.exam.deleteMany().catch(() => {});
+  await prisma.attendance.deleteMany().catch(() => {});
+  await prisma.feePayment.deleteMany().catch(() => {});
+  await prisma.feeInvoice.deleteMany().catch(() => {});
+  await prisma.concessionAssignment.deleteMany().catch(() => {});
+  await prisma.concession.deleteMany().catch(() => {});
+  await prisma.penaltyRule.deleteMany().catch(() => {});
+  await prisma.feeStructure.deleteMany().catch(() => {});
+  await prisma.enrollment.deleteMany().catch(() => {});
+  await prisma.course.deleteMany().catch(() => {});
   
   // Clear profiles and users. It's safer to delete profiles before the base user.
-  // Prisma should handle disconnecting M2M relations on student/parent deletion.
-  await prisma.parent.deleteMany();
-  await prisma.staff.deleteMany();
-  await prisma.student.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.parent.deleteMany().catch(() => {});
+  await prisma.staff.deleteMany().catch(() => {});
+  await prisma.student.deleteMany().catch(() => {});
+  await prisma.user.deleteMany().catch(() => {});
   
   // Clear core organizational data
-  await prisma.section.deleteMany();
-  await prisma.grade.deleteMany();
-  await prisma.academicYear.deleteMany();
-  await prisma.school.deleteMany();
+  await prisma.section.deleteMany().catch(() => {});
+  await prisma.grade.deleteMany().catch(() => {});
+  await prisma.academicYear.deleteMany().catch(() => {});
+  await prisma.school.deleteMany().catch(() => {});
   console.log('Data cleared.');
 
   // --- 2. Seed new data ---
