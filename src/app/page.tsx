@@ -35,7 +35,10 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2 pt-2">
                 <Button asChild type="submit" className="w-full font-bold">
-                  <Link href="/dashboard">Admin / Staff Login</Link>
+                  <Link href="/dashboard">Staff Login</Link>
+                </Button>
+                 <Button asChild variant="outline" className="w-full">
+                  <Link href="/system-admin/login">Admin Login</Link>
                 </Button>
                  <Button asChild variant="outline" className="w-full">
                   <Link href="/student/dashboard">Student Login</Link>
@@ -46,8 +49,9 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="mt-6 text-center text-sm">
-              <Link href="/system-admin/login" className="text-muted-foreground hover:underline">
-                System Administrator Login
+              Don't have an account?{" "}
+              <Link href="#" className="text-accent hover:underline">
+                Sign up
               </Link>
             </div>
           </CardContent>
