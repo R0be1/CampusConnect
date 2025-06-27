@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // MOCK DATA
 
@@ -48,6 +49,7 @@ const initialAssignedConcessions = [
 ]
 
 export default function AssignConcessionPage() {
+    const { toast } = useToast();
     const { selectedYear } = useAcademicYear();
     const [assignedConcessions, setAssignedConcessions] = useState(initialAssignedConcessions);
 
@@ -61,8 +63,32 @@ export default function AssignConcessionPage() {
     const filteredAssignments = assignedConcessions.filter(a => a.academicYear === selectedYear);
 
     const handleAssign = () => {
-        // Logic to add the new assignment to the state
-        console.log(`Assigning concession ${selectedConcession} to student ${selectedStudent} for year ${selectedYear}`);
+        if (!selectedStudent || !selectedConcession) return;
+
+        const student = studentsData.find(s => s.id === selectedStudent);
+        const concession = concessionSchemes.find(c => c.id === selectedConcession);
+
+        if (!student || !concession) return;
+
+        const newAssignment = {
+            id: `ac-${Date.now()}`,
+            studentId: student.id,
+            studentName: student.name,
+            concessionId: concession.id,
+            concessionName: concession.name,
+            academicYear: selectedYear,
+        };
+
+        setAssignedConcessions(prev => [...prev, newAssignment]);
+        
+        toast({
+            title: "Concession Assigned",
+            description: `${concession.name} has been assigned to ${student.name}.`
+        });
+
+        // Reset form
+        setSelectedStudent(null);
+        setSelectedConcession(null);
     };
     
     const handleDelete = (id: string) => {

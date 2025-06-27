@@ -26,9 +26,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 // MOCK DATA
-// In a real app, this would be fetched or come from a centralized store.
 const feeStructures = [
     { id: 'fs1', name: 'Tuition Fee - Fall (Grade 10)' },
     { id: 'fs2', name: 'Lab Fee - Chemistry' },
@@ -54,11 +54,30 @@ const initialConcessions: Concession[] = [
 ];
 
 export default function ConcessionsPage() {
+    const { toast } = useToast();
     const [concessions, setConcessions] = useState(initialConcessions);
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [editingConcession, setEditingConcession] = useState<Concession | null>(null);
 
     const handleDeleteConcession = (id: string) => {
         setConcessions(concessions.filter(c => c.id !== id));
+        toast({ title: "Concession Deleted", description: "The concession scheme has been removed." });
+    };
+    
+    const handleAddConcession = (newConcession: Omit<Concession, 'id'>) => {
+        const concessionToAdd = {
+            id: `con-${Date.now()}`,
+            ...newConcession,
+        };
+        setConcessions(prev => [concessionToAdd, ...prev]);
+        setIsAddDialogOpen(false);
+        toast({ title: "Concession Added", description: `${newConcession.name} has been created.` });
+    };
+
+    const handleUpdateConcession = (updatedConcession: Concession) => {
+        setConcessions(prev => prev.map(c => c.id === updatedConcession.id ? updatedConcession : c));
+        setEditingConcession(null);
+        toast({ title: "Concession Updated", description: `${updatedConcession.name} has been saved.` });
     };
 
     return (
@@ -68,25 +87,14 @@ export default function ConcessionsPage() {
                     <CardTitle>Concession Schemes</CardTitle>
                     <CardDescription>Define all scholarship and discount programs available to students.</CardDescription>
                 </div>
-                <Dialog>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild><Button size="sm"><PlusCircle className="mr-2 h-4 w-4"/> Add Concession</Button></DialogTrigger>
                     <DialogContent className="sm:max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Add New Concession</DialogTitle>
                             <DialogDescription>Define a new scholarship or discount rule.</DialogDescription>
                         </DialogHeader>
-                        {/* Form would go here, for simplicity we are just showing the edit dialog */}
-                         <div className="grid gap-4 py-4">
-                            <div className="space-y-2"><Label>Name</Label><Input placeholder="e.g., Alumni Discount" /></div>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label>Category</Label><Select><SelectTrigger><SelectValue placeholder="Select category"/></SelectTrigger><SelectContent><SelectItem value="Scholarship">Scholarship</SelectItem><SelectItem value="Discount">Discount</SelectItem></SelectContent></Select></div>
-                                <div className="space-y-2"><Label>Type</Label><Select><SelectTrigger><SelectValue placeholder="Select type"/></SelectTrigger><SelectContent><SelectItem value="Percentage">Percentage</SelectItem><SelectItem value="Fixed">Fixed</SelectItem></SelectContent></Select></div>
-                                <div className="space-y-2"><Label>Value</Label><Input type="number" placeholder="e.g., 15 or 100"/></div>
-                            </div>
-                             <div className="space-y-2"><Label>Description</Label><Textarea placeholder="Describe the concession." /></div>
-                            <div className="space-y-2"><Label>Applicable Fee Structures</Label><div>Multi-select component here</div></div>
-                        </div>
-                        <DialogFooter><Button>Save Concession</Button></DialogFooter>
+                        <ConcessionForm onSave={handleAddConcession} onClose={() => setIsAddDialogOpen(false)} />
                     </DialogContent>
                 </Dialog>
             </CardHeader>
@@ -150,26 +158,49 @@ export default function ConcessionsPage() {
                         <DialogTitle>Edit Concession</DialogTitle>
                         <DialogDescription>Make changes to the concession scheme.</DialogDescription>
                     </DialogHeader>
-                    {editingConcession && <EditConcessionForm concession={editingConcession} onClose={() => setEditingConcession(null)}/>}
+                    {editingConcession && <ConcessionForm concession={editingConcession} onSave={handleUpdateConcession} onClose={() => setEditingConcession(null)}/>}
                 </DialogContent>
             </Dialog>
         </Card>
     );
 }
 
-// --- Edit Form Component ---
+// --- Reusable Form Component ---
 
-function EditConcessionForm({ concession, onClose }: { concession: Concession, onClose: () => void }) {
-    const [name, setName] = useState(concession.name);
-    const [category, setCategory] = useState(concession.category);
-    const [type, setType] = useState(concession.type);
-    const [value, setValue] = useState(concession.value);
-    const [description, setDescription] = useState(concession.description);
-    const [selectedFees, setSelectedFees] = useState<string[]>(concession.applicableFeeStructureIds);
+type ConcessionFormProps = {
+    concession?: Concession;
+    onSave: (data: Concession | Omit<Concession, 'id'>) => void;
+    onClose: () => void;
+}
 
+function ConcessionForm({ concession, onSave, onClose }: ConcessionFormProps) {
+    const [name, setName] = useState(concession?.name || '');
+    const [category, setCategory] = useState<'Scholarship' | 'Discount'>(concession?.category || 'Discount');
+    const [type, setType] = useState<'Percentage' | 'Fixed'>(concession?.type || 'Percentage');
+    const [value, setValue] = useState(concession?.value || 0);
+    const [description, setDescription] = useState(concession?.description || '');
+    const [selectedFees, setSelectedFees] = useState<string[]>(concession?.applicableFeeStructureIds || []);
+
+    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let numValue = parseFloat(e.target.value);
+        if (isNaN(numValue)) numValue = 0;
+        
+        if (type === 'Percentage') {
+            if (numValue > 100) numValue = 100;
+            if (numValue < 0) numValue = 0;
+        } else {
+             if (numValue < 0) numValue = 0;
+        }
+        setValue(numValue);
+    }
+    
     const handleSave = () => {
-        console.log("Saving changes:", { ...concession, name, category, type, value, description, applicableFeeStructureIds: selectedFees });
-        onClose();
+        const data = { name, category, type, value, description, applicableFeeStructureIds: selectedFees };
+        if (concession?.id) {
+            onSave({ ...data, id: concession.id });
+        } else {
+            onSave(data);
+        }
     };
 
     return (
@@ -179,9 +210,9 @@ function EditConcessionForm({ concession, onClose }: { concession: Concession, o
                 <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2"><Label>Category</Label><Select value={category} onValueChange={(v: 'Scholarship' | 'Discount') => setCategory(v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="Scholarship">Scholarship</SelectItem><SelectItem value="Discount">Discount</SelectItem></SelectContent></Select></div>
                     <div className="space-y-2"><Label>Type</Label><Select value={type} onValueChange={(v: 'Percentage' | 'Fixed') => setType(v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="Percentage">Percentage</SelectItem><SelectItem value="Fixed">Fixed</SelectItem></SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Value</Label><Input type="number" value={value} onChange={(e) => setValue(parseFloat(e.target.value))}/></div>
+                    <div className="space-y-2"><Label>Value</Label><Input type="number" value={value} onChange={handleValueChange} max={type === 'Percentage' ? 100 : undefined} /></div>
                 </div>
-                    <div className="space-y-2"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+                <div className="space-y-2"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
                 <div className="space-y-2">
                     <Label>Applicable Fee Structures</Label>
                     <MultiSelectFeeStructures
@@ -192,7 +223,7 @@ function EditConcessionForm({ concession, onClose }: { concession: Concession, o
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave}>Save Changes</Button>
+                <Button onClick={handleSave}>{concession ? 'Save Changes' : 'Save Concession'}</Button>
             </DialogFooter>
         </>
     );
