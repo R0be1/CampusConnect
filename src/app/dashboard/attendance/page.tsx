@@ -1,33 +1,57 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, History } from "lucide-react";
-import { MarkAttendance } from "./mark-attendance";
-import { AttendanceRecords } from "./attendance-records";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { UserCheck, History, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function AttendancePage() {
+  const features = [
+    {
+      title: "Mark Attendance",
+      description: "Mark daily attendance for students class-wise.",
+      href: "/dashboard/attendance/mark",
+      icon: <UserCheck className="h-6 w-6 text-primary" />,
+    },
+    {
+      title: "Attendance Records",
+      description: "View monthly attendance summaries for classes.",
+      href: "/dashboard/attendance/records",
+      icon: <History className="h-6 w-6 text-primary" />,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <UserCheck className="h-8 w-8 text-primary" />
         <h1 className="text-3xl font-bold font-headline">Attendance</h1>
       </div>
-      <Tabs defaultValue="mark-attendance">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="mark-attendance">
-            <UserCheck className="mr-2 h-4 w-4" />
-            Mark Attendance
-          </TabsTrigger>
-          <TabsTrigger value="records">
-            <History className="mr-2 h-4 w-4" />
-            Attendance Records
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="mark-attendance">
-          <MarkAttendance />
-        </TabsContent>
-        <TabsContent value="records">
-          <AttendanceRecords />
-        </TabsContent>
-      </Tabs>
+      <p className="text-muted-foreground">
+        Mark daily attendance and view historical records.
+      </p>
+      <div className="grid gap-6 md:grid-cols-2">
+        {features.map((feature) => (
+          <Card key={feature.title} className="flex flex-col">
+            <CardHeader>
+              <div className="flex items-start gap-4">
+                {feature.icon}
+                <div className="flex-1">
+                  <CardTitle>{feature.title}</CardTitle>
+                  <CardDescription className="mt-2">{feature.description}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardFooter className="mt-auto">
+              <Button asChild className="w-full">
+                <Link href={feature.href}>
+                  Go to {feature.title.split(' ')[0]}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
