@@ -21,13 +21,14 @@ type School = {
   accountName: string;
   branch: string;
   contactPerson: string;
+  phone: string;
   address: string;
   logoUrl: string;
 };
 
 const initialSchools: School[] = [
-    { id: 'sch-01', name: 'Greenwood High', accountName: 'greenwood-high', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
-    { id: 'sch-02', name: 'Oakridge International', accountName: 'oakridge-intl', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
+    { id: 'sch-01', name: 'Greenwood High', accountName: 'greenwood-high', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', phone: '555-0101', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
+    { id: 'sch-02', name: 'Oakridge International', accountName: 'oakridge-intl', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', phone: '555-0102', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
 ];
 // End of mock data section
 
@@ -93,6 +94,10 @@ export default function SchoolProfilePage() {
                         <Label>Contact Person</Label>
                         <Input readOnly value={schoolData.contactPerson} />
                     </div>
+                    <div className="space-y-1">
+                        <Label>Contact Phone</Label>
+                        <Input readOnly value={schoolData.phone} />
+                    </div>
                 </div>
                  <div className="space-y-1">
                     <Label>Address</Label>
@@ -117,11 +122,12 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
     const [accountName, setAccountName] = useState(school.accountName);
     const [branch, setBranch] = useState(school.branch);
     const [contactPerson, setContactPerson] = useState(school.contactPerson);
+    const [phone, setPhone] = useState(school.phone);
     const [address, setAddress] = useState(school.address);
     const [logoUrl, setLogoUrl] = useState(school.logoUrl);
 
     const handleSave = () => {
-        onSave({ id: school.id, name, accountName, branch, contactPerson, address, logoUrl });
+        onSave({ id: school.id, name, accountName, branch, contactPerson, phone, address, logoUrl });
     };
 
     return (
@@ -131,9 +137,10 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
                     <div className="space-y-2"><Label>School Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Greenwood High" /></div>
                     <div className="space-y-2"><Label>School Account Name</Label><Input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="e.g., greenwood-high" /></div>
                 </div>
+                <div className="space-y-2"><Label>Branch Name</Label><Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="e.g., Main Campus"/></div>
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Branch Name</Label><Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="e.g., Main Campus"/></div>
                     <div className="space-y-2"><Label>Contact Person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Mr. John Appleseed" /></div>
+                    <div className="space-y-2"><Label>Contact Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-0101" /></div>
                 </div>
                 <div className="space-y-2"><Label>Contact Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address of the school" /></div>
                 <div className="space-y-2">
