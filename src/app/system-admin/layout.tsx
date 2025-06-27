@@ -1,7 +1,7 @@
-
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -82,6 +82,12 @@ function InnerLayout({ children }: { children: ReactNode }) {
 }
 
 export default function SystemAdminLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  if (pathname === '/system-admin/login') {
+    return <>{children}</>;
+  }
+
   return (
     <InnerLayout>{children}</InnerLayout>
   );
