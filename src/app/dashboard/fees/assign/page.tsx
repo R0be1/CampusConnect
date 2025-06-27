@@ -35,16 +35,16 @@ const studentsData = [
 ];
 
 const concessionSchemes = [
-    { id: 'sch01', name: 'Merit-Based Scholarship', type: 'Scholarship' },
-    { id: 'sch02', name: 'Sports Scholarship', type: 'Scholarship' },
-    { id: 'dsc01', name: 'Sibling Discount (10%)', type: 'Discount' },
-    { id: 'dsc02', name: 'Early Bird Discount ($50)', type: 'Discount' },
+    { id: 'con01', name: 'Merit-Based Scholarship' },
+    { id: 'con02', name: 'Sibling Discount' },
+    { id: 'con03', name: 'Early Bird Discount' },
+    { id: 'con04', name: 'Staff Child Discount' },
 ];
 
 const initialAssignedConcessions = [
-    { id: 'ac1', studentId: 's001', studentName: 'John Doe', concessionId: 'sch01', concessionName: 'Merit-Based Scholarship', academicYear: '2024-2025' },
-    { id: 'ac2', studentId: 's002', studentName: 'Alice Smith', concessionId: 'dsc01', concessionName: 'Sibling Discount (10%)', academicYear: '2024-2025' },
-    { id: 'ac3', studentId: 's005', studentName: 'Diana Prince', concessionId: 'dsc01', concessionName: 'Sibling Discount (10%)', academicYear: '2023-2024' },
+    { id: 'ac1', studentId: 's001', studentName: 'John Doe', concessionId: 'con01', concessionName: 'Merit-Based Scholarship', academicYear: '2024-2025' },
+    { id: 'ac2', studentId: 's002', studentName: 'Alice Smith', concessionId: 'con02', concessionName: 'Sibling Discount', academicYear: '2024-2025' },
+    { id: 'ac3', studentId: 's005', studentName: 'Diana Prince', concessionId: 'con02', concessionName: 'Sibling Discount', academicYear: '2023-2024' },
 ]
 
 export default function AssignConcessionPage() {
