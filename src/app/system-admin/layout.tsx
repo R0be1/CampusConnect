@@ -67,7 +67,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
           </Sheet>
           <div className="w-full flex-1" />
           <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">
+              <Link href="/">
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
               </Link>

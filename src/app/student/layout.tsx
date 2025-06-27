@@ -126,7 +126,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
               <span className="sr-only">Toggle user menu</span>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link href="/login">
+              <Link href="/">
                 <LogOut className="h-4 w-4" />
                 <span className="sr-only">Logout</span>
               </Link>

@@ -3,40 +3,51 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield } from "lucide-react";
+import { School } from "lucide-react";
 import Link from "next/link";
 
-export default function SystemAdminLoginPage() {
+export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <Card>
+        <Card className="shadow-2xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary p-3">
-              <Shield className="h-8 w-8 text-primary-foreground" />
+              <School className="h-8 w-8 text-primary-foreground" />
             </div>
-            <CardTitle className="font-headline text-3xl">System Administration</CardTitle>
-            <CardDescription>Please login to manage the platform.</CardDescription>
+            <CardTitle className="font-headline text-3xl">CampusConnect</CardTitle>
+            <CardDescription>Welcome! Please login to your respective portal.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Admin Email</Label>
-                <Input id="email" type="email" placeholder="admin@example.com" required />
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="m@example.com" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link href="#" className="text-sm text-accent hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input id="password" type="password" required />
               </div>
               <div className="space-y-2 pt-2">
                 <Button asChild type="submit" className="w-full font-bold">
-                  <Link href="/system-admin/dashboard">SysAdmin Login</Link>
+                  <Link href="/dashboard">Admin / Staff Login</Link>
+                </Button>
+                 <Button asChild variant="outline" className="w-full">
+                  <Link href="/student/dashboard">Student Login</Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/portal/dashboard">Parent Portal Login</Link>
                 </Button>
               </div>
             </div>
             <div className="mt-6 text-center text-sm">
-              <Link href="/login" className="text-accent hover:underline">
-                Are you a Staff, Student, or Parent? Login here
+              <Link href="/system-admin/login" className="text-muted-foreground hover:underline">
+                System Administrator Login
               </Link>
             </div>
           </CardContent>
