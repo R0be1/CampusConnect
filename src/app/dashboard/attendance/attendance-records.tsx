@@ -12,27 +12,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CalendarIcon, Eye, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { Grade, Section } from '@prisma/client';
+import { useToast } from '@/hooks/use-toast';
+import { getAttendanceSummaryAction } from './actions';
 
-// These are helpers, not mock data. They can remain.
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ['A', 'B', 'C', 'D'];
-
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const studentsByClass: Record<string, { id: string; name: string }[]> = {};
-const summaryData: Record<string, MonthlySummary> = {};
-
-type AttendanceSummaryRecord = {
+type DisplayRecord = {
+    id: string;
+    name: string;
     present: number;
     absent: number;
     late: number;
     excused: number;
 };
-type MonthlySummary = Record<string, AttendanceSummaryRecord>; 
 
-type DisplayRecord = { id: string; name: string } & AttendanceSummaryRecord;
+type AttendanceRecordsProps = {
+    grades: Grade[];
+    sections: Section[];
+}
 
-export function AttendanceRecords() {
+export function AttendanceRecords({ grades, sections }: AttendanceRecordsProps) {
+    const { toast } = useToast();
     const [selectedGrade, setSelectedGrade] = useState<string>("");
     const [selectedSection, setSelectedSection] = useState<string>("");
     const [month, setMonth] = useState<Date | undefined>(new Date());
@@ -40,29 +39,21 @@ export function AttendanceRecords() {
     const [records, setRecords] = useState<DisplayRecord[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
 
-    const handleFetchSummary = () => {
+    const handleFetchSummary = async () => {
         if (selectedGrade && selectedSection && month) {
             setIsLoading(true);
             setHasSearched(true);
             setRecords([]);
-            // In a real app, this timeout would be an API call to fetch data.
-            setTimeout(() => {
-                const classKey = `${selectedGrade}-${selectedSection}`;
-                const students = studentsByClass[classKey] || [];
-                const monthlySummary = summaryData[classKey] || {};
-                
-                const displayRecords = students.map(student => {
-                    const summary = monthlySummary[student.id] || { present: 0, absent: 0, late: 0, excused: 0 };
-                    return {
-                        id: student.id,
-                        name: student.name,
-                        ...summary,
-                    };
-                });
 
-                setRecords(displayRecords);
-                setIsLoading(false);
-            }, 700);
+            const result = await getAttendanceSummaryAction(selectedGrade, selectedSection, month.getMonth(), month.getFullYear());
+
+            if(result.success && result.summary) {
+                setRecords(result.summary);
+            } else {
+                 toast({ title: "Error", description: result.error, variant: "destructive" });
+            }
+
+            setIsLoading(false);
         }
     };
 
@@ -78,14 +69,14 @@ export function AttendanceRecords() {
                         <Label>Grade</Label>
                         <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                             <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                            <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+                            <SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1">
                         <Label>Section</Label>
                         <Select value={selectedSection} onValueChange={setSelectedSection}>
                             <SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger>
-                            <SelectContent>{sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1">
@@ -159,7 +150,7 @@ export function AttendanceRecords() {
                         <Eye className="h-4 w-4" />
                         <AlertTitle>No Records Found</AlertTitle>
                         <AlertDescription>
-                            No attendance summary data found for {selectedGrade}, Section {selectedSection} for the selected month.
+                            No attendance summary data found for the selected class and month.
                         </AlertDescription>
                     </Alert>
                 )}

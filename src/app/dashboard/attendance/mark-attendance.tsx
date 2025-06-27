@@ -14,28 +14,17 @@ import { CalendarIcon, UserCheck, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { Grade, Section } from "@prisma/client";
+import { useToast } from "@/hooks/use-toast";
+import { getClassRosterAction, saveAttendanceAction, AttendanceState, AttendanceStatus } from "./actions";
 
-// These are helpers, not mock data. They can remain.
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ['A', 'B', 'C', 'D'];
+type MarkAttendanceProps = {
+  grades: Grade[];
+  sections: Section[];
+}
 
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const studentsByClass: Record<string, { id: string; name: string }[]> = {};
-const attendanceSeedData: Record<string, AttendanceState> = {};
-
-
-type AttendanceStatus = "present" | "absent" | "late" | "excused";
-type AttendanceRecord = {
-  status: AttendanceStatus;
-  notes: string;
-};
-
-type AttendanceState = {
-  [studentId: string]: AttendanceRecord;
-};
-
-export function MarkAttendance() {
+export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
+  const { toast } = useToast();
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -46,28 +35,28 @@ export function MarkAttendance() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleFetchStudents = () => {
-    if (selectedGrade && selectedSection) {
+  const handleFetchStudents = async () => {
+    if (selectedGrade && selectedSection && date) {
       setIsLoading(true);
       setHasSearched(true);
-      // In a real app, this timeout would be an API call to fetch data.
-      setTimeout(() => {
-        const classKey = `${selectedGrade}-${selectedSection}`;
-        const fetchedStudents = studentsByClass[classKey] || [];
-        setStudents(fetchedStudents);
-
-        const seededAttendance = attendanceSeedData[classKey];
+      
+      const result = await getClassRosterAction(selectedGrade, selectedSection, date);
+      if (result.success && result.roster) {
+        setStudents(result.roster);
+        
         const initialAttendance: AttendanceState = {};
-
-        fetchedStudents.forEach(s => {
-          initialAttendance[s.id] = (seededAttendance && seededAttendance[s.id])
-            ? seededAttendance[s.id]
-            : { status: 'present', notes: '' };
+        result.roster.forEach(s => {
+          initialAttendance[s.id] = (result.attendance && result.attendance[s.id])
+            ? result.attendance[s.id]
+            : { status: 'PRESENT', notes: '' };
         });
         setAttendance(initialAttendance);
-        
-        setIsLoading(false);
-      }, 500);
+
+      } else {
+         toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+
+      setIsLoading(false);
     }
   };
 
@@ -88,17 +77,21 @@ export function MarkAttendance() {
   const markAllAsPresent = () => {
     const newAttendance: AttendanceState = {};
     students.forEach(s => {
-      newAttendance[s.id] = { status: 'present', notes: '' };
+      newAttendance[s.id] = { status: 'PRESENT', notes: '' };
     });
     setAttendance(newAttendance);
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
+      if (!date) return;
       setIsSaving(true);
-      console.log("Saving attendance:", attendance);
-      setTimeout(() => {
-          setIsSaving(false);
-      }, 1000);
+      const result = await saveAttendanceAction(attendance, date);
+      if(result.success) {
+          toast({ title: "Success", description: result.message });
+      } else {
+          toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+      setIsSaving(false);
   };
   
   return (
@@ -113,14 +106,14 @@ export function MarkAttendance() {
               <Label>Grade</Label>
               <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                 <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+                <SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
              <div className="space-y-1">
               <Label>Section</Label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
                 <SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger>
-                <SelectContent>{sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
              <div className="space-y-1">
@@ -158,7 +151,7 @@ export function MarkAttendance() {
             <div className="space-y-4 pt-4 border-t">
               <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">
-                    Roster for {selectedGrade}, Section {selectedSection}
+                    Roster for {grades.find(g => g.id === selectedGrade)?.name}, Section {sections.find(s => s.id === selectedSection)?.name}
                   </h3>
                   <Button variant="secondary" onClick={markAllAsPresent}>Mark All as Present</Button>
               </div>
@@ -172,7 +165,7 @@ export function MarkAttendance() {
                             </Avatar>
                             <div className="flex-grow">
                                 <p className="font-medium">{student.name}</p>
-                                {attendance[student.id]?.status === 'absent' && (
+                                {attendance[student.id]?.status === 'ABSENT' && (
                                     <Input 
                                       placeholder="Reason for absence (optional)" 
                                       className="mt-2 h-8"
@@ -182,10 +175,10 @@ export function MarkAttendance() {
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-2 justify-self-start md:justify-self-end">
-                                <Button size="sm" variant={attendance[student.id]?.status === 'present' ? 'default' : 'outline'} onClick={() => handleStatusChange(student.id, 'present')}>Present</Button>
-                                <Button size="sm" variant={attendance[student.id]?.status === 'absent' ? 'destructive' : 'outline'} onClick={() => handleStatusChange(student.id, 'absent')}>Absent</Button>
-                                <Button size="sm" variant={attendance[student.id]?.status === 'late' ? 'secondary' : 'outline'} onClick={() => handleStatusChange(student.id, 'late')}>Late</Button>
-                                <Button size="sm" variant={attendance[student.id]?.status === 'excused' ? 'outline' : 'outline'} className={cn(attendance[student.id]?.status === 'excused' && 'bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500')} onClick={() => handleStatusChange(student.id, 'excused')}>Excused</Button>
+                                <Button size="sm" variant={attendance[student.id]?.status === 'PRESENT' ? 'default' : 'outline'} onClick={() => handleStatusChange(student.id, 'PRESENT')}>Present</Button>
+                                <Button size="sm" variant={attendance[student.id]?.status === 'ABSENT' ? 'destructive' : 'outline'} onClick={() => handleStatusChange(student.id, 'ABSENT')}>Absent</Button>
+                                <Button size="sm" variant={attendance[student.id]?.status === 'LATE' ? 'secondary' : 'outline'} onClick={() => handleStatusChange(student.id, 'LATE')}>Late</Button>
+                                <Button size="sm" variant={attendance[student.id]?.status === 'EXCUSED' ? 'outline' : 'outline'} className={cn(attendance[student.id]?.status === 'EXCUSED' && 'bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500')} onClick={() => handleStatusChange(student.id, 'EXCUSED')}>Excused</Button>
                             </div>
                         </div>
                       ))}
@@ -199,7 +192,7 @@ export function MarkAttendance() {
                 <UserCheck className="h-4 w-4" />
                 <AlertTitle>No Students Found</AlertTitle>
                 <AlertDescription>
-                  No students were found for {selectedGrade}, Section {selectedSection}. Please check the class roster or select a different class.
+                  No students were found for the selected grade and section. Please check the class roster or select a different class.
                 </AlertDescription>
              </Alert>
           )}

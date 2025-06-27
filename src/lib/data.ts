@@ -257,3 +257,110 @@ export async function getScoresForStudent(studentId: string, academicYearId: str
         rank: `#${index + 1}` // Placeholder rank
     }));
 }
+
+// --- Attendance Data ---
+export async function getFirstTeacher(schoolId: string) {
+    return prisma.staff.findFirst({
+        where: { schoolId, staffType: 'TEACHER' },
+    });
+}
+
+export async function getStudentsForAttendance(gradeId: string, sectionId: string) {
+  if (!gradeId || !sectionId) return [];
+  return prisma.student.findMany({
+    where: { gradeId, sectionId },
+    select: { id: true, user: { select: { firstName: true, lastName: true } } },
+    orderBy: { user: { firstName: 'asc' } },
+  });
+}
+
+export async function getAttendanceForDate(gradeId: string, sectionId: string, date: Date) {
+  if (!gradeId || !sectionId) return [];
+
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return prisma.attendance.findMany({
+    where: {
+      student: { gradeId, sectionId },
+      date: { gte: startOfDay, lte: endOfDay },
+    },
+    select: { studentId: true, status: true, notes: true },
+  });
+}
+
+export async function upsertAttendance(
+  attendanceData: {
+    studentId: string;
+    status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+    notes: string;
+  }[],
+  date: Date,
+  markedById: string
+) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  return prisma.$transaction(async (tx) => {
+    for (const record of attendanceData) {
+      await tx.attendance.upsert({
+        where: {
+          studentId_date: {
+            studentId: record.studentId,
+            date: startOfDay,
+          },
+        },
+        update: {
+          status: record.status,
+          notes: record.notes,
+          markedById: markedById,
+        },
+        create: {
+          studentId: record.studentId,
+          date: startOfDay,
+          status: record.status,
+          notes: record.notes,
+          markedById: markedById,
+        },
+      });
+    }
+  });
+}
+
+export async function getAttendanceSummary(gradeId: string, sectionId: string, month: number, year: number) {
+    if (!gradeId || !sectionId) return [];
+
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0);
+
+    const students = await prisma.student.findMany({
+        where: { gradeId, sectionId },
+        select: { id: true, user: { select: { firstName: true, lastName: true } } },
+        orderBy: { user: { firstName: 'asc' } },
+    });
+
+    const attendanceRecords = await prisma.attendance.findMany({
+        where: {
+            student: { gradeId, sectionId },
+            date: { gte: startDate, lte: endDate },
+        },
+        select: { studentId: true, status: true },
+    });
+
+    const summary = students.map(student => {
+        const studentRecords = attendanceRecords.filter(r => r.studentId === student.id);
+        return {
+            id: student.id,
+            name: `${student.user.firstName} ${student.user.lastName}`,
+            present: studentRecords.filter(r => r.status === 'PRESENT').length,
+            absent: studentRecords.filter(r => r.status === 'ABSENT').length,
+            late: studentRecords.filter(r => r.status === 'LATE').length,
+            excused: studentRecords.filter(r => r.status === 'EXCUSED').length,
+        };
+    });
+
+    return summary;
+}
