@@ -78,6 +78,7 @@ const navItems: NavItem[] = [
   {
     label: 'Settings',
     subItems: [
+      { href: '/dashboard/settings/school-profile', label: 'School Profile' },
       { href: '/dashboard/settings/academic-year', label: 'Academic Year' },
       { href: '/dashboard/settings/grades-sections', label: 'Grades & Sections' },
       { href: '/dashboard/settings/courses', label: 'Courses' },
