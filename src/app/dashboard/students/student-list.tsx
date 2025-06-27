@@ -31,7 +31,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const [sectionFilter, setSectionFilter] = useState("all");
 
     const filteredStudents = students.filter(student => {
-        const name = `${student.user.firstName} ${student.user.lastName}`;
+        const name = `${student.firstName} ${student.lastName}`;
         const nameMatch = name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || student.grade.id === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || student.section.id === sectionFilter;
@@ -55,17 +55,17 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
         const parent = student.parents[0]; // Assuming one parent for simplicity
 
         return {
-            studentFirstName: student.user.firstName || "",
+            studentFirstName: student.firstName || "",
             studentMiddleName: student.user.middleName || "",
-            studentLastName: student.user.lastName || "",
+            studentLastName: student.lastName || "",
             studentDob: student.dob,
             studentGender: student.gender,
             grade: student.gradeId,
             section: student.sectionId,
             
-            parentFirstName: parent?.user.firstName || "",
+            parentFirstName: parent?.firstName || "",
             parentMiddleName: parent?.user.middleName || "",
-            parentLastName: parent?.user.lastName || "",
+            parentLastName: parent?.lastName || "",
             parentPhone: parent?.user.phone || "",
             parentRelation: parent?.relationToStudent || "Parent",
 
@@ -139,11 +139,11 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
                 const parent = student.parents[0]; // Assuming one parent for simplicity
                 return (
                     <TableRow key={student.id}>
-                    <TableCell className="font-medium">{`${student.user.firstName} ${student.user.lastName}`}</TableCell>
+                    <TableCell className="font-medium">{`${student.firstName} ${student.lastName}`}</TableCell>
                     <TableCell>{format(student.dob, 'PPP')}</TableCell>
                     <TableCell>{student.grade.name}</TableCell>
                     <TableCell>{student.section.name}</TableCell>
-                    <TableCell>{parent ? `${parent.user.firstName} ${parent.user.lastName}` : 'N/A'}</TableCell>
+                    <TableCell>{parent ? `${parent.firstName} ${parent.lastName}` : 'N/A'}</TableCell>
                     <TableCell>{parent?.user.phone ?? 'N/A'}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
@@ -174,7 +174,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
             <DialogHeader>
                 <DialogTitle>Edit Student Information</DialogTitle>
                 <DialogDescription>
-                Make changes to {editingStudent?.user.firstName}'s profile. Click save when you're done.
+                Make changes to {editingStudent?.firstName}'s profile. Click save when you're done.
                 </DialogDescription>
             </DialogHeader>
             {editingStudent && (

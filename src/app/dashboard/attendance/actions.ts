@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -23,7 +24,7 @@ export async function getClassRosterAction(gradeId: string, sectionId: string, d
 
         const roster = students.map(s => ({
             id: s.id,
-            name: `${s.user.firstName} ${s.user.lastName}`,
+            name: `${s.firstName} ${s.lastName}`,
         }));
 
         const attendance: AttendanceState = {};

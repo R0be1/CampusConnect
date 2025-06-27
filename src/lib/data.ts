@@ -103,8 +103,7 @@ export async function getStudentsWithDetails(schoolId: string) {
     },
   });
   
-  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
-  students.sort((a, b) => (a.user?.firstName ?? '').localeCompare(b.user?.firstName ?? ''));
+  students.sort((a, b) => (a.firstName ?? '').localeCompare(b.firstName ?? ''));
 
   return students;
 }
@@ -136,6 +135,8 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
     const parent = await tx.parent.create({
       data: {
         userId: parentUser.id,
+        firstName: data.parentFirstName,
+        lastName: data.parentLastName,
         schoolId: schoolId,
         relationToStudent: data.parentRelation,
       }
@@ -162,6 +163,8 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
     const student = await tx.student.create({
         data: {
             userId: studentUser.id,
+            firstName: data.studentFirstName,
+            lastName: data.studentLastName,
             schoolId: schoolId,
             gradeId: data.grade,
             sectionId: data.section,
@@ -229,7 +232,7 @@ export async function getGradesForStudent(studentId: string, academicYearId: str
     return enrollments.map(e => ({
         course: e.course.name,
         grade: e.results[0]?.grade || 'N/A',
-        teacher: `${e.course.teacher.user.firstName} ${e.course.teacher.user.lastName}`
+        teacher: `${e.course.teacher.firstName} ${e.course.teacher.lastName}`
     }));
 }
 
@@ -272,11 +275,10 @@ export async function getStudentsForAttendance(gradeId: string, sectionId: strin
 
   const students = await prisma.student.findMany({
     where: { gradeId, sectionId },
-    select: { id: true, user: { select: { firstName: true, lastName: true } } },
+    select: { id: true, firstName: true, lastName: true },
   });
 
-  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
-  students.sort((a,b) => a.user.firstName.localeCompare(b.user.lastName));
+  students.sort((a,b) => a.firstName.localeCompare(b.firstName));
   return students;
 }
 
@@ -344,7 +346,7 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
 
     const students = await prisma.student.findMany({
         where: { gradeId, sectionId },
-        select: { id: true, user: { select: { firstName: true, lastName: true } } },
+        select: { id: true, firstName: true, lastName: true },
     });
 
     const attendanceRecords = await prisma.attendance.findMany({
@@ -359,7 +361,7 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
         const studentRecords = attendanceRecords.filter(r => r.studentId === student.id);
         return {
             id: student.id,
-            name: `${student.user.firstName} ${student.user.lastName}`,
+            name: `${student.firstName} ${student.lastName}`,
             present: studentRecords.filter(r => r.status === 'PRESENT').length,
             absent: studentRecords.filter(r => r.status === 'ABSENT').length,
             late: studentRecords.filter(r => r.status === 'LATE').length,
@@ -379,12 +381,8 @@ export async function getStudentsForCommunication(schoolId: string) {
     where: { schoolId },
     select: {
       id: true,
-      user: {
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      },
+      firstName: true,
+      lastName: true,
       grade: {
         select: { name: true },
       },
@@ -394,11 +392,11 @@ export async function getStudentsForCommunication(schoolId: string) {
       parents: {
         select: {
           id: true,
+          firstName: true,
+          lastName: true,
           user: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
               phone: true,
             },
           },
@@ -408,8 +406,7 @@ export async function getStudentsForCommunication(schoolId: string) {
     },
   });
 
-  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
-  students.sort((a,b) => a.user.firstName.localeCompare(b.user.firstName));
+  students.sort((a,b) => a.firstName.localeCompare(b.firstName));
   return students;
 }
 
@@ -444,12 +441,8 @@ export async function getCommunicationHistory(senderId: string) {
       subject: true,
       student: {
         select: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
+          firstName: true,
+          lastName: true,
         },
       },
       sender: {
@@ -501,7 +494,7 @@ export async function getConcessionAssignments(schoolId: string, academicYearId:
     if (!schoolId || !academicYearId) return [];
     return prisma.concessionAssignment.findMany({
         where: { student: { schoolId }, academicYearId },
-        include: { student: { include: { user: true } }, concession: true },
+        include: { student: { include: { firstName: true, lastName: true } }, concession: true },
     });
 }
 
@@ -692,12 +685,8 @@ export async function getLearningMaterials(schoolId: string) {
             grade: true,
             uploader: {
                 select: {
-                    user: {
-                        select: {
-                            firstName: true,
-                            lastName: true,
-                        }
-                    }
+                    firstName: true,
+                    lastName: true,
                 }
             }
         },
@@ -845,7 +834,7 @@ async function getStudentsForExam(examId: string) {
         where: { gradeId: exam.gradeId, sectionId: exam.sectionId },
         include: { user: true },
     });
-    students.sort((a,b) => a.user.firstName.localeCompare(b.user.firstName));
+    students.sort((a,b) => a.firstName.localeCompare(b.firstName));
     return students;
 }
 
@@ -866,7 +855,7 @@ export async function getResultsForExamAction(examId: string) {
             const result = results.find(r => r.studentId === student.id);
             return {
                 id: student.id,
-                name: `${student.user.firstName} ${student.user.lastName}`,
+                name: `${student.firstName} ${student.lastName}`,
                 score: result?.score || '',
                 status: result?.status || 'PENDING'
             };
@@ -913,12 +902,12 @@ export async function getApprovalsForExamAction(examId: string) {
      try {
         const results = await prisma.examResult.findMany({
             where: { examId, status: { in: ['PENDING_APPROVAL', 'PENDING_REAPPROVAL'] } },
-            include: { student: { include: { user: true } } }
+            include: { student: { include: { firstName: true, lastName: true } } }
         });
          const data = results.map(r => ({
             id: r.id, 
             studentId: r.studentId,
-            name: `${r.student.user.firstName} ${r.student.user.lastName}`,
+            name: `${r.student.firstName} ${r.student.lastName}`,
             score: r.score,
             status: r.status,
          }));
