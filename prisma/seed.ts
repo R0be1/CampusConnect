@@ -311,6 +311,32 @@ async function main() {
       ]
   });
   console.log('Finished creating exams and results.');
+  
+  // --- Live Sessions ---
+  console.log('Creating live sessions...');
+  const liveSession = await prisma.liveSession.create({
+    data: {
+      topic: 'Advanced Algebra Concepts',
+      description: 'Deep dive into quadratic equations and functions.',
+      subject: 'Mathematics',
+      gradeId: grade10.id,
+      startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // One week from now
+      duration: 60,
+      fee: 25.00,
+      status: 'UPCOMING',
+      teacherId: teacherUser1.id,
+      schoolId: school1.id,
+    },
+  });
+
+  await prisma.liveSessionRegistration.create({
+    data: {
+      liveSessionId: liveSession.id,
+      studentId: student1.id,
+    }
+  });
+
+  console.log('Finished creating live sessions.');
 
 
   console.log('Seeding finished.');

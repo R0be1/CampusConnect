@@ -695,3 +695,52 @@ export async function getLearningMaterials(schoolId: string) {
         }
     });
 }
+
+
+// --- Live Sessions ---
+export async function getLiveSessions(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.liveSession.findMany({
+        where: { schoolId },
+        include: {
+            grade: true,
+            teacher: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                }
+            },
+            _count: {
+                select: { registrations: true },
+            }
+        },
+        orderBy: {
+            startTime: 'desc',
+        },
+    });
+}
+export type LiveSessionWithDetails = Awaited<ReturnType<typeof getLiveSessions>>[0];
+
+
+export async function getLiveSessionById(sessionId: string) {
+    if (!sessionId) return null;
+    return prisma.liveSession.findUnique({
+        where: { id: sessionId },
+        include: {
+             _count: {
+                select: { registrations: true },
+            }
+        }
+    });
+}
+export type LiveSessionForPage = NonNullable<Awaited<ReturnType<typeof getLiveSessionById>>>;
+
+export async function createLiveSession(data: any, schoolId: string, teacherId: string) {
+    return prisma.liveSession.create({
+        data: {
+            ...data,
+            schoolId,
+            teacherId
+        },
+    });
+}
