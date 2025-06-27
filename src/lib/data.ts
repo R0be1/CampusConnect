@@ -1,3 +1,4 @@
+
 // src/lib/data.ts
 'use server';
 
@@ -364,3 +365,94 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
 
     return summary;
 }
+
+// --- Communication Data ---
+export async function getStudentsForCommunication(schoolId: string) {
+  return prisma.student.findMany({
+    where: { schoolId },
+    select: {
+      id: true,
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+      grade: {
+        select: { name: true },
+      },
+      section: {
+        select: { name: true },
+      },
+      parents: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+            },
+          },
+        },
+        take: 1, // Assume one parent for simplicity
+      },
+    },
+    orderBy: { user: { firstName: 'asc' } },
+  });
+}
+
+export type StudentsForCommunication = Awaited<ReturnType<typeof getStudentsForCommunication>>;
+
+export async function createCommunication(
+  schoolId: string,
+  senderId: string,
+  receiverId: string,
+  studentId: string,
+  subject: string,
+  message: string
+) {
+  return prisma.communication.create({
+    data: {
+      schoolId,
+      senderId,
+      receiverId,
+      studentId,
+      subject,
+      message,
+    },
+  });
+}
+
+export async function getCommunicationHistory(senderId: string) {
+  return prisma.communication.findMany({
+    where: { senderId },
+    select: {
+      id: true,
+      sentAt: true,
+      subject: true,
+      student: {
+        select: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
+      sender: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: {
+      sentAt: 'desc',
+    },
+  });
+}
+
+export type CommunicationHistoryData = Awaited<ReturnType<typeof getCommunicationHistory>>;

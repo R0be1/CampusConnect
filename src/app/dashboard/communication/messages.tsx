@@ -15,15 +15,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { sendCommunicationAction } from "./actions";
 
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const allStudents: { id: string; name: string; grade: string; section: string; parentName: string; parentPhone: string; }[] = [];
-const myStudents: { id: string; name: string; grade: string; section: string; parentName: string; parentPhone: string; }[] = [];
+type StudentData = {
+    id: string;
+    name: string;
+    grade: string;
+    section: string;
+    parentId: string | undefined;
+    parentName: string;
+    parentPhone: string;
+};
 
-
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ['A', 'B', 'C', 'D'];
+type CommunicationComposerProps = {
+    allStudents: StudentData[];
+    grades: string[];
+    sections: string[];
+};
 
 const formSchema = z.object({
     studentId: z.string().min(1, "Please select a student."),
@@ -33,7 +42,8 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function CommunicationComposer() {
+export function CommunicationComposer({ allStudents, grades, sections }: CommunicationComposerProps) {
+    const { toast } = useToast();
     const [isSending, setIsSending] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -42,18 +52,14 @@ export function CommunicationComposer() {
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            studentId: "",
-            subject: "",
-            message: "",
-        },
+        defaultValues: { studentId: "", subject: "", message: "" },
     });
 
     useEffect(() => {
         form.resetField("studentId");
     }, [selectedGrade, selectedSection, form]);
     
-    const filteredStudents = myStudents.filter(student => {
+    const filteredStudents = allStudents.filter(student => {
         const gradeMatch = selectedGrade === "all" || student.grade === selectedGrade;
         const sectionMatch = selectedSection === "all" || student.section === selectedSection;
         return gradeMatch && sectionMatch;
@@ -62,16 +68,29 @@ export function CommunicationComposer() {
     const selectedStudentId = form.watch("studentId");
     const selectedStudent = allStudents.find(s => s.id === selectedStudentId);
 
-    const onSubmit = (data: FormData) => {
+    const onSubmit = async (data: FormData) => {
+        if (!selectedStudent?.parentId) {
+            toast({ title: "Error", description: "Selected student does not have a registered parent to contact.", variant: "destructive" });
+            return;
+        }
         setIsSending(true);
-        console.log("Sending message:", data);
-        setTimeout(() => {
-            setIsSending(false);
-            alert("Message sent successfully!");
+
+        const result = await sendCommunicationAction({
+            studentId: data.studentId,
+            receiverId: selectedStudent.parentId,
+            subject: data.subject,
+            message: data.message,
+        });
+
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
             form.reset();
             setSelectedGrade("all");
             setSelectedSection("all");
-        }, 1000);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSending(false);
     };
 
     return (

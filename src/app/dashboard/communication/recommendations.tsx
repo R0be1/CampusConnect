@@ -6,19 +6,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye, Filter } from "lucide-react";
 
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const communicationHistoryData: {
+type HistoryData = {
   id: string;
   date: string;
   student: string;
   subject: string;
   sentBy: string;
-  message: string;
-}[] = [];
+};
 
+type CommunicationHistoryProps = {
+    communicationHistoryData: HistoryData[];
+};
 
-export function CommunicationHistory() {
+export function CommunicationHistory({ communicationHistoryData }: CommunicationHistoryProps) {
   return (
     <Card>
       <CardHeader>
@@ -46,20 +46,28 @@ export function CommunicationHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {communicationHistoryData.map((msg) => (
-                <TableRow key={msg.id}>
-                  <TableCell>{msg.date}</TableCell>
-                  <TableCell className="font-medium">{msg.student}</TableCell>
-                  <TableCell>{msg.subject}</TableCell>
-                  <TableCell>{msg.sentBy}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </Button>
-                  </TableCell>
+              {communicationHistoryData.length > 0 ? (
+                communicationHistoryData.map((msg) => (
+                    <TableRow key={msg.id}>
+                    <TableCell>{msg.date}</TableCell>
+                    <TableCell className="font-medium">{msg.student}</TableCell>
+                    <TableCell>{msg.subject}</TableCell>
+                    <TableCell>{msg.sentBy}</TableCell>
+                    <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" disabled>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                        </Button>
+                    </TableCell>
+                    </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        No sent messages found.
+                    </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
