@@ -744,3 +744,83 @@ export async function createLiveSession(data: any, schoolId: string, teacherId: 
         },
     });
 }
+
+// --- Settings ---
+
+export async function updateSchoolProfile(schoolId: string, data: any) {
+    return prisma.school.update({
+        where: { id: schoolId },
+        data: data
+    });
+}
+
+export async function createAcademicYear(name: string, schoolId: string) {
+    return prisma.academicYear.create({
+        data: { name, schoolId }
+    });
+}
+
+export async function setCurrentAcademicYear(id: string, schoolId: string) {
+    return prisma.$transaction([
+        prisma.academicYear.updateMany({
+            where: { schoolId, isCurrent: true },
+            data: { isCurrent: false },
+        }),
+        prisma.academicYear.update({
+            where: { id },
+            data: { isCurrent: true },
+        }),
+    ]);
+}
+
+export async function deleteAcademicYear(id: string) {
+    return prisma.academicYear.delete({ where: { id } });
+}
+
+export async function createGrade(name: string, schoolId: string) {
+    return prisma.grade.create({
+        data: { name, schoolId }
+    });
+}
+
+export async function deleteGrade(id: string) {
+    return prisma.grade.delete({ where: { id } });
+}
+
+export async function createSection(name: string, schoolId: string) {
+    return prisma.section.create({
+        data: { name, schoolId }
+    });
+}
+
+export async function deleteSection(id: string) {
+    return prisma.section.delete({ where: { id } });
+}
+
+export async function getCoursesWithDetails(schoolId: string) {
+    return prisma.course.findMany({
+        where: { schoolId },
+        include: {
+            grade: true,
+            section: true,
+            teacher: {
+                include: {
+                    user: true
+                }
+            }
+        },
+        orderBy: { name: 'asc' }
+    });
+}
+
+export async function createCourse(data: { name: string, gradeId: string, sectionId: string, teacherId: string, schoolId: string }) {
+    return prisma.course.create({ data });
+}
+
+export async function updateCourse(id: string, data: { name: string, gradeId: string, sectionId: string, teacherId: string }) {
+    return prisma.course.update({ where: { id }, data });
+}
+
+export async function deleteCourse(id: string) {
+    return prisma.course.delete({ where: { id } });
+}

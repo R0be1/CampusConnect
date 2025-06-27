@@ -1,7 +1,4 @@
 
-"use client";
-
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,24 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSchool } from "@/context/school-context";
+import { getFirstSchool } from "@/lib/data";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
-// This mock data would live in a central store in a real app.
-const initialSchools = [
-    { id: 'sch-01', name: 'Greenwood High', accountName: 'greenwood-high', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', phone: '555-0101', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
-    { id: 'sch-02', name: 'Oakridge International', accountName: 'oakridge-intl', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', phone: '555-0102', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
-];
-
-export default function SchoolProfilePage() {
-    const { currentSchool } = useSchool();
-    
-    // This state simulates a database of all schools
-    const [schools, setSchools] = useState(initialSchools);
-    
-    const schoolData = schools.find(s => s.id === currentSchool.id);
+export default async function SchoolProfilePage() {
+    const schoolData = await getFirstSchool();
 
     if (!schoolData) {
-        return <Card><CardHeader><CardTitle>Error</CardTitle></CardHeader><CardContent>Could not load school data.</CardContent></Card>
+        return (
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No School Found</AlertTitle>
+                <AlertDescription>
+                    Please create a school in the system administration panel.
+                </AlertDescription>
+            </Alert>
+        )
     }
 
     return (
@@ -45,7 +41,7 @@ export default function SchoolProfilePage() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <Image src={schoolData.logoUrl} alt={schoolData.name} width={64} height={64} className="rounded-md" data-ai-hint="logo" />
+                    <Image src={schoolData.logoUrl || 'https://placehold.co/64x64.png'} alt={schoolData.name} width={64} height={64} className="rounded-md" data-ai-hint="logo" />
                     <div>
                         <h2 className="text-2xl font-bold font-headline">{schoolData.name}</h2>
                         <p className="text-muted-foreground">{schoolData.branch}</p>
