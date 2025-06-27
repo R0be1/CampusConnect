@@ -62,6 +62,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 const invoicesData = [
   {
@@ -126,9 +127,40 @@ const initialFeeStructureData = [
     { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee' },
 ];
 
-const initialPenaltyData = [
-    { id: 'p1', name: 'Standard Late Fee', gracePeriod: 3, penaltyType: 'Percentage', value: '5%', frequency: 'One-Time' },
-    { id: 'p2', name: 'Library Book Overdue', gracePeriod: 0, penaltyType: 'Fixed', value: '$1', frequency: 'Per Day' },
+type PenaltyTier = {
+    id: string;
+    fromDay: number;
+    toDay: number | null; // null for infinity
+    type: 'Percentage' | 'Fixed';
+    value: number;
+    frequency: 'Daily' | 'One-Time';
+};
+
+type PenaltyRule = {
+    id: string;
+    name: string;
+    gracePeriod: number;
+    tiers: PenaltyTier[];
+};
+
+const initialPenaltyData: PenaltyRule[] = [
+    {
+        id: 'p1',
+        name: 'Standard Late Fee',
+        gracePeriod: 3,
+        tiers: [
+            { id: 't1_1', fromDay: 1, toDay: 5, type: 'Percentage', value: 5, frequency: 'One-Time' },
+            { id: 't1_2', fromDay: 6, toDay: null, type: 'Percentage', value: 10, frequency: 'One-Time' },
+        ]
+    },
+    {
+        id: 'p2',
+        name: 'Library Book Overdue',
+        gracePeriod: 0,
+        tiers: [
+            { id: 't2_1', fromDay: 1, toDay: null, type: 'Fixed', value: 1, frequency: 'Daily' },
+        ]
+    },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -136,9 +168,9 @@ const sections = ["A", "B", "C", "D", "All"];
 
 export default function FeesPage() {
   const [feeSchemes, setFeeSchemes] = useState(initialFeeStructureData);
-  const [penalties, setPenalties] = useState(initialPenaltyData);
+  const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyData);
   const [selectedMethod, setSelectedMethod] = useState("bank");
-
+  const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
 
   const handleDeleteScheme = (id: string) => {
     setFeeSchemes(feeSchemes.filter(scheme => scheme.id !== id));
@@ -146,6 +178,46 @@ export default function FeesPage() {
 
   const handleDeletePenalty = (id: string) => {
     setPenalties(penalties.filter(penalty => penalty.id !== id));
+  };
+  
+  const handleEditPenaltyChange = <K extends keyof PenaltyRule>(field: K, value: PenaltyRule[K]) => {
+      if (!editingPenalty) return;
+      setEditingPenalty(prev => prev ? { ...prev, [field]: value } : null);
+  };
+  
+  const handleEditTierChange = (index: number, field: keyof PenaltyTier, value: any) => {
+      if (!editingPenalty) return;
+      const updatedTiers = [...editingPenalty.tiers];
+      updatedTiers[index] = { ...updatedTiers[index], [field]: value };
+      handleEditPenaltyChange('tiers', updatedTiers);
+  }
+
+  const addTierToEditForm = () => {
+    if (!editingPenalty) return;
+    const newTier: PenaltyTier = {
+        id: `new-${Date.now()}`,
+        fromDay: (editingPenalty.tiers[editingPenalty.tiers.length - 1]?.toDay || 0) + 1,
+        toDay: null,
+        type: 'Fixed',
+        value: 0,
+        frequency: 'One-Time'
+    };
+    handleEditPenaltyChange('tiers', [...editingPenalty.tiers, newTier]);
+  }
+
+  const removeTierFromEditForm = (index: number) => {
+    if (!editingPenalty) return;
+    const updatedTiers = [...editingPenalty.tiers];
+    updatedTiers.splice(index, 1);
+    handleEditPenaltyChange('tiers', updatedTiers);
+  }
+
+  const renderTierDetails = (tier: PenaltyTier) => {
+    const valuePrefix = tier.type === 'Fixed' ? '$' : '';
+    const valueSuffix = tier.type === 'Percentage' ? '%' : '';
+    const frequency = tier.frequency === 'Daily' ? ' / day' : ' (one-time)';
+    const period = `Days ${tier.fromDay} - ${tier.toDay ?? 'onwards'}`;
+    return `${period}: ${valuePrefix}${tier.value}${valueSuffix}${frequency}`;
   };
 
   return (
@@ -585,7 +657,7 @@ export default function FeesPage() {
                   <div>
                     <CardTitle>Penalty Rules</CardTitle>
                     <CardDescription>
-                      Define penalties for late payments.
+                      Define sequential penalties for late payments.
                     </CardDescription>
                   </div>
                   <Dialog>
@@ -594,74 +666,61 @@ export default function FeesPage() {
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Rule
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                     <DialogContent className="sm:max-w-3xl">
                       <DialogHeader>
                         <DialogTitle>Add New Penalty Rule</DialogTitle>
                         <DialogDescription>
-                          Define the conditions and charges for late fees.
+                          Define the conditions and charges for late fees, with sequential tiers.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="ruleName">Rule Name</Label>
-                          <Input
-                            id="ruleName"
-                            placeholder="e.g., Standard Tuition Late Fee"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="gracePeriod">
-                            Grace Period (days)
-                          </Label>
-                          <Input
-                            id="gracePeriod"
-                            type="number"
-                            placeholder="e.g., 3"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Penalty Type</Label>
-                          <RadioGroup
-                            defaultValue="percentage"
-                            className="flex gap-4 pt-2"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="percentage"
-                                id="r_percentage"
-                              />
-                              <Label htmlFor="r_percentage">Percentage</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="ruleName">Rule Name</Label>
+                                <Input id="ruleName" placeholder="e.g., Standard Tuition Late Fee" />
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="fixed" id="r_fixed" />
-                              <Label htmlFor="r_fixed">Fixed Amount</Label>
+                            <div className="space-y-2">
+                                <Label htmlFor="gracePeriod">Grace Period (days)</Label>
+                                <Input id="gracePeriod" type="number" placeholder="e.g., 3" />
                             </div>
-                          </RadioGroup>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="penaltyValue">Penalty Value</Label>
-                          <Input
-                            id="penaltyValue"
-                            type="number"
-                            placeholder="5 (for 5%) or 10 (for $10)"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="penaltyFrequency">
-                            Penalty Frequency
-                          </Label>
-                          <Select>
-                            <SelectTrigger id="penaltyFrequency">
-                              <SelectValue placeholder="Select Frequency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="daily">Per Day</SelectItem>
-                              <SelectItem value="one-time">
-                                One-Time Flat Fee
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                         <Separator />
+                         <div>
+                            <Label className="text-base font-medium">Penalty Tiers</Label>
+                            <div className="space-y-2 mt-2">
+                                {/* This would be a dynamic list in a real implementation */}
+                                <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">From Day</Label>
+                                        <Input type="number" defaultValue="1" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">To Day</Label>
+                                        <Input type="number" placeholder="Ongoing" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Type</Label>
+                                        <Select defaultValue="Fixed">
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent><SelectItem value="Fixed">Fixed</SelectItem><SelectItem value="Percentage">Percent</SelectItem></SelectContent>
+                                        </Select>
+                                    </div>
+                                     <div className="space-y-1">
+                                        <Label className="text-xs">Value</Label>
+                                        <Input type="number" placeholder="e.g., 10 or 5" />
+                                    </div>
+                                     <div className="space-y-1">
+                                        <Label className="text-xs">Frequency</Label>
+                                        <Select defaultValue="One-Time">
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent><SelectItem value="One-Time">One-Time</SelectItem><SelectItem value="Daily">Daily</SelectItem></SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Tier</Button>
+                         </div>
                       </div>
                       <DialogFooter>
                         <Button type="submit">Save Rule</Button>
@@ -676,8 +735,7 @@ export default function FeesPage() {
                     <TableRow>
                       <TableHead>Rule Name</TableHead>
                       <TableHead>Grace Period</TableHead>
-                      <TableHead>Penalty</TableHead>
-                      <TableHead>Frequency</TableHead>
+                      <TableHead>Details</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -688,91 +746,97 @@ export default function FeesPage() {
                           {penalty.name}
                         </TableCell>
                         <TableCell>{penalty.gracePeriod} days</TableCell>
-                        <TableCell>
-                          {penalty.penaltyType === "Fixed"
-                            ? penalty.value
-                            : `${penalty.value} of amount`}
+                        <TableCell className="text-xs text-muted-foreground">
+                            {penalty.tiers.length > 0 ? (
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <span className="cursor-help border-b border-dashed">
+                                            {penalty.tiers.length} Tier(s)
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <div className="space-y-1">
+                                            {penalty.tiers.map(tier => <p key={tier.id}>{renderTierDetails(tier)}</p>)}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : "No tiers defined"}
                         </TableCell>
-                        <TableCell>{penalty.frequency}</TableCell>
                         <TableCell className="text-right">
-                          <Dialog>
+                          <Dialog open={editingPenalty?.id === penalty.id} onOpenChange={(isOpen) => !isOpen && setEditingPenalty(null)}>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" onClick={() => setEditingPenalty(JSON.parse(JSON.stringify(penalty)))}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                             <DialogContent className="sm:max-w-3xl">
                               <DialogHeader>
                                 <DialogTitle>Edit Penalty Rule</DialogTitle>
                                 <DialogDescription>
-                                  Make changes to this penalty rule.
+                                  Make changes to this penalty rule and its tiers.
                                 </DialogDescription>
                               </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-ruleName-${penalty.id}`}>Rule Name</Label>
-                                  <Input
-                                    id={`edit-ruleName-${penalty.id}`}
-                                    defaultValue={penalty.name}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-gracePeriod-${penalty.id}`}>
-                                    Grace Period (days)
-                                  </Label>
-                                  <Input
-                                    id={`edit-gracePeriod-${penalty.id}`}
-                                    type="number"
-                                    defaultValue={penalty.gracePeriod}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Penalty Type</Label>
-                                  <RadioGroup
-                                    defaultValue={penalty.penaltyType.toLowerCase()}
-                                    className="flex gap-4 pt-2"
-                                  >
-                                    <div className="flex items-center space-x-2">
-                                      <RadioGroupItem
-                                        value="percentage"
-                                        id={`r_edit_percentage-${penalty.id}`}
-                                      />
-                                      <Label htmlFor={`r_edit_percentage-${penalty.id}`}>Percentage</Label>
+                              {editingPenalty && (
+                                <>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editRuleName">Rule Name</Label>
+                                            <Input id="editRuleName" value={editingPenalty.name} onChange={(e) => handleEditPenaltyChange('name', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="editGracePeriod">Grace Period (days)</Label>
+                                            <Input id="editGracePeriod" type="number" value={editingPenalty.gracePeriod} onChange={(e) => handleEditPenaltyChange('gracePeriod', parseInt(e.target.value))} />
+                                        </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                      <RadioGroupItem value="fixed" id={`r_edit_fixed-${penalty.id}`} />
-                                      <Label htmlFor={`r_edit_fixed-${penalty.id}`}>Fixed Amount</Label>
+                                    <Separator />
+                                    <div>
+                                        <Label className="text-base font-medium">Penalty Tiers</Label>
+                                        <div className="space-y-2 mt-2">
+                                            {editingPenalty.tiers.map((tier, index) => (
+                                                <div key={index} className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">From Day</Label>
+                                                        <Input type="number" value={tier.fromDay} onChange={(e) => handleEditTierChange(index, 'fromDay', parseInt(e.target.value))} />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">To Day</Label>
+                                                        <Input type="number" placeholder="Ongoing" value={tier.toDay ?? ''} onChange={(e) => handleEditTierChange(index, 'toDay', e.target.value ? parseInt(e.target.value) : null)} />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Type</Label>
+                                                        <Select value={tier.type} onValueChange={(val) => handleEditTierChange(index, 'type', val)}>
+                                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                                            <SelectContent><SelectItem value="Fixed">Fixed</SelectItem><SelectItem value="Percentage">Percent</SelectItem></SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Value</Label>
+                                                        <Input type="number" value={tier.value} onChange={(e) => handleEditTierChange(index, 'value', parseFloat(e.target.value))}/>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Frequency</Label>
+                                                        <Select value={tier.frequency} onValueChange={(val) => handleEditTierChange(index, 'frequency', val)}>
+                                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                                            <SelectContent><SelectItem value="One-Time">One-Time</SelectItem><SelectItem value="Daily">Daily</SelectItem></SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <Button variant="ghost" size="icon" onClick={() => removeTierFromEditForm(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <Button variant="outline" size="sm" className="mt-2" onClick={addTierToEditForm}><PlusCircle className="mr-2 h-4 w-4"/> Add Tier</Button>
                                     </div>
-                                  </RadioGroup>
                                 </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-penaltyValue-${penalty.id}`}>Penalty Value</Label>
-                                  <Input
-                                    id={`edit-penaltyValue-${penalty.id}`}
-                                    type="number"
-                                    defaultValue={penalty.value.replace(/[$,%]/g, '')}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-penaltyFrequency-${penalty.id}`}>
-                                    Penalty Frequency
-                                  </Label>
-                                  <Select defaultValue={penalty.frequency === 'Per Day' ? 'daily' : 'one-time'}>
-                                    <SelectTrigger id={`edit-penaltyFrequency-${penalty.id}`}>
-                                      <SelectValue placeholder="Select Frequency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="daily">Per Day</SelectItem>
-                                      <SelectItem value="one-time">
-                                        One-Time Flat Fee
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button type="submit">Save Changes</Button>
-                              </DialogFooter>
+                                <DialogFooter>
+                                    <Button type="submit" onClick={() => {
+                                        if (!editingPenalty) return;
+                                        setPenalties(penalties.map(p => p.id === editingPenalty.id ? editingPenalty : p));
+                                        setEditingPenalty(null);
+                                    }}>Save Changes</Button>
+                                </DialogFooter>
+                                </>
+                              )}
                             </DialogContent>
                           </Dialog>
                            <AlertDialog>
