@@ -1,13 +1,14 @@
 
 'use client';
 
-import { ReactNode } from 'react';
-import { School, UserCircle, Menu } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+import { School, UserCircle, Menu, PanelLeft, PanelRight } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
 import { DashboardNav, NavItem } from '@/components/dashboard-nav';
+import { cn } from '@/lib/utils';
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -93,19 +94,30 @@ function AcademicYearDisplay() {
 }
 
 function InnerLayout({ children }: { children: ReactNode }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
+    <div className={cn(
+        "grid min-h-screen w-full transition-[grid-template-columns] duration-300 ease-in-out",
+        isCollapsed ? "md:grid-cols-[68px_1fr]" : "md:grid-cols-[280px_1fr]"
+    )}>
+      <div className="hidden border-r bg-muted/40 md:flex md:flex-col justify-between">
+        <div>
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <School className="h-6 w-6 text-primary" />
-              <span className="font-headline text-xl">CampusConnect</span>
+              <span className={cn("font-headline text-xl", isCollapsed && "hidden")}>CampusConnect</span>
             </Link>
           </div>
           <div className="flex-1 overflow-auto">
-            <DashboardNav items={navItems} />
+            <DashboardNav items={navItems} isCollapsed={isCollapsed} />
           </div>
+        </div>
+        <div className="mt-auto p-4 border-t">
+          <Button variant="outline" size={isCollapsed ? "icon" : "default"} className="w-full" onClick={() => setIsCollapsed(!isCollapsed)}>
+              {isCollapsed ? <PanelRight className="h-5 w-5" /> : <><PanelLeft className="h-5 w-5" /><span>Collapse</span></>}
+              <span className="sr-only">Toggle Sidebar</span>
+          </Button>
         </div>
       </div>
       <div className="flex flex-col">
@@ -125,7 +137,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
                 </Link>
               </div>
               <nav className="flex-1 overflow-auto">
-                <DashboardNav items={navItems} />
+                <DashboardNav items={navItems} isCollapsed={false} />
               </nav>
             </SheetContent>
           </Sheet>
