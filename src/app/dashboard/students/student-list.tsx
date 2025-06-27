@@ -20,14 +20,15 @@ type Student = {
     parentName: string;
     email: string;
     enrollmentYear: string;
+    schoolId: string;
 };
 
 const studentsData: Student[] = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', email: 'jane.doe@example.com', enrollmentYear: '2024-2025' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', email: 'robert.smith@example.com', enrollmentYear: '2024-2025' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', email: 'mary.johnson@example.com', enrollmentYear: '2024-2025' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', email: 'lucy.brown@example.com', enrollmentYear: '2023-2024' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'hippolyta.prince@example.com', enrollmentYear: '2023-2024' },
+  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', email: 'jane.doe@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
+  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', email: 'robert.smith@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
+  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', email: 'mary.johnson@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-02' },
+  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', email: 'lucy.brown@example.com', enrollmentYear: '2023-2024', schoolId: 'sch-02' },
+  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'hippolyta.prince@example.com', enrollmentYear: '2023-2024', schoolId: 'sch-01' },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -60,7 +61,8 @@ export function StudentList() {
             section: data.section,
             parentName: `${data.parentFirstName} ${data.parentLastName}`,
             email: data.parentEmail,
-            enrollmentYear: editingStudent.enrollmentYear, // This field is not on the form, so we keep the original
+            enrollmentYear: editingStudent.enrollmentYear,
+            schoolId: editingStudent.schoolId,
         };
 
         setStudents(currentStudents => 
@@ -152,6 +154,7 @@ export function StudentList() {
                 <TableHead>Section</TableHead>
                 <TableHead>Parent Name</TableHead>
                 <TableHead>Enrollment Year</TableHead>
+                <TableHead>School ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -164,6 +167,7 @@ export function StudentList() {
                   <TableCell>{student.section}</TableCell>
                   <TableCell>{student.parentName}</TableCell>
                   <TableCell>{student.enrollmentYear}</TableCell>
+                  <TableCell className="font-mono text-xs">{student.schoolId}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
                         <Pencil className="h-4 w-4" />

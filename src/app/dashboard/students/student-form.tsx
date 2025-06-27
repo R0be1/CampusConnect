@@ -57,6 +57,7 @@ const studentRegistrationSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(5, "Invalid zip code"),
+  schoolId: z.string().optional(),
 });
 
 export type StudentRegistrationFormValues = z.infer<typeof studentRegistrationSchema>;

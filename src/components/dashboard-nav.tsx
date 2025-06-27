@@ -26,6 +26,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   Profile: UserCircle,
   "Parent Portal": UserCircle,
   "Student Portal": UserCircle,
+  "Manage Schools": School,
 };
 
 export type NavItem = {
@@ -114,7 +115,7 @@ export function DashboardNav({ items, isCollapsed }: DashboardNavProps) {
             );
           }
           
-          const isRootDashboard = item.href === '/dashboard';
+          const isRootDashboard = item.href === '/dashboard' || item.href === '/system-admin/dashboard';
           const isActive = item.href ? (isRootDashboard ? pathname === item.href : pathname.startsWith(item.href)) : false;
           
           return (
