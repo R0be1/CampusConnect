@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import Link from "next/link";
 
 type School = {
   id: string;
@@ -44,7 +45,6 @@ export default function SchoolsPage() {
     const { toast } = useToast();
     const [schools, setSchools] = useState(initialSchools);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [editingSchool, setEditingSchool] = useState<School | null>(null);
 
     const handleDeleteSchool = (id: string) => {
         setSchools(schools.filter(s => s.id !== id));
@@ -59,12 +59,6 @@ export default function SchoolsPage() {
         setSchools(prev => [schoolToAdd, ...prev]);
         setIsAddDialogOpen(false);
         toast({ title: "School Added", description: `${newSchool.name} has been created.` });
-    };
-
-    const handleUpdateSchool = (updatedSchool: School) => {
-        setSchools(prev => prev.map(s => s.id === updatedSchool.id ? updatedSchool : s));
-        setEditingSchool(null);
-        toast({ title: "School Updated", description: `${updatedSchool.name} has been saved.` });
     };
 
     return (
@@ -110,7 +104,11 @@ export default function SchoolsPage() {
                                     <TableCell>{school.contactPerson}</TableCell>
                                     <TableCell>{school.phone}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => setEditingSchool(school)}><Pencil className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/system-admin/schools/${school.id}/edit`}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Link>
+                                        </Button>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -133,21 +131,11 @@ export default function SchoolsPage() {
                     </Table>
                 </div>
             </CardContent>
-
-            <Dialog open={!!editingSchool} onOpenChange={(isOpen) => !isOpen && setEditingSchool(null)}>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Edit School</DialogTitle>
-                        <DialogDescription>Make changes to the school details.</DialogDescription>
-                    </DialogHeader>
-                    {editingSchool && <SchoolForm school={editingSchool} onSave={handleUpdateSchool} onClose={() => setEditingSchool(null)}/>}
-                </DialogContent>
-            </Dialog>
         </Card>
     );
 }
 
-// --- Reusable Form Component ---
+// --- Reusable Form Component for the "Add" Dialog ---
 
 type SchoolFormProps = {
     school?: School;
@@ -167,22 +155,11 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
     const [logoFile, setLogoFile] = useState<File | null>(null);
 
     const handleSave = () => {
-        if (!name.trim()) {
-            toast({ title: "Validation Error", description: "School Name is required.", variant: "destructive" });
-            return;
-        }
-        if (!accountName.trim()) {
-            toast({ title: "Validation Error", description: "Account Name is required.", variant: "destructive" });
-            return;
-        }
-        if (!branch.trim()) {
-            toast({ title: "Validation Error", description: "Branch is required.", variant: "destructive" });
-            return;
-        }
-        if (!contactPerson.trim()) {
-            toast({ title: "Validation Error", description: "Contact Person is required.", variant: "destructive" });
-            return;
-        }
+        if (!name.trim()) { toast({ title: "Validation Error", description: "School Name is required.", variant: "destructive" }); return; }
+        if (!accountName.trim()) { toast({ title: "Validation Error", description: "Account Name is required.", variant: "destructive" }); return; }
+        if (!branch.trim()) { toast({ title: "Validation Error", description: "Branch is required.", variant: "destructive" }); return; }
+        if (!contactPerson.trim()) { toast({ title: "Validation Error", description: "Contact Person is required.", variant: "destructive" }); return; }
+        if (!phone.trim()) { toast({ title: "Validation Error", description: "Phone Number is required.", variant: "destructive" }); return; }
 
         const data = { name, accountName, branch, contactPerson, phone, address, logoUrl };
         if (school?.id) {
@@ -194,7 +171,7 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
 
     return (
          <>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>School Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Greenwood High" /></div>
                     <div className="space-y-2"><Label>School Account Name</Label><Input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="e.g., greenwood-high" /></div>
