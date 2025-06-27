@@ -52,9 +52,9 @@ export async function getDashboardStats(schoolId: string) {
   ).length;
   
   const attendanceRate =
-    attendanceRecordsToday.length > 0
-      ? (presentCount / attendanceRecordsToday.length) * 100
-      : 100;
+    totalStudents > 0
+      ? (presentCount / totalStudents) * 100
+      : 0;
 
   return {
     totalStudents,
@@ -67,7 +67,7 @@ export async function getDashboardStats(schoolId: string) {
 export async function getFirstSchool() {
     return await prisma.school.findFirst({
         orderBy: {
-            name: 'asc'
+            createdAt: 'asc'
         }
     });
 }
@@ -89,7 +89,7 @@ export async function getSections(schoolId: string) {
 export async function getStudentsWithDetails(schoolId: string) {
   if (!schoolId) return [];
 
-  return prisma.student.findMany({
+  const students = await prisma.student.findMany({
     where: { schoolId },
     include: {
       user: true,
@@ -101,12 +101,12 @@ export async function getStudentsWithDetails(schoolId: string) {
         },
       },
     },
-    orderBy: {
-      user: {
-        firstName: 'asc',
-      },
-    },
   });
+  
+  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
+  students.sort((a, b) => (a.user?.firstName ?? '').localeCompare(b.user?.firstName ?? ''));
+
+  return students;
 }
 
 export type DetailedStudent = Awaited<ReturnType<typeof getStudentsWithDetails>>[0];
@@ -124,6 +124,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
         schoolId: schoolId,
         firstName: data.parentFirstName,
         lastName: data.parentLastName,
+        middleName: data.parentMiddleName,
         addressLine1: data.addressLine1,
         city: data.city,
         state: data.state,
@@ -136,14 +137,11 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
       data: {
         userId: parentUser.id,
         schoolId: schoolId,
-        firstName: data.parentFirstName,
-        lastName: data.parentLastName,
         relationToStudent: data.parentRelation,
       }
     });
 
     // 2. Create Student User and Profile
-    // Using a temporary unique phone number for the student user
     const studentPhone = `${data.parentPhone}-S${Date.now()}`;
     const studentUser = await tx.user.create({
         data: {
@@ -153,6 +151,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
             schoolId: schoolId,
             firstName: data.studentFirstName,
             lastName: data.studentLastName,
+            middleName: data.studentMiddleName,
             addressLine1: data.addressLine1,
             city: data.city,
             state: data.state,
@@ -166,8 +165,6 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
             schoolId: schoolId,
             gradeId: data.grade,
             sectionId: data.section,
-            firstName: data.studentFirstName,
-            lastName: data.studentLastName,
             dob: data.studentDob,
             gender: data.studentGender,
             parents: {
@@ -187,7 +184,7 @@ export async function getFirstStudent(schoolId: string) {
     return prisma.student.findFirst({
         where: { schoolId },
         include: { user: true },
-        orderBy: { user: { firstName: 'asc' } }
+        orderBy: { user: { createdAt: 'asc' } }
     });
 }
 
@@ -224,7 +221,7 @@ export async function getGradesForStudent(studentId: string, academicYearId: str
                 orderBy: {
                     createdAt: 'desc'
                 },
-                take: 1 // Get the latest result for the course
+                take: 1
             }
         }
     });
@@ -232,33 +229,32 @@ export async function getGradesForStudent(studentId: string, academicYearId: str
     return enrollments.map(e => ({
         course: e.course.name,
         grade: e.results[0]?.grade || 'N/A',
-        teacher: `${e.course.teacher.firstName} ${e.course.teacher.lastName}`
+        teacher: `${e.course.teacher.user.firstName} ${e.course.teacher.user.lastName}`
     }));
 }
 
 export async function getScoresForStudent(studentId: string, academicYearId: string) {
-    const submissions = await prisma.testSubmission.findMany({
+    const examResults = await prisma.examResult.findMany({
         where: {
             studentId,
-            test: {
-                endTime: {
-                    // This is a simplification; ideally we'd link tests to academic years
-                    // For now, let's assume tests within a certain time frame
-                }
+            exam: {
+                academicYearId,
             }
         },
         include: {
-            test: true
+            exam: true
         },
         orderBy: {
-          submittedAt: 'desc'
+          exam: {
+            name: 'asc'
+          }
         }
     });
     
-    return submissions.map((s, index) => ({
-        exam: s.test.name,
-        subject: s.test.subject,
-        score: `${s.score} / ${s.test.totalMarks}`,
+    return examResults.map((s, index) => ({
+        exam: s.exam.name,
+        subject: s.exam.subject,
+        score: s.score,
         rank: `#${index + 1}` // Placeholder rank
     }));
 }
@@ -273,11 +269,15 @@ export async function getFirstTeacher(schoolId: string) {
 
 export async function getStudentsForAttendance(gradeId: string, sectionId: string) {
   if (!gradeId || !sectionId) return [];
-  return prisma.student.findMany({
+
+  const students = await prisma.student.findMany({
     where: { gradeId, sectionId },
     select: { id: true, user: { select: { firstName: true, lastName: true } } },
-    orderBy: { user: { firstName: 'asc' } },
   });
+
+  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
+  students.sort((a,b) => a.user.firstName.localeCompare(b.user.lastName));
+  return students;
 }
 
 export async function getAttendanceForDate(gradeId: string, sectionId: string, date: Date) {
@@ -345,7 +345,6 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
     const students = await prisma.student.findMany({
         where: { gradeId, sectionId },
         select: { id: true, user: { select: { firstName: true, lastName: true } } },
-        orderBy: { user: { firstName: 'asc' } },
     });
 
     const attendanceRecords = await prisma.attendance.findMany({
@@ -368,12 +367,15 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
         };
     });
 
+    // Sort the final summary by name
+    summary.sort((a,b) => a.name.localeCompare(b.name));
+
     return summary;
 }
 
 // --- Communication Data ---
 export async function getStudentsForCommunication(schoolId: string) {
-  return prisma.student.findMany({
+  const students = await prisma.student.findMany({
     where: { schoolId },
     select: {
       id: true,
@@ -404,8 +406,11 @@ export async function getStudentsForCommunication(schoolId: string) {
         take: 1, // Assume one parent for simplicity
       },
     },
-    orderBy: { user: { firstName: 'asc' } },
   });
+
+  // Workaround: Sorting in JS because Prisma has issues with `orderBy: { user: { firstName: 'asc' } }`
+  students.sort((a,b) => a.user.firstName.localeCompare(b.user.firstName));
+  return students;
 }
 
 export type StudentsForCommunication = Awaited<ReturnType<typeof getStudentsForCommunication>>;
@@ -591,13 +596,15 @@ export async function getExamsWithPendingApprovals(schoolId: string, academicYea
 // --- Tests Data ---
 export async function createTestWithQuestions(data: any, schoolId: string, teacherId: string) {
     const { questions, ...testData } = data;
+    const totalMarks = questions.reduce((acc: number, q: any) => acc + (parseInt(q.points) || 0), 0)
+
     return prisma.test.create({
         data: {
             ...testData,
             schoolId,
             teacherId,
             duration: parseInt(testData.duration),
-            totalMarks: questions.reduce((acc: number, q: any) => acc + (q.points || 0), 0),
+            totalMarks,
             questions: {
                 create: questions.map((q: any) => ({
                     ...q,
@@ -685,8 +692,12 @@ export async function getLearningMaterials(schoolId: string) {
             grade: true,
             uploader: {
                 select: {
-                    firstName: true,
-                    lastName: true,
+                    user: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                        }
+                    }
                 }
             }
         },
@@ -824,3 +835,152 @@ export async function updateCourse(id: string, data: { name: string, gradeId: st
 export async function deleteCourse(id: string) {
     return prisma.course.delete({ where: { id } });
 }
+
+// --- Result Actions ---
+
+async function getStudentsForExam(examId: string) {
+    const exam = await prisma.exam.findUnique({ where: { id: examId } });
+    if (!exam) return [];
+    const students = await prisma.student.findMany({
+        where: { gradeId: exam.gradeId, sectionId: exam.sectionId },
+        include: { user: true },
+    });
+    students.sort((a,b) => a.user.firstName.localeCompare(b.user.firstName));
+    return students;
+}
+
+async function getResultsForExam(examId: string) {
+    return prisma.examResult.findMany({
+        where: { examId },
+        include: { student: { include: { user: true } } }
+    });
+}
+
+export async function getResultsForExamAction(examId: string) {
+    try {
+        const students = await getStudentsForExam(examId);
+        const results = await getResultsForExam(examId);
+        const exam = await prisma.exam.findUnique({ where: { id: examId } });
+
+        const data = students.map(student => {
+            const result = results.find(r => r.studentId === student.id);
+            return {
+                id: student.id,
+                name: `${student.user.firstName} ${student.user.lastName}`,
+                score: result?.score || '',
+                status: result?.status || 'PENDING'
+            };
+        });
+        return { success: true, data, gradingType: exam?.gradingType };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to fetch results." };
+    }
+}
+
+export async function submitResultsForApprovalAction(examId: string, results: {studentId: string, score: string, status: string}[]) {
+    try {
+        await prisma.$transaction(async (tx) => {
+            for (const result of results) {
+                if (!result.score) continue; 
+
+                const currentResult = await tx.examResult.findUnique({
+                    where: { examId_studentId: { examId, studentId: result.studentId } }
+                });
+
+                let newStatus = currentResult?.status || 'PENDING';
+                if (newStatus === 'PENDING') newStatus = 'PENDING_APPROVAL';
+                if (newStatus === 'APPROVED') newStatus = 'PENDING_REAPPROVAL';
+                
+                await tx.examResult.upsert({
+                    where: { examId_studentId: { examId, studentId: result.studentId } },
+                    update: { score: result.score, status: newStatus },
+                    create: { examId, studentId: result.studentId, score: result.score, status: 'PENDING_APPROVAL' },
+                });
+            }
+        });
+        revalidatePath('/dashboard/results/enter-results');
+        revalidatePath('/dashboard/results/approve-results');
+        return { success: true, message: "Results submitted for approval." };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to submit results." };
+    }
+}
+
+
+export async function getApprovalsForExamAction(examId: string) {
+     try {
+        const results = await prisma.examResult.findMany({
+            where: { examId, status: { in: ['PENDING_APPROVAL', 'PENDING_REAPPROVAL'] } },
+            include: { student: { include: { user: true } } }
+        });
+         const data = results.map(r => ({
+            id: r.id, 
+            studentId: r.studentId,
+            name: `${r.student.user.firstName} ${r.student.user.lastName}`,
+            score: r.score,
+            status: r.status,
+         }));
+        return { success: true, data };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to fetch approvals." };
+    }
+}
+
+export async function updateResultStatusAction(resultId: string, action: 'approve' | 'reject') {
+    try {
+        const result = await prisma.examResult.findUnique({ where: { id: resultId } });
+        if (!result) throw new Error("Result not found");
+
+        let newStatus: any = result.status;
+        if (action === 'approve') {
+            newStatus = result.status === 'PENDING_REAPPROVAL' ? 'FINALIZED' : 'APPROVED';
+        } else {
+            newStatus = result.status === 'PENDING_REAPPROVAL' ? 'APPROVED' : 'PENDING';
+        }
+
+        await prisma.examResult.update({
+            where: { id: resultId },
+            data: { status: newStatus }
+        });
+        
+        revalidatePath('/dashboard/results/approve-results');
+        return { success: true };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to update status." };
+    }
+}
+
+export async function bulkUpdateResultStatusAction(examId: string, action: 'approve' | 'reject') {
+    try {
+        const resultsToUpdate = await prisma.examResult.findMany({
+            where: { examId, status: { in: ['PENDING_APPROVAL', 'PENDING_REAPPROVAL'] } },
+        });
+
+        await prisma.$transaction(async (tx) => {
+            for (const result of resultsToUpdate) {
+                let newStatus: any = result.status;
+                if (action === 'approve') {
+                    newStatus = result.status === 'PENDING_REAPPROVAL' ? 'FINALIZED' : 'APPROVED';
+                } else {
+                    newStatus = result.status === 'PENDING_REAPPROVAL' ? 'APPROVED' : 'PENDING';
+                }
+                 await tx.examResult.update({
+                    where: { id: result.id },
+                    data: { status: newStatus }
+                });
+            }
+        });
+        
+        revalidatePath('/dashboard/results/approve-results');
+        return { success: true };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to bulk update." };
+    }
+}
+
+    
