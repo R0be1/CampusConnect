@@ -90,7 +90,10 @@ async function main() {
       name: 'Grade 10',
       schoolId: school1.id,
       sections: {
-        create: [{ name: 'A' }, { name: 'B' }],
+        create: [
+          { name: 'A', schoolId: school1.id }, 
+          { name: 'B', schoolId: school1.id }
+        ],
       },
     },
     include: { sections: true },
@@ -100,7 +103,10 @@ async function main() {
         name: 'Grade 9',
         schoolId: school1.id,
         sections: {
-            create: [{ name: 'A' }, { name: 'B' }]
+            create: [
+              { name: 'A', schoolId: school1.id },
+              { name: 'B', schoolId: school1.id }
+            ]
         }
     },
     include: { sections: true }
