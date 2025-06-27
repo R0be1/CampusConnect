@@ -21,8 +21,8 @@ export default function LoginPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="m@example.com" required />
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" type="tel" placeholder="e.g., (123) 456-7890" required />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

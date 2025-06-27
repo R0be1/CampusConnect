@@ -24,7 +24,6 @@ const parentProfile = {
   middleName: "Anne",
   lastName: "Doe",
   relation: "Mother",
-  email: "jane.doe@example.com",
   phone: "(123) 456-7890",
   alternatePhone: ""
 };
@@ -74,8 +73,8 @@ export default function ProfilePortalPage() {
                     <div><Label>First Name</Label><Input defaultValue={parentProfile.firstName} /></div>
                     <div><Label>Last Name</Label><Input defaultValue={parentProfile.lastName} /></div>
                 </div>
-                 <div><Label>Email</Label><Input type="email" defaultValue={parentProfile.email} /></div>
                  <div><Label>Phone Number</Label><Input type="tel" defaultValue={parentProfile.phone} /></div>
+                 <div><Label>Alternate Phone Number</Label><Input type="tel" defaultValue={parentProfile.alternatePhone} /></div>
                 <div className="flex justify-end">
                     <Button>
                         <Edit className="mr-2 h-4 w-4" />

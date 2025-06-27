@@ -18,13 +18,13 @@ import { cn } from "@/lib/utils";
 
 // --- Mock Data ---
 const allStudents = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', parentEmail: 'jane.doe@example.com' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', parentEmail: 'robert.smith@example.com' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', parentEmail: 'mary.johnson@example.com' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', parentEmail: 'lucy.brown@example.com' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'B', parentName: 'Hippolyta Prince', parentEmail: 'hippolyta.prince@example.com' },
-  { id: 's006', name: 'Peter Parker', grade: 'Grade 10', section: 'A', parentName: 'May Parker', parentEmail: 'may.parker@example.com' },
-  { id: 's007', name: 'Bruce Wayne', grade: 'Grade 11', section: 'C', parentName: 'Alfred Pennyworth', parentEmail: 'alfred.pennyworth@example.com' },
+  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', parentPhone: '(123) 456-7890' },
+  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', parentPhone: '(123) 456-7891' },
+  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', parentPhone: '(123) 456-7892' },
+  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', parentPhone: '(123) 456-7893' },
+  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'B', parentName: 'Hippolyta Prince', parentPhone: '(123) 456-7894' },
+  { id: 's006', name: 'Peter Parker', grade: 'Grade 10', section: 'A', parentName: 'May Parker', parentPhone: '(123) 456-7895' },
+  { id: 's007', name: 'Bruce Wayne', grade: 'Grade 11', section: 'C', parentName: 'Alfred Pennyworth', parentPhone: '(123) 456-7896' },
 ];
 
 const allCourses = [
@@ -192,7 +192,7 @@ export function CommunicationComposer() {
                         </div>
                         <div className="space-y-2">
                             <Label>To (Parent/Guardian)</Label>
-                            <Input readOnly value={selectedStudent ? `${selectedStudent.parentName} <${selectedStudent.parentEmail}>` : ''} placeholder="Parent details appear here" />
+                            <Input readOnly value={selectedStudent ? `${selectedStudent.parentName} (${selectedStudent.parentPhone})` : ''} placeholder="Parent details appear here" />
                         </div>
                     </div>
                     <div className="space-y-2">

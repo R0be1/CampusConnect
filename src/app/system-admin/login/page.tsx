@@ -21,8 +21,8 @@ export default function SystemAdminLoginPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Admin Email</Label>
-                <Input id="email" type="email" placeholder="admin@example.com" required />
+                <Label htmlFor="phone">Admin Phone Number</Label>
+                <Input id="phone" type="tel" placeholder="e.g., (123) 456-7890" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

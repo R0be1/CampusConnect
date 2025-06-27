@@ -18,17 +18,17 @@ type Student = {
     grade: string;
     section: string;
     parentName: string;
-    email: string;
+    phone: string;
     enrollmentYear: string;
     schoolId: string;
 };
 
 const studentsData: Student[] = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', email: 'jane.doe@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', email: 'robert.smith@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', email: 'mary.johnson@example.com', enrollmentYear: '2024-2025', schoolId: 'sch-02' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', email: 'lucy.brown@example.com', enrollmentYear: '2023-2024', schoolId: 'sch-02' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'hippolyta.prince@example.com', enrollmentYear: '2023-2024', schoolId: 'sch-01' },
+  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', phone: '(123) 456-7890', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
+  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', phone: '(123) 456-7891', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
+  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', phone: '(123) 456-7892', enrollmentYear: '2024-2025', schoolId: 'sch-02' },
+  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', phone: '(123) 456-7893', enrollmentYear: '2023-2024', schoolId: 'sch-02' },
+  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', phone: '(123) 456-7894', enrollmentYear: '2023-2024', schoolId: 'sch-01' },
 ];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
@@ -60,7 +60,7 @@ export function StudentList() {
             grade: data.grade,
             section: data.section,
             parentName: `${data.parentFirstName} ${data.parentLastName}`,
-            email: data.parentEmail,
+            phone: data.parentPhone,
             enrollmentYear: editingStudent.enrollmentYear,
             schoolId: editingStudent.schoolId,
         };
@@ -86,12 +86,11 @@ export function StudentList() {
             section: student.section,
             parentFirstName: parentNameParts[0] || "",
             parentLastName: parentNameParts.slice(1).join(' ') || "",
-            parentEmail: student.email,
+            parentPhone: student.phone,
             // Mocking other required fields for the form
             studentDob: new Date('2008-01-01'),
             studentGender: 'Male',
             parentRelation: 'Father',
-            parentPhone: '1234567890',
             addressLine1: '123 Mock Street',
             city: 'Mockville',
             state: 'MC',
@@ -153,6 +152,7 @@ export function StudentList() {
                 <TableHead>Grade</TableHead>
                 <TableHead>Section</TableHead>
                 <TableHead>Parent Name</TableHead>
+                <TableHead>Parent Contact</TableHead>
                 <TableHead>Enrollment Year</TableHead>
                 <TableHead>School ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -166,6 +166,7 @@ export function StudentList() {
                   <TableCell>{student.grade}</TableCell>
                   <TableCell>{student.section}</TableCell>
                   <TableCell>{student.parentName}</TableCell>
+                  <TableCell>{student.phone}</TableCell>
                   <TableCell>{student.enrollmentYear}</TableCell>
                   <TableCell className="font-mono text-xs">{student.schoolId}</TableCell>
                   <TableCell className="text-right">

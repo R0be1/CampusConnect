@@ -47,7 +47,6 @@ const studentRegistrationSchema = z.object({
   parentMiddleName: z.string().optional(),
   parentLastName: z.string().min(1, "Last name is required"),
   parentRelation: z.string().min(1, "Relationship is required"),
-  parentEmail: z.string().email("Invalid email address"),
   parentPhone: z.string().min(10, "Phone number must be at least 10 digits"),
   parentAlternatePhone: z.string().min(10, "Must be at least 10 digits").optional().or(z.literal('')),
   parentPhoto: z.any().optional(),
@@ -87,7 +86,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
       parentFirstName: "",
       parentMiddleName: "",
       parentLastName: "",
-      parentEmail: "",
       parentPhone: "",
       parentAlternatePhone: "",
       parentPhoto: undefined,
@@ -376,19 +374,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           {relations.map(rel => <SelectItem key={rel} value={rel}>{rel}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="parentEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="jane.doe@example.com" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
