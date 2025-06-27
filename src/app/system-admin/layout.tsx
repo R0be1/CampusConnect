@@ -19,7 +19,7 @@ export default function SystemAdminLayout({ children }: { children: ReactNode })
         
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
           <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
+              <Link href="/login">
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
               </Link>
