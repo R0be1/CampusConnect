@@ -17,6 +17,8 @@ async function main() {
   console.log('Clearing existing data...');
   // Using .catch() to ignore errors if a model doesn't exist in the schema.
   // This makes the script resilient to schema variations and prevents crashes.
+  await prisma.examResult.deleteMany().catch(() => {});
+  await prisma.exam.deleteMany().catch(() => {});
   await prisma.testAnswer.deleteMany().catch(() => {});
   await prisma.testSubmission.deleteMany().catch(() => {});
   await prisma.question.deleteMany().catch(() => {});
@@ -216,7 +218,7 @@ async function main() {
   });
   console.log('Finished creating fee structures.');
 
-  // --- Tests & Submissions ---
+  // --- Tests ---
   console.log('Creating tests...');
   const algebraTest = await prisma.test.create({
       data: {
@@ -224,7 +226,7 @@ async function main() {
           gradeId: grade10.id,
           sectionId: section10A.id,
           subject: 'Mathematics',
-          teacherId: teacher1.id,
+          teacherId: teacherUser1.id,
           startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
           endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
           duration: 60,
@@ -272,6 +274,43 @@ async function main() {
       ]
   })
   console.log('Created test submission.');
+
+  // --- Exams ---
+  console.log('Creating exams and results...');
+
+  const midTermMath = await prisma.exam.create({
+      data: {
+          name: 'Mid-term Exam',
+          weightage: 40,
+          gradingType: 'DECIMAL',
+          academicYearId: academicYear2425.id,
+          gradeId: grade10.id,
+          sectionId: section10A.id,
+          subject: 'Mathematics',
+          schoolId: school1.id,
+      }
+  });
+
+  const finalMath = await prisma.exam.create({
+      data: {
+          name: 'Final Exam',
+          weightage: 60,
+          gradingType: 'LETTER',
+          academicYearId: academicYear2425.id,
+          gradeId: grade10.id,
+          sectionId: section10A.id,
+          subject: 'Mathematics',
+          schoolId: school1.id,
+      }
+  });
+
+  await prisma.examResult.createMany({
+      data: [
+          { examId: midTermMath.id, studentId: student1.id, score: '85', status: 'PENDING_APPROVAL' },
+      ]
+  });
+  console.log('Finished creating exams and results.');
+
 
   console.log('Seeding finished.');
 }

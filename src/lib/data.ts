@@ -561,3 +561,25 @@ export async function getPaymentHistory(studentId: string) {
         },
     });
 }
+
+// --- Results Data ---
+export async function getExamsForYear(schoolId: string, academicYearId: string) {
+    return prisma.exam.findMany({
+        where: { schoolId, academicYearId },
+        orderBy: { name: 'asc' },
+    });
+}
+
+export async function getExamsWithPendingApprovals(schoolId: string, academicYearId: string) {
+    return prisma.exam.findMany({
+        where: {
+            schoolId,
+            academicYearId,
+            results: {
+                some: {
+                    status: { in: ['PENDING_APPROVAL', 'PENDING_REAPPROVAL'] }
+                }
+            }
+        },
+    });
+}
