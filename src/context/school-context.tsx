@@ -7,7 +7,8 @@ import { createContext, useState, ReactNode, useContext, useMemo } from 'react';
 // In a real application, this would be determined after login.
 const schoolData = { 
   id: 'sch-01', 
-  name: 'Greenwood High', 
+  name: 'Greenwood High',
+  accountName: 'greenwood-high',
   branch: 'Main Campus', 
   logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' 
 };
@@ -15,6 +16,7 @@ const schoolData = {
 type School = {
     id: string;
     name: string;
+    accountName: string;
     branch: string;
     logoUrl: string;
 };

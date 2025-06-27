@@ -27,6 +27,7 @@ import Image from "next/image";
 type School = {
   id: string;
   name: string;
+  accountName: string;
   branch: string;
   contactPerson: string;
   address: string;
@@ -34,8 +35,8 @@ type School = {
 };
 
 const initialSchools: School[] = [
-    { id: 'sch-01', name: 'Greenwood High', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
-    { id: 'sch-02', name: 'Oakridge International', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
+    { id: 'sch-01', name: 'Greenwood High', accountName: 'greenwood-high', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
+    { id: 'sch-02', name: 'Oakridge International', accountName: 'oakridge-intl', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
 ];
 
 export default function ManageSchoolsPage() {
@@ -89,6 +90,7 @@ export default function ManageSchoolsPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>School</TableHead>
+                                <TableHead>Account Name</TableHead>
                                 <TableHead>Branch</TableHead>
                                 <TableHead>Contact Person</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -101,6 +103,7 @@ export default function ManageSchoolsPage() {
                                         <Image src={school.logoUrl} alt={school.name} width={24} height={24} className="rounded-sm" data-ai-hint="logo" />
                                         {school.name}
                                     </TableCell>
+                                    <TableCell className="font-mono text-xs">{school.accountName}</TableCell>
                                     <TableCell>{school.branch}</TableCell>
                                     <TableCell>{school.contactPerson}</TableCell>
                                     <TableCell className="text-right">
@@ -151,13 +154,14 @@ type SchoolFormProps = {
 
 function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
     const [name, setName] = useState(school?.name || '');
+    const [accountName, setAccountName] = useState(school?.accountName || '');
     const [branch, setBranch] = useState(school?.branch || '');
     const [contactPerson, setContactPerson] = useState(school?.contactPerson || '');
     const [address, setAddress] = useState(school?.address || '');
     const [logoUrl, setLogoUrl] = useState(school?.logoUrl || '');
 
     const handleSave = () => {
-        const data = { name, branch, contactPerson, address, logoUrl };
+        const data = { name, accountName, branch, contactPerson, address, logoUrl };
         if (school?.id) {
             onSave({ ...data, id: school.id });
         } else {
@@ -170,9 +174,12 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>School Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Greenwood High" /></div>
-                    <div className="space-y-2"><Label>Branch Name</Label><Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="e.g., Main Campus"/></div>
+                    <div className="space-y-2"><Label>School Account Name</Label><Input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="e.g., greenwood-high" /></div>
                 </div>
-                <div className="space-y-2"><Label>Contact Person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Mr. John Appleseed" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Branch Name</Label><Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="e.g., Main Campus"/></div>
+                    <div className="space-y-2"><Label>Contact Person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Mr. John Appleseed" /></div>
+                </div>
                 <div className="space-y-2"><Label>Contact Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address of the school" /></div>
                 <div className="space-y-2"><Label>Logo URL</Label><Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." /></div>
             </div>
