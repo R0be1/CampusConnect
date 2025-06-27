@@ -5,39 +5,64 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Info } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
+import { useStudent } from "@/context/student-context";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const academicData = {
-  mathematics: {
-    exams: [
-      { name: 'Unit Test 1', score: 21, totalMarks: 25, rank: 5, classAverage: 78 },
-      { name: 'Mid-term', score: 46, totalMarks: 50, rank: 3, classAverage: 82 },
-      { name: 'Unit Test 2', score: 22, totalMarks: 25, rank: 4, classAverage: 80 },
-      { name: 'Final Exam', score: 95, totalMarks: 100, rank: 1, classAverage: 85 },
-    ],
-    overallScore: 92.0,
+const allAcademicData = {
+  "John Doe": {
+    mathematics: {
+      exams: [
+        { name: 'Unit Test 1', score: 21, totalMarks: 25, rank: 5, classAverage: 78 },
+        { name: 'Mid-term', score: 46, totalMarks: 50, rank: 3, classAverage: 82 },
+        { name: 'Unit Test 2', score: 22, totalMarks: 25, rank: 4, classAverage: 80 },
+        { name: 'Final Exam', score: 95, totalMarks: 100, rank: 1, classAverage: 85 },
+      ],
+      overallScore: 92.0,
+    },
+    history: {
+      exams: [
+        { name: 'Essay 1', score: 17.6, totalMarks: 20, rank: 5, classAverage: 85 },
+        { name: 'Mid-term', score: 41, totalMarks: 50, rank: 9, classAverage: 80 },
+        { name: 'Project', score: 27, totalMarks: 30, rank: 3, classAverage: 88 },
+        { name: 'Final Exam', score: 85, totalMarks: 100, rank: 7, classAverage: 82 },
+      ],
+      overallScore: 85.3,
+    },
+    science: {
+      exams: [
+          { name: 'Lab Report 1', score: 23.75, totalMarks: 25, rank: 2, classAverage: 88 },
+          { name: 'Mid-term', score: 45.5, totalMarks: 50, rank: 4, classAverage: 85 },
+          { name: 'Lab Report 2', score: 24, totalMarks: 25, rank: 1, classAverage: 90 },
+          { name: 'Final Exam', score: 93, totalMarks: 100, rank: 3, classAverage: 87 },
+      ],
+      overallScore: 93.1,
+    },
   },
-  history: {
-    exams: [
-      { name: 'Essay 1', score: 17.6, totalMarks: 20, rank: 5, classAverage: 85 },
-      { name: 'Mid-term', score: 41, totalMarks: 50, rank: 9, classAverage: 80 },
-      { name: 'Project', score: 27, totalMarks: 30, rank: 3, classAverage: 88 },
-      { name: 'Final Exam', score: 85, totalMarks: 100, rank: 7, classAverage: 82 },
-    ],
-    overallScore: 85.3,
-  },
-  science: {
-    exams: [
-        { name: 'Lab Report 1', score: 23.75, totalMarks: 25, rank: 2, classAverage: 88 },
-        { name: 'Mid-term', score: 45.5, totalMarks: 50, rank: 4, classAverage: 85 },
-        { name: 'Lab Report 2', score: 24, totalMarks: 25, rank: 1, classAverage: 90 },
-        { name: 'Final Exam', score: 93, totalMarks: 100, rank: 3, classAverage: 87 },
-    ],
-    overallScore: 93.1,
-  },
+  "Alice Smith": {
+    mathematics: {
+      exams: [
+        { name: 'Unit Test 1', score: 24, totalMarks: 25, rank: 1, classAverage: 78 },
+        { name: 'Mid-term', score: 49, totalMarks: 50, rank: 1, classAverage: 82 },
+        { name: 'Unit Test 2', score: 25, totalMarks: 25, rank: 1, classAverage: 80 },
+        { name: 'Final Exam', score: 99, totalMarks: 100, rank: 1, classAverage: 85 },
+      ],
+      overallScore: 98.0,
+    },
+    history: {
+      exams: [
+        { name: 'Essay 1', score: 19, totalMarks: 20, rank: 2, classAverage: 85 },
+        { name: 'Mid-term', score: 45, totalMarks: 50, rank: 3, classAverage: 80 },
+        { name: 'Project', score: 29, totalMarks: 30, rank: 1, classAverage: 88 },
+        { name: 'Final Exam', score: 94, totalMarks: 100, rank: 2, classAverage: 82 },
+      ],
+      overallScore: 93.3,
+    },
+  }
 };
+
 
 const chartConfig = {
   yourScore: {
@@ -51,11 +76,32 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function AcademicsPortalPage() {
+  const { selectedStudent } = useStudent();
+  const academicData = allAcademicData[selectedStudent.name as keyof typeof allAcademicData];
+
+  if (!academicData) {
+     return (
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <BookOpen className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-bold font-headline">Academic Performance for {selectedStudent.name}</h1>
+            </div>
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No Data Available</AlertTitle>
+                <AlertDescription>
+                    Academic performance data is not available for {selectedStudent.name}. Please select another student or check back later.
+                </AlertDescription>
+            </Alert>
+        </div>
+     )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <BookOpen className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Academic Performance</h1>
+        <h1 className="text-3xl font-bold font-headline">Academic Performance for {selectedStudent.name}</h1>
       </div>
       <p className="text-muted-foreground">
         A detailed overview of exam results, ranks, and performance trends for each subject.

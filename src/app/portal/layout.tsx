@@ -10,12 +10,17 @@ import {
   Menu,
   PanelLeft,
   PanelRight,
+  ChevronDown,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { DashboardNav, NavItem } from '@/components/dashboard-nav';
 import { cn } from '@/lib/utils';
+import { StudentProvider, useStudent } from '@/context/student-context';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 
 const navItems: NavItem[] = [
   { href: '/portal/dashboard', label: 'Dashboard' },
@@ -29,7 +34,45 @@ const navItems: NavItem[] = [
   { href: '/portal/profile', label: 'Profile' },
 ];
 
-export default function PortalLayout({ children }: { children: ReactNode }) {
+function StudentSelector() {
+    const { availableStudents, selectedStudent, setSelectedStudent } = useStudent();
+    
+    if (availableStudents.length <= 1) {
+        return (
+             <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                    <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold">{selectedStudent.name}</span>
+            </div>
+        )
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                         <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                {availableStudents.map(student => (
+                    <DropdownMenuItem key={student.id} onSelect={() => setSelectedStudent(student)}>
+                        {student.name}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
+function InnerLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -104,6 +147,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+            <StudentSelector />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Notifications</span>
@@ -130,4 +174,13 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
+}
+
+
+export default function PortalLayout({ children }: { children: ReactNode }) {
+  return (
+    <StudentProvider>
+        <InnerLayout>{children}</InnerLayout>
+    </StudentProvider>
+  )
 }

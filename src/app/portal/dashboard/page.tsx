@@ -1,4 +1,5 @@
 
+"use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,53 +8,84 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, BookOpen, CalendarDays, DollarSign, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
+import { useStudent } from "@/context/student-context";
 
-// Mock Data for a parent viewing their child "John Doe"
-const student = {
-  name: 'John Doe',
-  grade: 'Grade 10',
-  section: 'A',
-  avatar: 'https://placehold.co/80x80.png',
-  parentName: 'Jane Doe',
+// Mock Data for multiple children
+const allData = {
+    "John Doe": {
+        student: {
+            name: 'John Doe',
+            grade: 'Grade 10',
+            section: 'A',
+            avatar: 'https://placehold.co/80x80.png',
+            parentName: 'Jane Doe',
+        },
+        attendanceSummary: {
+            present: 18,
+            absent: 1,
+            late: 1,
+            total: 20,
+        },
+        gradesData: [
+            { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
+            { course: 'History', grade: 'B+', teacher: 'Ms. Jones' },
+            { course: 'Science', grade: 'A-', teacher: 'Dr. Brown' },
+            { course: 'English Literature', grade: 'B', teacher: 'Mrs. Davis' },
+        ],
+        feeSummary: {
+            outstanding: 2645.00,
+            invoices: [
+                { id: "INV-001", item: "Tuition Fee - Grade 10", total: "$2,625.00", dueDate: "2024-08-01", status: "Overdue" },
+                { id: "INV-002", item: "Library Book Fine", total: "$20.00", dueDate: "2024-07-25", status: "Overdue" },
+            ],
+        },
+        recentCommunications: [
+            { id: "msg-001", date: "2024-08-01", subject: "Update on Q2 Mathematics Performance", sentBy: "Mr. Smith", unread: false },
+            { id: "msg-004", date: "2024-08-05", subject: "Parent-Teacher Meeting Schedule", sentBy: "Admin Office", unread: true },
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    },
+    "Alice Smith": {
+        student: {
+            name: 'Alice Smith',
+            grade: 'Grade 9',
+            section: 'B',
+            avatar: 'https://placehold.co/80x80.png',
+            parentName: 'Jane Doe',
+        },
+        attendanceSummary: {
+            present: 20,
+            absent: 0,
+            late: 0,
+            total: 20,
+        },
+        gradesData: [
+            { course: 'Mathematics', grade: 'A+', teacher: 'Mr. Smith' },
+            { course: 'History', grade: 'A', teacher: 'Ms. Jones' },
+            { course: 'Science', grade: 'A', teacher: 'Dr. Brown' },
+            { course: 'English Literature', grade: 'A-', teacher: 'Mrs. Davis' },
+        ],
+        feeSummary: {
+            outstanding: 0.00,
+            invoices: [],
+        },
+        recentCommunications: [
+             { id: "msg-005", date: "2024-08-02", subject: "Welcome to Grade 9", sentBy: "Admin Office", unread: false },
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    }
 };
 
-const attendanceSummary = {
-  present: 18,
-  absent: 1,
-  late: 1,
-  total: 20,
-};
-const attendancePercentage = (attendanceSummary.present / attendanceSummary.total) * 100;
-
-const gradesData = [
-  { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
-  { course: 'History', grade: 'B+', teacher: 'Ms. Jones' },
-  { course: 'Science', grade: 'A-', teacher: 'Dr. Brown' },
-  { course: 'English Literature', grade: 'B', teacher: 'Mrs. Davis' },
-];
-
-const feeSummary = {
-  outstanding: 2645.00,
-  invoices: [
-    { id: "INV-001", item: "Tuition Fee - Grade 10", total: "$2,625.00", dueDate: "2024-08-01", status: "Overdue" },
-    { id: "INV-002", item: "Library Book Fine", total: "$20.00", dueDate: "2024-07-25", status: "Overdue" },
-  ],
-};
-
-const recentCommunications = [
-    { id: "msg-001", date: "2024-08-01", subject: "Update on Q2 Mathematics Performance", sentBy: "Mr. Smith", unread: false },
-    { id: "msg-004", date: "2024-08-05", subject: "Parent-Teacher Meeting Schedule", sentBy: "Admin Office", unread: true },
-];
-
-// Sort communications by date, most recent first
-recentCommunications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export default function ParentDashboardPage() {
+  const { selectedStudent } = useStudent();
+  const data = allData[selectedStudent.name as keyof typeof allData];
+
+  const attendancePercentage = (data.attendanceSummary.present / data.attendanceSummary.total) * 100;
+
   return (
     <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-bold font-headline">Welcome, {student.parentName}!</h1>
-            <p className="text-muted-foreground">Here's a summary of {student.name}'s progress and school activities.</p>
+            <h1 className="text-3xl font-bold font-headline">Welcome, {data.student.parentName}!</h1>
+            <p className="text-muted-foreground">Here's a summary of {data.student.name}'s progress and school activities.</p>
         </div>
       
         <div className="grid gap-6 lg:grid-cols-3">
@@ -72,7 +104,7 @@ export default function ParentDashboardPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {gradesData.map((item) => (
+                                {data.gradesData.map((item) => (
                                     <TableRow key={item.course}>
                                     <TableCell className="font-medium">{item.course}</TableCell>
                                     <TableCell>{item.teacher}</TableCell>
@@ -96,20 +128,24 @@ export default function ParentDashboardPage() {
                         <CardTitle className="flex items-center gap-2"><MessageCircle className="h-5 w-5" /> Recent Communications</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {recentCommunications.map(msg => (
+                        {data.recentCommunications.length > 0 ? data.recentCommunications.map(msg => (
                             <div key={msg.id} className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50">
                                  <div className={`mt-1.5 h-2 w-2 rounded-full ${msg.unread ? 'bg-primary animate-pulse' : 'bg-transparent'}`} />
                                  <div className="flex-1">
                                     <p className={`font-medium ${msg.unread ? 'text-foreground' : 'text-muted-foreground'}`}>{msg.subject}</p>
                                     <p className="text-sm text-muted-foreground">From: {msg.sentBy} on {msg.date}</p>
                                  </div>
-                                <Button variant="ghost" size="sm">View</Button>
+                                <Button variant="ghost" size="sm" asChild><Link href="/portal/communication">View</Link></Button>
                             </div>
-                        ))}
+                        )) : (
+                            <p className="text-sm text-center text-muted-foreground py-4">No recent communications.</p>
+                        )}
                     </CardContent>
                      <CardFooter>
-                         <Button variant="outline" className="w-full">
-                            View All Messages <ArrowRight className="ml-2 h-4 w-4" />
+                         <Button variant="outline" className="w-full" asChild>
+                            <Link href="/portal/communication">
+                                View All Messages <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
                         </Button>
                     </CardFooter>
                 </Card>
@@ -120,17 +156,19 @@ export default function ParentDashboardPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0">
                          <Avatar className="h-16 w-16 border">
-                            <AvatarImage src={student.avatar} data-ai-hint="person portrait" />
-                            <AvatarFallback>{student.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                            <AvatarImage src={data.student.avatar} data-ai-hint="person portrait" />
+                            <AvatarFallback>{data.student.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                         </Avatar>
                         <div className="grid gap-1">
-                            <CardTitle className="text-xl">{student.name}</CardTitle>
-                            <CardDescription>{student.grade}, Section {student.section}</CardDescription>
+                            <CardTitle className="text-xl">{data.student.name}</CardTitle>
+                            <CardDescription>{data.student.grade}, Section {data.student.section}</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Button className="w-full">
-                           <User className="mr-2 h-4 w-4" /> View Full Profile
+                        <Button className="w-full" asChild>
+                           <Link href="/portal/profile">
+                            <User className="mr-2 h-4 w-4" /> View Full Profile
+                           </Link>
                         </Button>
                     </CardContent>
                 </Card>
@@ -150,15 +188,15 @@ export default function ParentDashboardPage() {
                         </div>
                         <div className="flex justify-around text-center text-sm pt-2">
                             <div>
-                                <p className="font-bold text-lg">{attendanceSummary.present}</p>
+                                <p className="font-bold text-lg">{data.attendanceSummary.present}</p>
                                 <p className="text-muted-foreground">Present</p>
                             </div>
                              <div>
-                                <p className="font-bold text-lg text-destructive">{attendanceSummary.absent}</p>
+                                <p className="font-bold text-lg text-destructive">{data.attendanceSummary.absent}</p>
                                 <p className="text-muted-foreground">Absent</p>
                             </div>
                              <div>
-                                <p className="font-bold text-lg">{attendanceSummary.late}</p>
+                                <p className="font-bold text-lg">{data.attendanceSummary.late}</p>
                                 <p className="text-muted-foreground">Late</p>
                             </div>
                         </div>
@@ -170,23 +208,34 @@ export default function ParentDashboardPage() {
                         <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Fee Status</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center mb-4 p-4 bg-destructive/10 rounded-lg">
-                            <p className="text-sm text-destructive font-medium">Outstanding Balance</p>
-                            <p className="text-3xl font-bold text-destructive">${feeSummary.outstanding.toFixed(2)}</p>
-                        </div>
+                        {data.feeSummary.outstanding > 0 ? (
+                             <div className="text-center mb-4 p-4 bg-destructive/10 rounded-lg">
+                                <p className="text-sm text-destructive font-medium">Outstanding Balance</p>
+                                <p className="text-3xl font-bold text-destructive">${data.feeSummary.outstanding.toFixed(2)}</p>
+                            </div>
+                        ) : (
+                             <div className="text-center mb-4 p-4 bg-green-500/10 rounded-lg">
+                                <p className="text-sm text-green-700 font-medium">No Outstanding Balance</p>
+                                <p className="text-3xl font-bold text-green-700">$0.00</p>
+                            </div>
+                        )}
                          <div className="space-y-2 text-sm">
                             <h4 className="font-medium mb-2">Overdue Invoices:</h4>
-                            {feeSummary.invoices.map(invoice => (
+                             {data.feeSummary.invoices.length > 0 ? data.feeSummary.invoices.map(invoice => (
                                 <div key={invoice.id} className="flex justify-between">
                                     <span className="text-muted-foreground">{invoice.item}</span>
                                     <span className="font-medium">{invoice.total}</span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className="text-xs text-muted-foreground text-center">No overdue invoices.</p>
+                            )}
                         </div>
                     </CardContent>
                      <CardFooter>
-                         <Button className="w-full">
-                            Pay Now <ArrowRight className="ml-2 h-4 w-4" />
+                         <Button className="w-full" asChild>
+                            <Link href="/portal/fees">
+                                Pay Now <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
                         </Button>
                     </CardFooter>
                 </Card>
