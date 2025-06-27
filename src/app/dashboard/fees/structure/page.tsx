@@ -51,16 +51,34 @@ import {
   Pencil,
   PlusCircle,
   Trash2,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { useAcademicYear } from "@/context/academic-year-context";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-const initialFeeStructureData = [
-    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee', academicYear: '2024-2025' },
-    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None', academicYear: '2024-2025' },
-    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee', academicYear: '2024-2025' },
-    { id: 'fs4', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,400', penalty: 'Standard Late Fee', academicYear: '2023-2024' },
+type FeeScheme = {
+    id: string;
+    name: string;
+    grade: string;
+    section: string;
+    amount: string;
+    penalty: string;
+    academicYear: string;
+    dueDate: string;
+    interval: 'One-Time' | 'Monthly' | 'Quarterly' | 'Annually';
+};
+
+const initialFeeStructureData: FeeScheme[] = [
+    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-15', interval: 'One-Time' },
+    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None', academicYear: '2024-2025', dueDate: '2024-09-01', interval: 'One-Time' },
+    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-15', interval: 'One-Time' },
+    { id: 'fs4', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,400', penalty: 'Standard Late Fee', academicYear: '2023-2024', dueDate: '2023-08-15', interval: 'One-Time' },
+    { id: 'fs5', name: 'Monthly Bus Fee', grade: 'All', section: 'All', amount: '$80', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-05', interval: 'Monthly' },
 ];
 
 type PenaltyTier = {
@@ -101,11 +119,14 @@ const initialPenaltyData: PenaltyRule[] = [
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ["A", "B", "C", "D", "All"];
+const intervals: FeeScheme['interval'][] = ['One-Time', 'Monthly', 'Quarterly', 'Annually'];
 
 
 export default function FeeStructurePage() {
   const { selectedYear } = useAcademicYear();
   const [feeSchemes, setFeeSchemes] = useState(initialFeeStructureData);
+  const [editingScheme, setEditingScheme] = useState<FeeScheme | null>(null);
+
   const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyData);
   const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
 
@@ -160,6 +181,7 @@ export default function FeeStructurePage() {
   };
 
     return (
+        <TooltipProvider>
         <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -231,6 +253,26 @@ export default function FeeStructurePage() {
                             </Select>
                           </div>
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <Label htmlFor="feeDueDate">First Due Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" /><span>Pick a date</span></Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" initialFocus /></PopoverContent>
+                                </Popover>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="feeInterval">Payment Interval</Label>
+                                <Select>
+                                    <SelectTrigger id="feeInterval"><SelectValue placeholder="Select Interval" /></SelectTrigger>
+                                    <SelectContent>
+                                        {intervals.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="feePenalty">Penalty Rule</Label>
                             <Select>
@@ -260,10 +302,10 @@ export default function FeeStructurePage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fee Name</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead>Section</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Penalty Rule</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Interval</TableHead>
+                      <TableHead>Applies To</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -271,98 +313,17 @@ export default function FeeStructurePage() {
                     {filteredFeeSchemes.map((fee) => (
                       <TableRow key={fee.id}>
                         <TableCell className="font-medium">{fee.name}</TableCell>
-                        <TableCell>{fee.grade}</TableCell>
-                        <TableCell>{fee.section}</TableCell>
                         <TableCell>{fee.amount}</TableCell>
-                        <TableCell>{fee.penalty}</TableCell>
+                        <TableCell>{fee.dueDate}</TableCell>
+                        <TableCell>{fee.interval}</TableCell>
+                        <TableCell>
+                          {fee.grade}
+                          {fee.section !== 'All' && `, Sec ${fee.section}`}
+                        </TableCell>
                         <TableCell className="text-right">
-                           <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Edit Fee Scheme</DialogTitle>
-                                <DialogDescription>
-                                  Make changes to the fee structure.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                  <Label>Academic Year</Label>
-                                  <Input readOnly disabled value={fee.academicYear} />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-feeName-${fee.id}`}>Fee Name</Label>
-                                  <Input
-                                    id={`edit-feeName-${fee.id}`}
-                                    defaultValue={fee.name}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-feeAmount-${fee.id}`}>Amount</Label>
-                                  <Input
-                                    id={`edit-feeAmount-${fee.id}`}
-                                    type="number"
-                                    defaultValue={fee.amount.replace(/[$,]/g, '')}
-                                  />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`edit-feeGrade-${fee.id}`}>Grade</Label>
-                                    <Select defaultValue={fee.grade}>
-                                      <SelectTrigger id={`edit-feeGrade-${fee.id}`}>
-                                        <SelectValue placeholder="Select Grade" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {grades.map((g) => (
-                                          <SelectItem key={g} value={g}>
-                                            {g}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`edit-feeSection-${fee.id}`}>Section</Label>
-                                    <Select defaultValue={fee.section}>
-                                      <SelectTrigger id={`edit-feeSection-${fee.id}`}>
-                                        <SelectValue placeholder="Select Section" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {sections.map((s) => (
-                                          <SelectItem key={s} value={s}>
-                                            {s}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`edit-feePenalty-${fee.id}`}>Penalty Rule</Label>
-                                  <Select defaultValue={fee.penalty}>
-                                    <SelectTrigger id={`edit-feePenalty-${fee.id}`}>
-                                      <SelectValue placeholder="Select a rule" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="None">None</SelectItem>
-                                      {penalties.map((p) => (
-                                        <SelectItem key={p.id} value={p.name}>
-                                          {p.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button type="submit">Save Changes</Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingScheme(fee)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon">
@@ -492,22 +453,18 @@ export default function FeeStructurePage() {
                         </TableCell>
                         <TableCell>{penalty.gracePeriod} days</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                            <TooltipProvider>
-                            {penalty.tiers.length > 0 ? (
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <span className="cursor-help border-b border-dashed">
-                                            {penalty.tiers.length} Tier(s)
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <div className="space-y-1">
-                                            {penalty.tiers.map(tier => <p key={tier.id}>{renderTierDetails(tier)}</p>)}
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            ) : "No tiers defined"}
-                            </TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <span className="cursor-help border-b border-dashed">
+                                        {penalty.tiers.length} Tier(s)
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <div className="space-y-1">
+                                        {penalty.tiers.map(tier => <p key={tier.id}>{renderTierDetails(tier)}</p>)}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
                         </TableCell>
                         <TableCell className="text-right">
                           <Dialog open={editingPenalty?.id === penalty.id} onOpenChange={(isOpen) => !isOpen && setEditingPenalty(null)}>
@@ -615,5 +572,81 @@ export default function FeeStructurePage() {
               </CardContent>
             </Card>
           </div>
+        {editingScheme && (
+            <Dialog open={!!editingScheme} onOpenChange={(isOpen) => !isOpen && setEditingScheme(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Edit Fee Scheme</DialogTitle>
+                    <DialogDescription>
+                        Make changes to the fee structure.
+                    </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                        <Label>Academic Year</Label>
+                        <Input readOnly disabled value={editingScheme.academicYear} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor={`edit-feeName-${editingScheme.id}`}>Fee Name</Label>
+                        <Input id={`edit-feeName-${editingScheme.id}`} defaultValue={editingScheme.name} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor={`edit-feeAmount-${editingScheme.id}`}>Amount</Label>
+                        <Input id={`edit-feeAmount-${editingScheme.id}`} type="number" defaultValue={editingScheme.amount.replace(/[$,]/g, '')} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                        <Label htmlFor={`edit-feeGrade-${editingScheme.id}`}>Grade</Label>
+                        <Select defaultValue={editingScheme.grade}>
+                            <SelectTrigger id={`edit-feeGrade-${editingScheme.id}`}><SelectValue placeholder="Select Grade" /></SelectTrigger>
+                            <SelectContent>{grades.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}</SelectContent>
+                        </Select>
+                        </div>
+                        <div className="space-y-2">
+                        <Label htmlFor={`edit-feeSection-${editingScheme.id}`}>Section</Label>
+                        <Select defaultValue={editingScheme.section}>
+                            <SelectTrigger id={`edit-feeSection-${editingScheme.id}`}><SelectValue placeholder="Select Section" /></SelectTrigger>
+                            <SelectContent>{sections.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
+                        </Select>
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <Label htmlFor="edit-feeDueDate">First Due Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" /><span>{editingScheme.dueDate}</span></Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(editingScheme.dueDate)} initialFocus /></PopoverContent>
+                                </Popover>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="edit-feeInterval">Payment Interval</Label>
+                                <Select defaultValue={editingScheme.interval}>
+                                    <SelectTrigger id="edit-feeInterval"><SelectValue placeholder="Select Interval" /></SelectTrigger>
+                                    <SelectContent>
+                                        {intervals.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    <div className="space-y-2">
+                        <Label htmlFor={`edit-feePenalty-${editingScheme.id}`}>Penalty Rule</Label>
+                        <Select defaultValue={editingScheme.penalty}>
+                        <SelectTrigger id={`edit-feePenalty-${editingScheme.id}`}><SelectValue placeholder="Select a rule" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="None">None</SelectItem>
+                            {penalties.map((p) => (<SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>))}
+                        </SelectContent>
+                        </Select>
+                    </div>
+                    </div>
+                    <DialogFooter>
+                    <Button type="submit" onClick={() => setEditingScheme(null)}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )}
+        </TooltipProvider>
     )
 }
