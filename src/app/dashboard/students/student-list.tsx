@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pencil, Trash2, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentForm, StudentRegistrationFormValues } from "./student-form";
+import { useAcademicYear } from "@/context/academic-year-context";
 
 type Student = {
     id: string;
@@ -29,24 +30,23 @@ const studentsData: Student[] = [
   { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', email: 'hippolyta.prince@example.com', enrollmentYear: '2023-2024' },
 ];
 
-const academicYears = ["2024-2025", "2023-2024"];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 
 export function StudentList() {
+    const { selectedYear } = useAcademicYear();
     const [students, setStudents] = useState<Student[]>(studentsData);
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
-    const [yearFilter, setYearFilter] = useState("all");
 
     const filteredStudents = students.filter(student => {
         const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || student.section === sectionFilter;
-        const yearMatch = yearFilter === 'all' || student.enrollmentYear === yearFilter;
+        const yearMatch = student.enrollmentYear === selectedYear;
         return nameMatch && gradeMatch && sectionMatch && yearMatch;
     });
 
@@ -104,10 +104,10 @@ export function StudentList() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Student Roster</CardTitle>
-            <CardDescription>View, search, and manage student records.</CardDescription>
+            <CardDescription>View and manage students enrolled in the {selectedYear} academic year.</CardDescription>
           </div>
         </div>
-        <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-4">
+        <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-3">
             <div className="relative col-span-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -116,17 +116,6 @@ export function StudentList() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
-            </div>
-            <div className="space-y-1">
-                <Select onValueChange={setYearFilter} defaultValue="all">
-                    <SelectTrigger>
-                        <SelectValue placeholder="Filter by year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Years</SelectItem>
-                        {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                    </SelectContent>
-                </Select>
             </div>
             <div className="space-y-1">
                 <Select onValueChange={setGradeFilter} defaultValue="all">
@@ -192,7 +181,7 @@ export function StudentList() {
         </div>
         {filteredStudents.length === 0 && (
             <div className="text-center p-8 text-muted-foreground mt-4">
-                No students match the current filters.
+                No students match the current filters for the {selectedYear} academic year.
             </div>
         )}
       </CardContent>

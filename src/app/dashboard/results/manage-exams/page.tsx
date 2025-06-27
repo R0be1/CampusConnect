@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useAcademicYear } from "@/context/academic-year-context";
 
 
 // Placeholder data
@@ -26,7 +27,6 @@ const examsData = [
   { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30, gradingType: 'Letter', academicYear: '2023-2024' },
 ];
 
-const academicYears = ["2024-2025", "2023-2024"];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
@@ -34,6 +34,7 @@ const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Ch
 type Exam = typeof examsData[0];
 
 export default function ManageExamsPage() {
+    const { selectedYear, availableYears } = useAcademicYear();
     const [exams, setExams] = useState<Exam[]>(examsData);
     const [editingExam, setEditingExam] = useState<Exam | null>(null);
 
@@ -60,13 +61,12 @@ export default function ManageExamsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
-    const [yearFilter, setYearFilter] = useState("all");
 
     const filteredExams = exams.filter(exam => {
         const nameMatch = exam.name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || exam.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || exam.section === sectionFilter;
-        const yearMatch = yearFilter === 'all' || exam.academicYear === yearFilter;
+        const yearMatch = exam.academicYear === selectedYear;
         return nameMatch && gradeMatch && sectionMatch && yearMatch;
     });
 
@@ -92,7 +92,7 @@ export default function ManageExamsPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle>Exam Definitions</CardTitle>
-                            <CardDescription>Define exams and their weightage for different grades, sections, and subjects.</CardDescription>
+                            <CardDescription>Define exams for the academic year: {selectedYear}</CardDescription>
                         </div>
                         <Dialog>
                             <DialogTrigger asChild>
@@ -101,19 +101,12 @@ export default function ManageExamsPage() {
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Define New Exam</DialogTitle>
-                                    <DialogDescription>Fill in the details to create a new exam entry.</DialogDescription>
+                                    <DialogDescription>Fill in the details to create a new exam entry for {selectedYear}.</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                     <div className="space-y-2">
                                         <Label>Academic Year</Label>
-                                        <Select>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select Year" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <Input readOnly disabled value={selectedYear} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="examName">Exam Name</Label>
@@ -246,7 +239,7 @@ export default function ManageExamsPage() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                    <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-4 sm:gap-4">
+                    <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-3 sm:gap-4">
                         <div className="space-y-1">
                             <Label htmlFor="examSearch">Search by Name</Label>
                             <div className="relative">
@@ -259,18 +252,6 @@ export default function ManageExamsPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="yearFilter">Filter by Academic Year</Label>
-                            <Select onValueChange={setYearFilter} defaultValue="all">
-                                <SelectTrigger id="yearFilter">
-                                    <SelectValue placeholder="Filter by year" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Years</SelectItem>
-                                    {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="gradeFilter">Filter by Grade</Label>
@@ -371,14 +352,7 @@ export default function ManageExamsPage() {
                         <div className="grid gap-4 py-4">
                             <div className="space-y-2">
                                 <Label>Academic Year</Label>
-                                <Select defaultValue={editingExam?.academicYear}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Year" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <Input readOnly disabled value={editingExam?.academicYear ?? ''} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="editExamName">Exam Name</Label>

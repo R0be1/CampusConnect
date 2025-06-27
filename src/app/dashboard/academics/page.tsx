@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from "@/components/ui/label";
+import { useAcademicYear } from "@/context/academic-year-context";
 
 const gradesData = [
   { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
@@ -22,10 +22,8 @@ const scoresData = [
   { exam: 'Essay', subject: 'English', score: '85/100', rank: '7th' },
 ];
 
-const academicYears = ["2024-2025", "2023-2024"];
-
 export default function AcademicsPage() {
-  const [selectedYear, setSelectedYear] = useState(academicYears[0]);
+  const { selectedYear, setSelectedYear, availableYears } = useAcademicYear();
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,7 +36,7 @@ export default function AcademicsPage() {
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
-                {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
               </SelectContent>
           </Select>
         </div>

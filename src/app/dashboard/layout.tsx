@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
+import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -25,9 +26,17 @@ const navItems = [
   { href: '/student/dashboard', label: 'Student Portal' },
 ];
 
+function AcademicYearDisplay() {
+    const { selectedYear } = useAcademicYear();
+    return (
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground ml-4">
+            <span>Academic Year:</span>
+            <span className="font-semibold text-foreground">{selectedYear}</span>
+        </div>
+    )
+}
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  
+function InnerLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -62,6 +71,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <DashboardNav items={navItems} />
             </SheetContent>
           </Sheet>
+          <AcademicYearDisplay />
           <div className="w-full flex-1" />
            <div className="flex items-center gap-4">
             <Button variant="secondary" size="icon" className="rounded-full">
@@ -75,5 +85,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+  
+  return (
+    <AcademicYearProvider>
+      <InnerLayout>{children}</InnerLayout>
+    </AcademicYearProvider>
   );
 }

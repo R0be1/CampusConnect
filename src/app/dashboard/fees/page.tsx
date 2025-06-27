@@ -63,6 +63,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { useAcademicYear } from "@/context/academic-year-context";
 
 const invoicesData = [
   {
@@ -164,19 +165,17 @@ const initialPenaltyData: PenaltyRule[] = [
     },
 ];
 
-const academicYears = ["2024-2025", "2023-2024"];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ["A", "B", "C", "D", "All"];
 
 export default function FeesPage() {
+  const { selectedYear, availableYears } = useAcademicYear();
   const [feeSchemes, setFeeSchemes] = useState(initialFeeStructureData);
   const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyData);
   const [selectedMethod, setSelectedMethod] = useState("bank");
   const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
-  const [yearFilter, setYearFilter] = useState(academicYears[0]);
 
-
-  const filteredFeeSchemes = feeSchemes.filter(scheme => scheme.academicYear === yearFilter);
+  const filteredFeeSchemes = feeSchemes.filter(scheme => scheme.academicYear === selectedYear);
 
   const handleDeleteScheme = (id: string) => {
     setFeeSchemes(feeSchemes.filter(scheme => scheme.id !== id));
@@ -437,7 +436,7 @@ export default function FeesPage() {
                   <div>
                     <CardTitle>Fee Schemes</CardTitle>
                     <CardDescription>
-                      Define fee structures for different grades and sections.
+                      Define fee structures for the selected academic year.
                     </CardDescription>
                   </div>
                   <Dialog>
@@ -450,21 +449,10 @@ export default function FeesPage() {
                       <DialogHeader>
                         <DialogTitle>Add New Fee Scheme</DialogTitle>
                         <DialogDescription>
-                          Fill in the details for the new fee structure.
+                          Fill in the details for the new fee structure. It will be associated with the academic year: {selectedYear}.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                           <Label htmlFor="feeAcademicYear">Academic Year</Label>
-                           <Select>
-                               <SelectTrigger id="feeAcademicYear">
-                                   <SelectValue placeholder="Select Year" />
-                               </SelectTrigger>
-                               <SelectContent>
-                                   {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                               </SelectContent>
-                           </Select>
-                        </div>
                         <div className="space-y-2">
                           <Label htmlFor="feeName">Fee Name</Label>
                           <Input
@@ -535,17 +523,6 @@ export default function FeesPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
-                 <div className="px-6 pb-4">
-                    <Label htmlFor="year-filter">Filter by Academic Year</Label>
-                    <Select value={yearFilter} onValueChange={setYearFilter}>
-                        <SelectTrigger id="year-filter" className="mt-1">
-                            <SelectValue placeholder="Select Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {academicYears.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                 </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -583,15 +560,8 @@ export default function FeesPage() {
                               </DialogHeader>
                               <div className="grid gap-4 py-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor={`edit-feeAcademicYear-${fee.id}`}>Academic Year</Label>
-                                   <Select defaultValue={fee.academicYear}>
-                                       <SelectTrigger id={`edit-feeAcademicYear-${fee.id}`}>
-                                           <SelectValue placeholder="Select Year" />
-                                       </SelectTrigger>
-                                       <SelectContent>
-                                           {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                       </SelectContent>
-                                   </Select>
+                                  <Label>Academic Year</Label>
+                                  <Input readOnly disabled value={fee.academicYear} />
                                 </div>
                                 <div className="space-y-2">
                                   <Label htmlFor={`edit-feeName-${fee.id}`}>Fee Name</Label>
@@ -688,6 +658,11 @@ export default function FeesPage() {
                     ))}
                   </TableBody>
                 </Table>
+                 {filteredFeeSchemes.length === 0 && (
+                    <div className="text-center p-8 text-muted-foreground">
+                        No fee schemes defined for the academic year {selectedYear}.
+                    </div>
+                )}
               </CardContent>
             </Card>
             <Card>
