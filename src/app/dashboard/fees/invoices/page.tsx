@@ -41,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Info, FileUp } from "lucide-react";
+import { CreditCard, Info, FileUp, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 
@@ -49,37 +49,39 @@ const invoicesData = [
   {
     id: "INV-001",
     item: "Tuition Fee - Grade 10",
-    amount: "$2,500.00",
+    amount: 2500.00,
     dueDate: "2024-08-01",
     status: "Overdue",
-    lateFee: "$125.00",
-    total: "$2,625.00",
+    lateFee: 125.00,
+    concession: { name: 'Sibling Discount (10%)', amount: 250 },
     lateFeeDetails: "5% one-time penalty on base amount of $2,500.00."
   },
   {
     id: "INV-002",
     item: "Library Book Fine",
-    amount: "$15.00",
+    amount: 15.00,
     dueDate: "2024-07-25",
     status: "Overdue",
-    lateFee: "$5.00",
-    total: "$20.00",
+    lateFee: 5.00,
+    concession: null,
     lateFeeDetails: "$1 per day for 5 overdue days."
   },
   {
     id: "INV-003",
     item: "Lab Fee - Chemistry",
-    amount: "$150.00",
+    amount: 150.00,
     dueDate: "2024-09-01",
     status: "Pending",
-    lateFee: "$0.00",
-    total: "$150.00",
+    lateFee: 0.00,
+    concession: null,
     lateFeeDetails: null,
   },
 ];
 
 export default function InvoicesPage() {
     const [selectedMethod, setSelectedMethod] = useState("bank");
+
+    const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
     return (
         <TooltipProvider>
@@ -97,6 +99,7 @@ export default function InvoicesPage() {
                     <TableHead>Invoice ID</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Base Amount</TableHead>
+                    <TableHead>Concession</TableHead>
                     <TableHead>Late Fee</TableHead>
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Due Date</TableHead>
@@ -105,123 +108,144 @@ export default function InvoicesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoicesData.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.id}</TableCell>
-                      <TableCell>{invoice.item}</TableCell>
-                      <TableCell>{invoice.amount}</TableCell>
-                      <TableCell className={invoice.lateFee !== '$0.00' ? 'text-destructive font-medium' : ''}>
-                          {invoice.lateFee !== '$0.00' && invoice.lateFeeDetails ? (
+                  {invoicesData.map((invoice) => {
+                    const total = (invoice.amount - (invoice.concession?.amount ?? 0)) + invoice.lateFee;
+
+                    return (
+                        <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.id}</TableCell>
+                        <TableCell>{invoice.item}</TableCell>
+                        <TableCell>{formatCurrency(invoice.amount)}</TableCell>
+                        <TableCell>
+                          {invoice.concession ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="flex items-center gap-1 cursor-help">
-                                  {invoice.lateFee}
-                                  <Info className="h-3 w-3" />
+                                <span className="flex items-center gap-1 cursor-help text-emerald-600">
+                                  <Sparkles className="h-3 w-3" />
+                                  -{formatCurrency(invoice.concession.amount)}
                                 </span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{invoice.lateFeeDetails}</p>
+                                <p>{invoice.concession.name} applied.</p>
                               </TooltipContent>
                             </Tooltip>
                           ) : (
-                            invoice.lateFee
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                      <TableCell className="font-semibold">{invoice.total}</TableCell>
-                      <TableCell>{invoice.dueDate}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            invoice.status === "Overdue"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {invoice.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm">
-                              <CreditCard className="mr-2 h-4 w-4" /> Pay Now
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[480px]">
-                            <DialogHeader>
-                              <DialogTitle>Make Payment for {invoice.id}</DialogTitle>
-                              <DialogDescription>
-                                You are paying a total of <span className="font-bold text-foreground">{invoice.total}</span> for: {invoice.item}.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-6 py-4">
-                              <div className="space-y-3">
-                                <Label>Payment Method</Label>
-                                <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="flex flex-wrap gap-4">
-                                  <Label htmlFor={`method-bank-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                    <RadioGroupItem value="bank" id={`method-bank-${invoice.id}`} />
-                                    Bank
-                                  </Label>
-                                  <Label htmlFor={`method-wallet-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                    <RadioGroupItem value="wallet" id={`method-wallet-${invoice.id}`} />
-                                    Wallet
-                                  </Label>
-                                  <Label htmlFor={`method-cash-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                    <RadioGroupItem value="cash" id={`method-cash-${invoice.id}`} />
-                                    Cash
-                                  </Label>
-                                </RadioGroup>
-                              </div>
-
-                              {selectedMethod !== 'cash' && (
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`bank-name-${invoice.id}`}>{selectedMethod === 'bank' ? 'Bank Name' : 'Wallet Provider'}</Label>
-                                    <Input id={`bank-name-${invoice.id}`} placeholder={selectedMethod === 'bank' ? 'e.g., Central Bank' : 'e.g., PayTM'} />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`ref-${invoice.id}`}>Transaction Reference</Label>
-                                    <Input id={`ref-${invoice.id}`} placeholder="e.g., TRF12345ABC" />
-                                  </div>
+                        <TableCell className={invoice.lateFee > 0 ? 'text-destructive font-medium' : ''}>
+                            {invoice.lateFee > 0 && invoice.lateFeeDetails ? (
+                                <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="flex items-center gap-1 cursor-help">
+                                    {formatCurrency(invoice.lateFee)}
+                                    <Info className="h-3 w-3" />
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{invoice.lateFeeDetails}</p>
+                                </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                formatCurrency(invoice.lateFee)
+                            )}
+                            </TableCell>
+                        <TableCell className="font-semibold">{formatCurrency(total)}</TableCell>
+                        <TableCell>{invoice.dueDate}</TableCell>
+                        <TableCell>
+                            <Badge
+                            variant={
+                                invoice.status === "Overdue"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                            >
+                            {invoice.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <Dialog>
+                            <DialogTrigger asChild>
+                                <Button size="sm">
+                                <CreditCard className="mr-2 h-4 w-4" /> Pay Now
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[480px]">
+                                <DialogHeader>
+                                <DialogTitle>Make Payment for {invoice.id}</DialogTitle>
+                                <DialogDescription>
+                                    You are paying a total of <span className="font-bold text-foreground">{formatCurrency(total)}</span> for: {invoice.item}.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-6 py-4">
+                                <div className="space-y-3">
+                                    <Label>Payment Method</Label>
+                                    <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="flex flex-wrap gap-4">
+                                    <Label htmlFor={`method-bank-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                        <RadioGroupItem value="bank" id={`method-bank-${invoice.id}`} />
+                                        Bank
+                                    </Label>
+                                    <Label htmlFor={`method-wallet-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                        <RadioGroupItem value="wallet" id={`method-wallet-${invoice.id}`} />
+                                        Wallet
+                                    </Label>
+                                    <Label htmlFor={`method-cash-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                        <RadioGroupItem value="cash" id={`method-cash-${invoice.id}`} />
+                                        Cash
+                                    </Label>
+                                    </RadioGroup>
                                 </div>
-                              )}
 
-                              <div className="space-y-2">
-                                <Label htmlFor={`evidence-${invoice.id}`}>Upload Evidence</Label>
-                                <div className="relative">
-                                    <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
-                                        <Label htmlFor={`evidence-${invoice.id}`} className="cursor-pointer">
-                                            <FileUp className="h-4 w-4" />
-                                        </Label>
-                                    </Button>
-                                    <Input id={`evidence-${invoice.id}`} type="file" className="pl-12" />
+                                {selectedMethod !== 'cash' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`bank-name-${invoice.id}`}>{selectedMethod === 'bank' ? 'Bank Name' : 'Wallet Provider'}</Label>
+                                        <Input id={`bank-name-${invoice.id}`} placeholder={selectedMethod === 'bank' ? 'e.g., Central Bank' : 'e.g., PayTM'} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`ref-${invoice.id}`}>Transaction Reference</Label>
+                                        <Input id={`ref-${invoice.id}`} placeholder="e.g., TRF12345ABC" />
+                                    </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-2">
+                                    <Label htmlFor={`evidence-${invoice.id}`}>Upload Evidence</Label>
+                                    <div className="relative">
+                                        <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                            <Label htmlFor={`evidence-${invoice.id}`} className="cursor-pointer">
+                                                <FileUp className="h-4 w-4" />
+                                            </Label>
+                                        </Button>
+                                        <Input id={`evidence-${invoice.id}`} type="file" className="pl-12" />
+                                    </div>
                                 </div>
-                              </div>
-                            </div>
-                            <DialogFooter>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button className="w-full">Submit for Verification</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                            This will mark the invoice as 'Pending Verification'. An administrator will review the payment evidence. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction>Confirm and Submit</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                                </div>
+                                <DialogFooter>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button className="w-full">Submit for Verification</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                This will mark the invoice as 'Pending Verification'. An administrator will review the payment evidence. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction>Confirm and Submit</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </DialogFooter>
+                            </DialogContent>
+                            </Dialog>
+                        </TableCell>
+                        </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

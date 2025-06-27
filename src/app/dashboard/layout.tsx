@@ -40,6 +40,8 @@ const navItems: NavItem[] = [
       { href: '/dashboard/fees/invoices', label: 'Invoices' },
       { href: '/dashboard/fees/history', label: 'Payment History' },
       { href: '/dashboard/fees/structure', label: 'Fee Structure' },
+      { href: '/dashboard/fees/concessions', label: 'Concessions' },
+      { href: '/dashboard/fees/assign', label: 'Assign Concession' },
     ]
   },
   { 
