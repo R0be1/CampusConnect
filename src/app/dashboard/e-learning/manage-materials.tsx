@@ -2,17 +2,22 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Video, FileText, Search } from "lucide-react";
+import { Pencil, Trash2, Video, FileText, Search, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
 
 // Define Material type
 type Material = {
@@ -169,6 +174,15 @@ export function ManageMaterials() {
 }
 
 // Reusable form component for editing materials
+const editSchema = z.object({
+  title: z.string().min(1, "Title is required."),
+  description: z.string().min(10, "Description must be at least 10 characters."),
+  grade: z.string().min(1, "Please select a grade."),
+  subject: z.string().min(1, "Please select a subject."),
+});
+
+type EditFormValues = z.infer<typeof editSchema>;
+
 type MaterialFormProps = {
     material: Material;
     onSave: (material: Material) => void;
@@ -176,48 +190,50 @@ type MaterialFormProps = {
 };
 
 function MaterialEditForm({ material, onSave, onClose }: MaterialFormProps) {
-    const [formData, setFormData] = useState<Material>(material);
+    const form = useForm<EditFormValues>({
+        resolver: zodResolver(editSchema),
+        defaultValues: {
+            title: material.title,
+            description: material.description,
+            grade: material.grade,
+            subject: material.subject,
+        },
+    });
 
-    const handleChange = (field: keyof Omit<Material, 'id' | 'date'>, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSubmit = () => {
-        onSave(formData);
+    const handleSubmit = (data: EditFormValues) => {
+        onSave({
+            ...material,
+            ...data,
+        });
     };
 
     return (
-        <>
-            <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input id="title" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" value={formData.description} onChange={(e) => handleChange('description', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="grade">Grade</Label>
-                        <Select value={formData.grade} onValueChange={(value) => handleChange('grade', value)}>
-                            <SelectTrigger id="grade"><SelectValue /></SelectTrigger>
-                            <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="subject">Subject</Label>
-                        <Select value={formData.subject} onValueChange={(value) => handleChange('subject', value)}>
-                            <SelectTrigger id="subject"><SelectValue /></SelectTrigger>
-                            <SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                        </Select>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
+                <div className="grid gap-4 py-4">
+                    <FormField control={form.control} name="title" render={({ field }) => (
+                        <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="description" render={({ field }) => (
+                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="grade" render={({ field }) => (
+                            <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        )} />
+                         <FormField control={form.control} name="subject" render={({ field }) => (
+                            <FormItem><FormLabel>Subject</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        )} />
                     </div>
                 </div>
-            </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSubmit}>Save Changes</Button>
-            </DialogFooter>
-        </>
+                <DialogFooter>
+                    <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
     )
 }
