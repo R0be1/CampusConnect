@@ -25,7 +25,12 @@ export default function SystemAdminLoginPage() {
                 <Input id="phone" type="tel" placeholder="e.g., (123) 456-7890" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                 <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link href="/forgot-password" className="text-sm text-accent hover:underline">
+                        Forgot password?
+                    </Link>
+                </div>
                 <Input id="password" type="password" required />
               </div>
               <div className="space-y-2 pt-2">
