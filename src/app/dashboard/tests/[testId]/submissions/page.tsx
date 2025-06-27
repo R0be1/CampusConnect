@@ -24,53 +24,19 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 
-// Mock data for a specific test's submissions, now including questions, individual answers, and status.
-const initialTestsWithSubmissions = {
-  "test-001": {
-    name: "Algebra II - Mid-term",
-    isMock: false,
-    questions: [
-        { id: "q1", text: "Solve for x: 2x + 3 = 7", correctAnswer: "2" },
-        { id: "q2", text: "What is the formula for the area of a circle?", correctAnswer: "pi * r^2" },
-    ],
-    submissions: [],
-  },
-  "test-002": {
-    name: "Mechanics - Unit Test",
-    isMock: false,
-    questions: [
-      { id: "q1", text: "Which of the following is a vector quantity?", correctAnswer: "Velocity" },
-      { id: "q2", text: "Inertia is the property of a body to resist changes in its state of motion.", correctAnswer: "true" },
-      { id: "q3", text: "The rate of change of velocity is called ___.", correctAnswer: "acceleration" },
-      { id: "q4", text: "What is the SI unit of force?", correctAnswer: "Newton" },
-    ],
-    submissions: [
-      { studentId: "s001", studentName: "John Doe", score: "3/4", percentage: 75, submittedAt: "2024-08-10 10:15 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Pascal" }, status: 'Awaiting Approval' as const },
-      { studentId: "s005", studentName: "Diana Prince", score: "4/4", percentage: 100, submittedAt: "2024-08-10 10:22 AM", answers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Newton" }, status: 'Graded' as const },
-    ],
-  },
-  "test-003": {
-      name: "American Revolution",
-      isMock: false,
-      questions: [
-        { id: "q1", text: "The American Revolution was a conflict between Great Britain and thirteen of its North American colonies.", correctAnswer: "true" },
-        { id: "q2", text: "The Declaration of Independence was signed in what year?", correctAnswer: "1776" },
-      ],
-      submissions: [
-        { studentId: "s002", studentName: "Alice Smith", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:30 AM", answers: { q1: "true", q2: "1776" }, status: 'Awaiting Approval' as const },
-        { studentId: "s008", studentName: "Clark Kent", score: "1/2", percentage: 50, submittedAt: "2024-08-05 09:32 AM", answers: { q1: "true", q2: "1775" }, status: 'Awaiting Approval' as const },
-        { studentId: "s009", studentName: "Tony Stark", score: "2/2", percentage: 100, submittedAt: "2024-08-05 09:35 AM", answers: { q1: "true", q2: "1776" }, status: 'Graded' as const },
-      ]
-  },
-  "test-004": {
-    name: "Practice Test: Chemistry",
-    isMock: true,
-    questions: [],
-    submissions: []
-  }
-};
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialTestsWithSubmissions: Record<string, any> = {};
 
-type Submission = (typeof initialTestsWithSubmissions)["test-002"]["submissions"][0];
+type Submission = {
+  studentId: string;
+  studentName: string;
+  score: string;
+  percentage: number;
+  submittedAt: string;
+  answers: Record<string, string>;
+  status: 'Awaiting Approval' | 'Graded';
+};
 
 export default function TestSubmissionsPage({ params }: { params: { testId: string } }) {
   const testId = params.testId as keyof typeof initialTestsWithSubmissions;
@@ -81,7 +47,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
 
   const handleApprove = (studentId: string) => {
     setTests(currentTests => {
-        const newSubmissions = currentTests[testId].submissions.map(sub => {
+        const newSubmissions = currentTests[testId].submissions.map((sub: Submission) => {
             if (sub.studentId === studentId) {
                 return { ...sub, status: 'Graded' as const };
             }
@@ -103,7 +69,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
 
   const handleApproveAll = () => {
     setTests(currentTests => {
-        const newSubmissions = currentTests[testId].submissions.map(sub => {
+        const newSubmissions = currentTests[testId].submissions.map((sub: Submission) => {
             if (sub.status === 'Awaiting Approval') {
                 return { ...sub, status: 'Graded' as const };
             }
@@ -167,10 +133,10 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
   }
 
   const averageScore = testData.submissions.length > 0
-    ? testData.submissions.reduce((acc, sub) => acc + sub.percentage, 0) / testData.submissions.length
+    ? testData.submissions.reduce((acc: number, sub: Submission) => acc + sub.percentage, 0) / testData.submissions.length
     : 0;
 
-  const pendingSubmissionsCount = testData.submissions.filter(s => s.status === 'Awaiting Approval').length;
+  const pendingSubmissionsCount = testData.submissions.filter((s: Submission) => s.status === 'Awaiting Approval').length;
 
   const getStatusBadge = (status: Submission['status']) => {
     switch (status) {
@@ -239,7 +205,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
               </TableHeader>
               <TableBody>
                 {testData.submissions.length > 0 ? (
-                  testData.submissions.map((submission) => (
+                  testData.submissions.map((submission: Submission) => (
                     <TableRow key={submission.studentId}>
                       <TableCell className="font-medium">{submission.studentName}</TableCell>
                       <TableCell>{submission.score}</TableCell>
@@ -262,7 +228,7 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1 pr-4">
-                              {testData.questions.map((question, index) => {
+                              {testData.questions.map((question: any, index: number) => {
                                 const studentAnswer = submission.answers[question.id as keyof typeof submission.answers];
                                 const isCorrect = studentAnswer === question.correctAnswer;
                                 return (
@@ -339,5 +305,3 @@ export default function TestSubmissionsPage({ params }: { params: { testId: stri
     </div>
   );
 }
-
-    

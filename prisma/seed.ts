@@ -68,14 +68,21 @@ async function main() {
   console.log(`Created school: ${school1.name}`);
 
   // Academic Year
-  const academicYear = await prisma.academicYear.create({
+  const academicYear2425 = await prisma.academicYear.create({
     data: {
       name: '2024-2025',
       isCurrent: true,
       schoolId: school1.id,
     },
   });
-  console.log(`Created academic year: ${academicYear.name}`);
+   const academicYear2324 = await prisma.academicYear.create({
+    data: {
+      name: '2023-2024',
+      isCurrent: false,
+      schoolId: school1.id,
+    },
+  });
+  console.log(`Created academic years: ${academicYear2425.name} (current) and ${academicYear2324.name}`);
 
   // Grades & Sections
   const grade10 = await prisma.grade.create({
@@ -88,119 +95,113 @@ async function main() {
     },
     include: { sections: true },
   });
-  console.log(`Created grade: ${grade10.name} with sections A, B`);
+  const grade9 = await prisma.grade.create({
+    data: {
+        name: 'Grade 9',
+        schoolId: school1.id,
+        sections: {
+            create: [{ name: 'A' }, { name: 'B' }]
+        }
+    },
+    include: { sections: true }
+  });
+  console.log(`Created grades with sections.`);
   const section10A = grade10.sections.find((s) => s.name === 'A')!;
+  const section10B = grade10.sections.find((s) => s.name === 'B')!;
+  const section9B = grade9.sections.find((s) => s.name === 'B')!;
 
   // Hash a common password
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // Users
-  const teacherUser = await prisma.user.create({
-    data: {
-      phone: '1112223331',
-      password: hashedPassword,
-      role: 'TEACHER',
-      schoolId: school1.id,
-    },
-  });
+  // --- Users & Profiles ---
+  console.log('Creating users and profiles...');
 
-  const parentUser = await prisma.user.create({
-    data: {
-      phone: '1112223332',
-      password: hashedPassword,
-      role: 'PARENT',
-      schoolId: school1.id,
-    },
-  });
-
-  const studentUser = await prisma.user.create({
-    data: {
-      phone: '1112223333',
-      password: hashedPassword,
-      role: 'STUDENT',
-      schoolId: school1.id,
-    },
-  });
-  console.log('Created teacher, parent, and student users.');
-
-  // Profiles
-  const teacherProfile = await prisma.staff.create({
-    data: {
-      userId: teacherUser.id,
-      firstName: 'James',
-      lastName: 'Smith',
-      staffType: 'TEACHER',
-      schoolId: school1.id,
-    },
-  });
-
-  const parentProfile = await prisma.parent.create({
-    data: {
-      userId: parentUser.id,
-      firstName: 'Jane',
-      lastName: 'Doe',
-      schoolId: school1.id,
-    },
-  });
-
-  const studentProfile = await prisma.student.create({
-    data: {
-      userId: studentUser.id,
-      firstName: 'John',
-      lastName: 'Doe',
-      dob: new Date('2008-05-12'),
-      gender: 'MALE',
-      schoolId: school1.id,
-      gradeId: grade10.id,
-      sectionId: section10A.id,
-      parents: {
-        connect: { id: parentProfile.id },
-      },
-    },
-  });
-  console.log('Created staff, parent, and student profiles.');
-
-  // Course & Enrollment
-  const mathCourse = await prisma.course.create({
-    data: {
-      name: 'Mathematics 10',
-      gradeId: grade10.id,
-      sectionId: section10A.id,
-      teacherId: teacherProfile.id,
-      schoolId: school1.id,
-    },
-  });
-
-  await prisma.enrollment.create({
-    data: {
-      studentId: studentProfile.id,
-      courseId: mathCourse.id,
-      academicYearId: academicYear.id,
-    },
-  });
-  console.log('Created Math course and enrolled student.');
+  // Teachers
+  const teacherUser1 = await prisma.user.create({ data: { phone: '1000000001', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacher1 = await prisma.staff.create({ data: { userId: teacherUser1.id, firstName: 'James', lastName: 'Smith', staffType: 'TEACHER', schoolId: school1.id } });
   
-  // Attendance
+  const teacherUser2 = await prisma.user.create({ data: { phone: '1000000002', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacher2 = await prisma.staff.create({ data: { userId: teacherUser2.id, firstName: 'Maria', lastName: 'Jones', staffType: 'TEACHER', schoolId: school1.id } });
+  
+  const teacherUser3 = await prisma.user.create({ data: { phone: '1000000003', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacher3 = await prisma.staff.create({ data: { userId: teacherUser3.id, firstName: 'Robert', lastName: 'Brown', staffType: 'TEACHER', schoolId: school1.id } });
+
+  // Parents
+  const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id } });
+  const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id } });
+
+  const parentUser2 = await prisma.user.create({ data: { phone: '2000000002', password: hashedPassword, role: 'PARENT', schoolId: school1.id } });
+  const parent2 = await prisma.parent.create({ data: { userId: parentUser2.id, firstName: 'Robert', lastName: 'Smith', schoolId: school1.id } });
+
+  // Students
+  const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id } });
+  const student1 = await prisma.student.create({ data: { userId: studentUser1.id, firstName: 'John', lastName: 'Doe', dob: new Date('2008-05-12'), gender: 'MALE', schoolId: school1.id, gradeId: grade10.id, sectionId: section10A.id, parents: { connect: { id: parent1.id } } } });
+
+  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id } });
+  const student2 = await prisma.student.create({ data: { userId: studentUser2.id, firstName: 'Alice', lastName: 'Smith', dob: new Date('2009-02-20'), gender: 'FEMALE', schoolId: school1.id, gradeId: grade9.id, sectionId: section9B.id, parents: { connect: { id: parent2.id } } } });
+  
+  console.log('Finished creating users and profiles.');
+
+  // --- Course & Enrollment ---
+  console.log('Creating courses and enrollments...');
+  const mathCourse = await prisma.course.create({ data: { name: 'Mathematics 10', gradeId: grade10.id, sectionId: section10A.id, teacherId: teacher1.id, schoolId: school1.id } });
+  const historyCourse = await prisma.course.create({ data: { name: 'History 10', gradeId: grade10.id, sectionId: section10A.id, teacherId: teacher2.id, schoolId: school1.id } });
+  
+  await prisma.enrollment.createMany({
+      data: [
+          { studentId: student1.id, courseId: mathCourse.id, academicYearId: academicYear2425.id },
+          { studentId: student1.id, courseId: historyCourse.id, academicYearId: academicYear2425.id },
+      ]
+  });
+  console.log('Finished creating courses and enrollments.');
+
+  // --- Attendance ---
   await prisma.attendance.create({
       data: {
-          studentId: studentProfile.id,
+          studentId: student1.id,
           date: new Date(),
           status: 'PRESENT',
-          markedById: teacherProfile.id
+          markedById: teacher1.id
       }
   });
-  console.log('Created an attendance record.');
 
-  // Test & Submissions
+  // --- E-Learning ---
+  await prisma.learningMaterial.createMany({
+    data: [
+        { title: 'Introduction to Algebra', description: 'A foundational video covering the basics...', subject: 'Mathematics', gradeId: grade10.id, type: 'VIDEO', schoolId: school1.id, uploaderId: teacher1.id },
+        { title: 'The Fall of Rome', description: 'A detailed PDF document...', subject: 'History', gradeId: grade9.id, type: 'DOCUMENT', schoolId: school1.id, uploaderId: teacher2.id },
+    ]
+  });
+  console.log('Created learning materials.');
+  
+  // --- Fees ---
+  console.log('Creating fee structures...');
+  const penaltyRule = await prisma.penaltyRule.create({ data: { name: 'Standard Late Fee', gracePeriod: 5, schoolId: school1.id }});
+  const tuitionFee = await prisma.feeStructure.create({ data: { name: 'Tuition Fee - Fall Semester', amount: 2500, interval: 'ONE_TIME', schoolId: school1.id, penaltyRuleId: penaltyRule.id }});
+  const siblingDiscount = await prisma.concession.create({ data: { name: 'Sibling Discount', type: 'PERCENTAGE', value: 10, description: 'For families with multiple children', schoolId: school1.id }});
+  await prisma.feeInvoice.create({
+      data: {
+          studentId: student1.id,
+          feeStructureId: tuitionFee.id,
+          academicYearId: academicYear2425.id,
+          amount: 2500,
+          dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+          status: 'OVERDUE'
+      }
+  });
+  console.log('Finished creating fee structures.');
+
+  // --- Tests & Submissions ---
+  console.log('Creating tests...');
   const algebraTest = await prisma.test.create({
       data: {
           name: 'Algebra Basics',
           gradeId: grade10.id,
           sectionId: section10A.id,
           subject: 'Mathematics',
-          teacherId: teacherProfile.id,
-          startTime: new Date(),
-          endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+          teacherId: teacher1.id,
+          startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+          endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
           duration: 60,
           isMock: false,
           resultVisibility: 'IMMEDIATE',
@@ -221,7 +222,25 @@ async function main() {
       },
       include: { questions: true }
   });
-  console.log('Created an Algebra test with 2 questions.');
+  console.log('Created an Algebra test.');
+
+  const testSubmission = await prisma.testSubmission.create({
+      data: {
+          testId: algebraTest.id,
+          studentId: student1.id,
+          submittedAt: new Date(),
+          score: 1,
+          status: 'AWAITING_APPROVAL'
+      }
+  });
+
+  await prisma.testAnswer.createMany({
+      data: [
+          { submissionId: testSubmission.id, questionId: algebraTest.questions[0].id, answer: '3' },
+          { submissionId: testSubmission.id, questionId: algebraTest.questions[1].id, answer: 'false' },
+      ]
+  })
+  console.log('Created test submission.');
 
   console.log('Seeding finished.');
 }

@@ -23,13 +23,9 @@ type Student = {
     schoolId: string;
 };
 
-const studentsData: Student[] = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', phone: '(123) 456-7890', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', phone: '(123) 456-7891', enrollmentYear: '2024-2025', schoolId: 'sch-01' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', phone: '(123) 456-7892', enrollmentYear: '2024-2025', schoolId: 'sch-02' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', phone: '(123) 456-7893', enrollmentYear: '2023-2024', schoolId: 'sch-02' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A', parentName: 'Hippolyta Prince', phone: '(123) 456-7894', enrollmentYear: '2023-2024', schoolId: 'sch-01' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const studentsData: Student[] = [];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];

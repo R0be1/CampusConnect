@@ -6,32 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye, Filter } from "lucide-react";
 
-const communicationHistoryData = [
-  {
-    id: "msg-001",
-    date: "2024-08-01",
-    student: "John Doe",
-    subject: "Update on Q2 Mathematics Performance",
-    sentBy: "Mr. Smith",
-    message: "Dear Mrs. Doe, I wanted to share an update on John's excellent performance in Mathematics this quarter. He scored an A on the recent exam and has been an active participant in class. Keep up the great work encouraging him at home. Best, Mr. Smith"
-  },
-  {
-    id: "msg-002",
-    date: "2024-07-28",
-    student: "Alice Smith",
-    subject: "History Project Submission Reminder",
-    sentBy: "Ms. Jones",
-    message: "Dear Mr. Smith, this is a friendly reminder that the 'Ancient Civilizations' history project is due this Friday, August 2nd. Please ensure Alice submits it on time. Thank you, Ms. Jones."
-  },
-  {
-    id: "msg-003",
-    date: "2024-07-25",
-    student: "Bob Johnson",
-    subject: "Concerns about recent behavior",
-    sentBy: "Admin Office",
-    message: "Dear Mrs. Johnson, We'd like to schedule a meeting to discuss some recent behavioral concerns regarding Bob. Please let us know your availability for next week. Sincerely, Admin Office."
-  },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const communicationHistoryData: {
+  id: string;
+  date: string;
+  student: string;
+  subject: string;
+  sentBy: string;
+  message: string;
+}[] = [];
+
 
 export function CommunicationHistory() {
   return (

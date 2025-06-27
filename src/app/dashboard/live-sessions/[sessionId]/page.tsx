@@ -10,19 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
 
-// Mock Data
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
 const sessionDetails = {
     id: 'session-01',
-    topic: 'Advanced Algebra Concepts',
+    topic: 'Live Session',
 };
 
-const initialParticipants = [
-    { id: 's001', name: 'John Doe', status: 'present', handRaised: false },
-    { id: 's003', name: 'Bob Johnson', status: 'present', handRaised: true },
-    { id: 's006', name: 'Peter Parker', status: 'absent', handRaised: false },
-    { id: 's007', name: 'Bruce Wayne', status: 'present', handRaised: false },
-    { id: 's009', name: 'Tony Stark', status: 'present', handRaised: true },
-];
+const initialParticipants: { id: string; name: string; status: string; handRaised: boolean }[] = [];
 
 export default function TeacherSessionPage({ params }: { params: { sessionId: string } }) {
     const { toast } = useToast();

@@ -17,16 +17,20 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAcademicYear } from "@/context/academic-year-context";
 
 
-// Placeholder data
-const examsData = [
-  { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40, gradingType: 'Decimal', academicYear: '2024-2025' },
-  { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60, gradingType: 'Decimal', academicYear: '2024-2025' },
-  { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20, gradingType: 'Decimal', academicYear: '2024-2025' },
-  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50, gradingType: 'Letter', academicYear: '2024-2025' },
-  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70, gradingType: 'Decimal', academicYear: '2023-2024' },
-  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30, gradingType: 'Letter', academicYear: '2023-2024' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const examsData: {
+  id: string;
+  name: string;
+  grade: string;
+  section: string;
+  subject: string;
+  weightage: number;
+  gradingType: string;
+  academicYear: string;
+}[] = [];
 
+// These are helpers, not mock data. They can remain.
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];

@@ -27,12 +27,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const initialTestsData = [
-  { id: "test-001", name: "Algebra II - Mid-term", grade: "Grade 10", subject: "Mathematics", status: "Upcoming", type: "Standard" as const },
-  { id: "test-002", name: "Mechanics - Unit Test", grade: "Grade 11", subject: "Physics", status: "Active", type: "Standard" as const },
-  { id: "test-003", name: "American Revolution", grade: "Grade 9", subject: "History", status: "Completed", type: "Standard" as const },
-  { id: "test-004", name: "Practice Test: Chemistry", grade: "Grade 10", subject: "Chemistry", status: "Active", type: "Mock" as const },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialTestsData: {
+  id: string;
+  name: string;
+  grade: string;
+  subject: string;
+  status: "Upcoming" | "Active" | "Completed";
+  type: "Standard" | "Mock";
+}[] = [];
+
 
 type Test = typeof initialTestsData[0];
 

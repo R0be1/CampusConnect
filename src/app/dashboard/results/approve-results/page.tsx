@@ -32,46 +32,10 @@ type StudentResult = {
   status: 'Pending' | 'Pending Approval' | 'Approved' | 'Pending Re-approval' | 'Finalized';
 };
 
-// This data should eventually come from a central store/API.
-// For now, we are creating a mutable version for the demo.
-const examsForSelection = [
-  { id: 'exam1', name: 'Mid-term Exam (Grade 10, Section A, Mathematics)' },
-  { id: 'exam2', name: 'Final Exam (Grade 10, Section A, Mathematics)' },
-  { id: 'exam3', name: 'Unit Test 1 (Grade 9, Section B, Science)' },
-  { id: 'exam4', name: 'Mid-term Exam (Grade 9, Section B, History)' },
-  { id: 'exam5', name: 'Final Exam (Grade 11, Section C, Physics)' },
-  { id: 'exam6', name: 'Unit Test 2 (Grade 10, Section C, Chemistry)' },
-];
-
-const initialStudentsData: Record<string, StudentResult[]> = {
-    exam1: [
-      { id: 's001', name: 'John Doe', score: '85', status: 'Approved' },
-      { id: 's003', name: 'Bob Johnson', score: '65', status: 'Pending Approval' },
-      { id: 's006', name: 'Peter Parker', score: '78', status: 'Finalized' },
-      { id: 's007', name: 'Bruce Wayne', score: '', status: 'Pending' },
-    ],
-    exam2: [
-        { id: 's001', name: 'John Doe', score: '', status: 'Pending' },
-        { id: 's003', name: 'Bob Johnson', score: '', status: 'Pending' },
-        { id: 's006', name: 'Peter Parker', score: '', status: 'Pending' },
-        { id: 's007', name: 'Bruce Wayne', score: '', status: 'Pending' },
-    ],
-    exam3: [
-        { id: 's002', name: 'Alice Smith', score: '92', status: 'Pending Approval' },
-        { id: 's005', name: 'Diana Prince', score: '', status: 'Pending' },
-        { id: 's008', name: 'Clark Kent', score: '99', status: 'Approved' },
-    ],
-    exam4: [
-      // No data for this exam initially
-    ],
-    exam5: [
-      // No data for this exam initially
-    ],
-    exam6: [
-      { id: 's010', name: 'Tony Stark', score: '100', status: 'Pending Approval' },
-      { id: 's011', name: 'Steve Rogers', score: '95', status: 'Pending Re-approval' },
-    ]
-};
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const examsForSelection: { id: string; name: string }[] = [];
+const initialStudentsData: Record<string, StudentResult[]> = {};
 
 
 export default function ApproveResultsPage() {

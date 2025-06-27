@@ -73,13 +73,9 @@ type FeeScheme = {
     interval: 'One-Time' | 'Monthly' | 'Quarterly' | 'Annually';
 };
 
-const initialFeeStructureData: FeeScheme[] = [
-    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-15', interval: 'One-Time' },
-    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None', academicYear: '2024-2025', dueDate: '2024-09-01', interval: 'One-Time' },
-    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-15', interval: 'One-Time' },
-    { id: 'fs4', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,400', penalty: 'Standard Late Fee', academicYear: '2023-2024', dueDate: '2023-08-15', interval: 'One-Time' },
-    { id: 'fs5', name: 'Monthly Bus Fee', grade: 'All', section: 'All', amount: '$80', penalty: 'Standard Late Fee', academicYear: '2024-2025', dueDate: '2024-08-05', interval: 'Monthly' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialFeeStructureData: FeeScheme[] = [];
 
 type PenaltyTier = {
     id: string;
@@ -97,26 +93,11 @@ type PenaltyRule = {
     tiers: PenaltyTier[];
 };
 
-const initialPenaltyData: PenaltyRule[] = [
-    {
-        id: 'p1',
-        name: 'Standard Late Fee',
-        gracePeriod: 3,
-        tiers: [
-            { id: 't1_1', fromDay: 1, toDay: 5, type: 'Percentage', value: 5, frequency: 'One-Time' },
-            { id: 't1_2', fromDay: 6, toDay: null, type: 'Percentage', value: 10, frequency: 'One-Time' },
-        ]
-    },
-    {
-        id: 'p2',
-        name: 'Library Book Overdue',
-        gracePeriod: 0,
-        tiers: [
-            { id: 't2_1', fromDay: 1, toDay: null, type: 'Fixed', value: 1, frequency: 'Daily' },
-        ]
-    },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialPenaltyData: PenaltyRule[] = [];
 
+// These are helpers, not mock data. They can remain.
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ["A", "B", "C", "D", "All"];
 const intervals: FeeScheme['interval'][] = ['One-Time', 'Monthly', 'Quarterly', 'Annually'];

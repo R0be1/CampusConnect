@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -12,24 +13,14 @@ import { CalendarIcon, Eye, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// These are helpers, not mock data. They can remain.
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 
-const studentsByClass: Record<string, { id: string; name: string }[]> = {
-  "Grade 10-A": [
-    { id: 's001', name: 'John Doe' },
-    { id: 's003', name: 'Bob Johnson' },
-    { id: 's006', name: 'Peter Parker' },
-    { id: 's007', name: 'Bruce Wayne' },
-    { id: 's009', name: 'Tony Stark' },
-  ],
-  "Grade 9-B": [
-    { id: 's002', name: 'Alice Smith' },
-    { id: 's005', name: 'Diana Prince' },
-    { id: 's008', name: 'Clark Kent' },
-    { id: 's011', name: 'Steve Rogers' },
-  ],
-};
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const studentsByClass: Record<string, { id: string; name: string }[]> = {};
+const summaryData: Record<string, MonthlySummary> = {};
 
 type AttendanceSummaryRecord = {
     present: number;
@@ -38,22 +29,6 @@ type AttendanceSummaryRecord = {
     excused: number;
 };
 type MonthlySummary = Record<string, AttendanceSummaryRecord>; 
-
-const summaryData: Record<string, MonthlySummary> = {
-    "Grade 10-A": {
-        's001': { present: 18, absent: 1, late: 1, excused: 0 },
-        's003': { present: 15, absent: 3, late: 1, excused: 1 },
-        's006': { present: 20, absent: 0, late: 0, excused: 0 },
-        's007': { present: 19, absent: 0, late: 1, excused: 0 },
-        's009': { present: 17, absent: 2, late: 0, excused: 1 },
-    },
-    "Grade 9-B": {
-        's002': { present: 20, absent: 0, late: 0, excused: 0 },
-        's005': { present: 19, absent: 1, late: 0, excused: 0 },
-        's008': { present: 18, absent: 0, late: 2, excused: 0 },
-        's011': { present: 19, absent: 1, late: 0, excused: 0 },
-    }
-};
 
 type DisplayRecord = { id: string; name: string } & AttendanceSummaryRecord;
 
@@ -70,6 +45,7 @@ export function AttendanceRecords() {
             setIsLoading(true);
             setHasSearched(true);
             setRecords([]);
+            // In a real app, this timeout would be an API call to fetch data.
             setTimeout(() => {
                 const classKey = `${selectedGrade}-${selectedSection}`;
                 const students = studentsByClass[classKey] || [];

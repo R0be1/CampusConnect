@@ -36,10 +36,9 @@ type School = {
   logoUrl: string;
 };
 
-const initialSchools: School[] = [
-    { id: 'sch-01', name: 'Greenwood High', accountName: 'greenwood-high', branch: 'Main Campus', contactPerson: 'Mr. John Appleseed', phone: '555-0101', address: '123 Education Lane, Knowledge City, 12345', logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' },
-    { id: 'sch-02', name: 'Oakridge International', accountName: 'oakridge-intl', branch: 'North Campus', contactPerson: 'Ms. Carol Danvers', phone: '555-0102', address: '456 Wisdom Avenue, Learning Town, 67890', logoUrl: 'https://placehold.co/40x40/f97316/ffffff.png' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialSchools: School[] = [];
 
 export default function SchoolsPage() {
     const { toast } = useToast();

@@ -45,38 +45,18 @@ import { CreditCard, Info, FileUp, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 
-const invoicesData = [
-  {
-    id: "INV-001",
-    item: "Tuition Fee - Grade 10",
-    amount: 2500.00,
-    dueDate: "2024-08-01",
-    status: "Overdue",
-    lateFee: 125.00,
-    concession: { name: 'Sibling Discount (10%)', amount: 250 },
-    lateFeeDetails: "5% one-time penalty on base amount of $2,500.00."
-  },
-  {
-    id: "INV-002",
-    item: "Library Book Fine",
-    amount: 15.00,
-    dueDate: "2024-07-25",
-    status: "Overdue",
-    lateFee: 5.00,
-    concession: null,
-    lateFeeDetails: "$1 per day for 5 overdue days."
-  },
-  {
-    id: "INV-003",
-    item: "Lab Fee - Chemistry",
-    amount: 150.00,
-    dueDate: "2024-09-01",
-    status: "Pending",
-    lateFee: 0.00,
-    concession: null,
-    lateFeeDetails: null,
-  },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const invoicesData: {
+    id: string;
+    item: string;
+    amount: number;
+    dueDate: string;
+    status: string;
+    lateFee: number;
+    concession: { name: string; amount: number } | null;
+    lateFeeDetails: string | null;
+}[] = [];
 
 export default function InvoicesPage() {
     const [selectedMethod, setSelectedMethod] = useState("bank");

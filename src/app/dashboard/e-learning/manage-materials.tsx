@@ -30,13 +30,9 @@ type Material = {
     date: string;
 };
 
-// Mock Data
-const materialsData: Material[] = [
-    { id: 'mat001', title: 'Introduction to Algebra', description: 'A foundational video covering the basics of algebraic expressions and equations.', subject: 'Mathematics', grade: 'Grade 10', type: 'Video', date: '2024-08-10' },
-    { id: 'mat002', title: 'The Fall of Rome - Reading Material', description: 'A detailed PDF document exploring the factors that led to the collapse of the Western Roman Empire.', subject: 'History', grade: 'Grade 9', type: 'Document', date: '2024-08-09' },
-    { id: 'mat003', title: 'Photosynthesis Explained', description: 'This video breaks down the complex process of photosynthesis into easy-to-understand steps.', subject: 'Science', grade: 'Grade 11', type: 'Video', date: '2024-08-08' },
-    { id: 'mat004', title: 'Periodic Table PDF', description: 'A high-resolution, printable PDF of the periodic table of elements.', subject: 'Science', grade: 'Grade 11', type: 'Document', date: '2024-08-07' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const materialsData: Material[] = [];
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];

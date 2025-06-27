@@ -16,53 +16,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// --- Mock Data ---
-const allStudents = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A', parentName: 'Jane Doe', parentPhone: '(123) 456-7890' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B', parentName: 'Robert Smith', parentPhone: '(123) 456-7891' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A', parentName: 'Mary Johnson', parentPhone: '(123) 456-7892' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C', parentName: 'Lucy Brown', parentPhone: '(123) 456-7893' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'B', parentName: 'Hippolyta Prince', parentPhone: '(123) 456-7894' },
-  { id: 's006', name: 'Peter Parker', grade: 'Grade 10', section: 'A', parentName: 'May Parker', parentPhone: '(123) 456-7895' },
-  { id: 's007', name: 'Bruce Wayne', grade: 'Grade 11', section: 'C', parentName: 'Alfred Pennyworth', parentPhone: '(123) 456-7896' },
-];
-
-const allCourses = [
-    { id: 'c01', name: 'Mathematics', teacherId: 't01' },
-    { id: 'c02', name: 'History', teacherId: 't02' },
-    { id: 'c03', name: 'Science', teacherId: 't03' },
-    { id: 'c04', name: 'Advanced Mathematics', teacherId: 't01' }, // Mr. Smith also teaches this
-];
-
-const enrollments = [
-    // Mr. Smith's students (t01)
-    { studentId: 's001', courseId: 'c01' }, // John Doe in Math
-    { studentId: 's003', courseId: 'c01' }, // Bob Johnson in Math
-    { studentId: 's006', courseId: 'c01' }, // Peter Parker in Math
-    { studentId: 's004', courseId: 'c04' }, // Charlie Brown in Adv Math
-
-    // Ms. Jones' students (t02)
-    { studentId: 's002', courseId: 'c02' }, // Alice Smith in History
-    { studentId: 's005', courseId: 'c02' }, // Diana Prince in History
-
-    // Dr. Brown's students (t03)
-    { studentId: 's007', courseId: 'c03' }, // Bruce Wayne in Science
-];
-
-// Assume the logged-in teacher is 'Mr. Smith'
-const currentTeacherId = 't01';
-
-// Get the courses taught by the current teacher
-const teacherCourseIds = allCourses.filter(c => c.teacherId === currentTeacherId).map(c => c.id);
-
-// Get the IDs of students enrolled in those courses
-const teacherStudentIds = new Set(
-    enrollments.filter(e => teacherCourseIds.includes(e.courseId)).map(e => e.studentId)
-);
-
-// Get the full student objects for the current teacher
-const myStudents = allStudents.filter(s => teacherStudentIds.has(s.id));
-// --- End Mock Data ---
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const allStudents: { id: string; name: string; grade: string; section: string; parentName: string; parentPhone: string; }[] = [];
+const myStudents: { id: string; name: string; grade: string; section: string; parentName: string; parentPhone: string; }[] = [];
 
 
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);

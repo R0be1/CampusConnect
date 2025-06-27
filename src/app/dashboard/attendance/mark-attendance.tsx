@@ -15,24 +15,15 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// These are helpers, not mock data. They can remain.
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 
-const studentsByClass: Record<string, { id: string; name: string }[]> = {
-  "Grade 10-A": [
-    { id: 's001', name: 'John Doe' },
-    { id: 's003', name: 'Bob Johnson' },
-    { id: 's006', name: 'Peter Parker' },
-    { id: 's007', name: 'Bruce Wayne' },
-    { id: 's009', name: 'Tony Stark' },
-  ],
-  "Grade 9-B": [
-    { id: 's002', name: 'Alice Smith' },
-    { id: 's005', name: 'Diana Prince' },
-    { id: 's008', name: 'Clark Kent' },
-    { id: 's011', name: 'Steve Rogers' },
-  ],
-};
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const studentsByClass: Record<string, { id: string; name: string }[]> = {};
+const attendanceSeedData: Record<string, AttendanceState> = {};
+
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused";
 type AttendanceRecord = {
@@ -43,23 +34,6 @@ type AttendanceRecord = {
 type AttendanceState = {
   [studentId: string]: AttendanceRecord;
 };
-
-const attendanceSeedData: Record<string, AttendanceState> = {
-  "Grade 10-A": {
-    's001': { status: 'present', notes: '' },
-    's003': { status: 'absent', notes: 'Doctor appointment' },
-    's006': { status: 'late', notes: '' },
-    's007': { status: 'present', notes: '' },
-    's009': { status: 'excused', notes: 'Family event' },
-  },
-  "Grade 9-B": {
-    's002': { status: 'present', notes: '' },
-    's005': { status: 'present', notes: '' },
-    's008': { status: 'late', notes: 'Traffic' },
-    's011': { status: 'present', notes: '' },
-  },
-};
-
 
 export function MarkAttendance() {
   const [selectedGrade, setSelectedGrade] = useState<string>("");
@@ -76,6 +50,7 @@ export function MarkAttendance() {
     if (selectedGrade && selectedSection) {
       setIsLoading(true);
       setHasSearched(true);
+      // In a real app, this timeout would be an API call to fetch data.
       setTimeout(() => {
         const classKey = `${selectedGrade}-${selectedSection}`;
         const fetchedStudents = studentsByClass[classKey] || [];

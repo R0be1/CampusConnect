@@ -28,14 +28,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-// MOCK DATA
-const feeStructures = [
-    { id: 'fs1', name: 'Tuition Fee - Fall (Grade 10)' },
-    { id: 'fs2', name: 'Lab Fee - Chemistry' },
-    { id: 'fs3', name: 'Tuition Fee - Fall (Grade 9)' },
-    { id: 'fs4', name: 'Tuition Fee - Fall (Grade 11)' },
-    { id: 'fs5', name: 'Monthly Bus Fee' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const feeStructures: { id: string; name: string }[] = [];
 
 type Concession = {
   id: string;
@@ -47,11 +42,7 @@ type Concession = {
   applicableFeeStructureIds: string[];
 };
 
-const initialConcessions: Concession[] = [
-    { id: 'con01', name: 'Merit-Based Scholarship', category: 'Scholarship', type: 'Fixed', value: 500, description: 'Awarded to students with outstanding academic performance.', applicableFeeStructureIds: ['fs1', 'fs3', 'fs4'] },
-    { id: 'con02', name: 'Sibling Discount', category: 'Discount', type: 'Percentage', value: 10, description: 'For families with multiple children enrolled.', applicableFeeStructureIds: ['fs1', 'fs3', 'fs4', 'fs5'] },
-    { id: 'con03', name: 'Early Bird Discount', category: 'Discount', type: 'Fixed', value: 50, description: 'For paying fees before the deadline.', applicableFeeStructureIds: ['fs1', 'fs3'] },
-];
+const initialConcessions: Concession[] = [];
 
 export default function ConcessionsPage() {
     const { toast } = useToast();

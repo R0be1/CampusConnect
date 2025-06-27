@@ -13,18 +13,10 @@ import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
-// Placeholder data
-const initialGradesData = [
-  { id: 'g1', name: 'Grade 1' },
-  { id: 'g2', name: 'Grade 2' },
-  { id: 'g10', name: 'Grade 10' },
-];
-
-const initialSectionsData = [
-  { id: 's1', name: 'A' },
-  { id: 's2', name: 'B' },
-  { id: 's3', name: 'C' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const initialGradesData: { id: string; name: string }[] = [];
+const initialSectionsData: { id: string; name: string }[] = [];
 
 const nameSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(20, "Name is too long."),

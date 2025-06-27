@@ -8,19 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from "@/components/ui/label";
 import { useAcademicYear } from "@/context/academic-year-context";
 
-const gradesData = [
-  { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
-  { course: 'History', grade: 'B+', teacher: 'Ms. Jones' },
-  { course: 'Science', grade: 'A-', teacher: 'Dr. Brown' },
-  { course: 'English Literature', grade: 'B', teacher: 'Mrs. Davis' },
-];
-
-const scoresData = [
-  { exam: 'Mid-term Exam', subject: 'Mathematics', score: '92/100', rank: '3rd' },
-  { exam: 'Final Exam', subject: 'History', score: '88/100', rank: '5th' },
-  { exam: 'Unit Test', subject: 'Science', score: '95/100', rank: '1st' },
-  { exam: 'Essay', subject: 'English', score: '85/100', rank: '7th' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const gradesData: { course: string; grade: string; teacher: string }[] = [];
+const scoresData: { exam: string; subject: string; score: string; rank: string }[] = [];
 
 export default function AcademicsPage() {
   const { selectedYear, setSelectedYear, availableYears } = useAcademicYear();

@@ -16,26 +16,11 @@ import { PlusCircle, Trash2, Pencil, Loader2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
-// Placeholder data
-const gradesData = [
-  { id: 'g1', name: 'Grade 1' },
-  { id: 'g2', name: 'Grade 2' },
-  { id: 'g10', name: 'Grade 10' },
-];
-
-const sectionsData = [
-  { id: 's1', name: 'A' },
-  { id: 's2', name: 'B' },
-  { id: 's3', name: 'C' },
-];
-
-const initialCoursesData = [
-  { id: 'c1', name: 'Mathematics', grade: 'Grade 10', section: 'A', teacher: 'Mr. Smith' },
-  { id: 'c2', name: 'History', grade: 'Grade 10', section: 'A', teacher: 'Ms. Jones' },
-  { id: 'c3', name: 'Science', grade: 'Grade 10', section: 'B', teacher: 'Dr. Brown' },
-  { id: 'c4', name: 'English', grade: 'Grade 1', section: 'C', teacher: 'Mrs. Davis' },
-  { id: 'c5', name: 'Art', grade: 'Grade 2', section: 'A', teacher: 'Mr. Picasso' },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const gradesData: { id: string, name: string }[] = [];
+const sectionsData: { id: string, name: string }[] = [];
+const initialCoursesData: { id: string, name: string, grade: string, section: string, teacher: string }[] = [];
 
 type Course = typeof initialCoursesData[0];
 

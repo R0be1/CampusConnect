@@ -25,28 +25,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// MOCK DATA
-
-const studentsData = [
-  { id: 's001', name: 'John Doe', grade: 'Grade 10', section: 'A' },
-  { id: 's002', name: 'Alice Smith', grade: 'Grade 9', section: 'B' },
-  { id: 's003', name: 'Bob Johnson', grade: 'Grade 10', section: 'A' },
-  { id: 's004', name: 'Charlie Brown', grade: 'Grade 11', section: 'C' },
-  { id: 's005', name: 'Diana Prince', grade: 'Grade 9', section: 'A' },
-];
-
-const concessionSchemes = [
-    { id: 'con01', name: 'Merit-Based Scholarship' },
-    { id: 'con02', name: 'Sibling Discount' },
-    { id: 'con03', name: 'Early Bird Discount' },
-    { id: 'con04', name: 'Staff Child Discount' },
-];
-
-const initialAssignedConcessions = [
-    { id: 'ac1', studentId: 's001', studentName: 'John Doe', concessionId: 'con01', concessionName: 'Merit-Based Scholarship', academicYear: '2024-2025' },
-    { id: 'ac2', studentId: 's002', studentName: 'Alice Smith', concessionId: 'con02', concessionName: 'Sibling Discount', academicYear: '2024-2025' },
-    { id: 'ac3', studentId: 's005', studentName: 'Diana Prince', concessionId: 'con02', concessionName: 'Sibling Discount', academicYear: '2023-2024' },
-]
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const studentsData: { id: string, name: string, grade: string, section: string }[] = [];
+const concessionSchemes: { id: string, name: string }[] = [];
+const initialAssignedConcessions: { id: string, studentId: string, studentName: string, concessionId: string, concessionName: string, academicYear: string }[] = [];
 
 export default function AssignConcessionPage() {
     const { toast } = useToast();

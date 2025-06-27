@@ -18,29 +18,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const paymentHistoryData = [
-  {
-    id: "TRN-123",
-    date: "2024-04-15",
-    description: "Tuition Fee - Spring Semester",
-    amount: "$2,500",
-    status: "Completed",
-  },
-  {
-    id: "TRN-124",
-    date: "2024-02-10",
-    description: "Book Purchase",
-    amount: "$250",
-    status: "Completed",
-  },
-  {
-    id: "TRN-125",
-    date: "2024-01-20",
-    description: "Bus Fee - January",
-    amount: "$100",
-    status: "Completed",
-  },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const paymentHistoryData: {
+  id: string;
+  date: string;
+  description: string;
+  amount: string;
+  status: string;
+}[] = [];
 
 export default function PaymentHistoryPage() {
     return (

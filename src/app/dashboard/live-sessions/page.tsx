@@ -9,11 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { Radio, PlusCircle, Play, Users } from "lucide-react";
 import Link from 'next/link';
 
-const liveSessionsData = [
-  { id: 'session-01', topic: 'Advanced Algebra Concepts', subject: 'Mathematics', grade: 'Grade 10', dateTime: '2024-09-15 14:00', status: 'Upcoming' as const, fee: 25.00, registrations: 12 },
-  { id: 'session-02', topic: 'Introduction to Newtonian Physics', subject: 'Physics', grade: 'Grade 11', dateTime: '2024-09-16 10:00', status: 'Upcoming' as const, fee: 30.00, registrations: 8 },
-  { id: 'session-03', topic: 'Live Q&A for Final Exams', subject: 'History', grade: 'Grade 9', dateTime: '2024-08-20 16:00', status: 'Completed' as const, fee: 0, registrations: 45 },
-];
+// Mock data has been moved to the seed script.
+// This component will need to be updated to fetch data from the database.
+const liveSessionsData: {
+  id: string;
+  topic: string;
+  subject: string;
+  grade: string;
+  dateTime: string;
+  status: "Upcoming" | "Active" | "Completed";
+  fee: number;
+  registrations: number;
+}[] = [];
+
 
 export default function LiveSessionsPage() {
   const [sessions, setSessions] = useState(liveSessionsData);
