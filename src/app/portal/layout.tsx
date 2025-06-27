@@ -21,6 +21,7 @@ import { StudentProvider, useStudent } from '@/context/student-context';
 import { SchoolProvider, useSchool } from '@/context/school-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
 
 
 const navItems: NavItem[] = [
@@ -80,6 +81,16 @@ function StudentSelector() {
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
+    )
+}
+
+function AcademicYearDisplay() {
+    const { selectedYear } = useAcademicYear();
+    return (
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground ml-auto">
+            <span>Academic Year:</span>
+            <span className="font-semibold text-foreground">{selectedYear}</span>
+        </div>
     )
 }
 
@@ -143,7 +154,10 @@ function InnerLayout({ children }: { children: ReactNode }) {
               </nav>
             </SheetContent>
           </Sheet>
-          <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+          <div className="w-full flex-1">
+            <AcademicYearDisplay />
+          </div>
+          <div className="flex items-center gap-4 md:gap-2 lg:gap-4">
             <StudentSelector />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
@@ -177,9 +191,11 @@ function InnerLayout({ children }: { children: ReactNode }) {
 export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
     <SchoolProvider>
+      <AcademicYearProvider>
         <StudentProvider>
             <InnerLayout>{children}</InnerLayout>
         </StudentProvider>
+      </AcademicYearProvider>
     </SchoolProvider>
   )
 }
