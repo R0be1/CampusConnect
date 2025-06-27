@@ -18,14 +18,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 // Placeholder data
 const examsData = [
-  { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40, gradingType: 'Decimal' },
-  { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60, gradingType: 'Decimal' },
-  { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20, gradingType: 'Decimal' },
-  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50, gradingType: 'Letter' },
-  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70, gradingType: 'Decimal' },
-  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30, gradingType: 'Letter' },
+  { id: 'exam1', name: 'Mid-term Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 40, gradingType: 'Decimal', academicYear: '2024-2025' },
+  { id: 'exam2', name: 'Final Exam', grade: 'Grade 10', section: 'A', subject: 'Mathematics', weightage: 60, gradingType: 'Decimal', academicYear: '2024-2025' },
+  { id: 'exam3', name: 'Unit Test 1', grade: 'Grade 9', section: 'B', subject: 'Science', weightage: 20, gradingType: 'Decimal', academicYear: '2024-2025' },
+  { id: 'exam4', name: 'Mid-term Exam', grade: 'Grade 9', section: 'B', subject: 'History', weightage: 50, gradingType: 'Letter', academicYear: '2024-2025' },
+  { id: 'exam5', name: 'Final Exam', grade: 'Grade 11', section: 'C', subject: 'Physics', weightage: 70, gradingType: 'Decimal', academicYear: '2023-2024' },
+  { id: 'exam6', name: 'Unit Test 2', grade: 'Grade 10', section: 'C', subject: 'Chemistry', weightage: 30, gradingType: 'Letter', academicYear: '2023-2024' },
 ];
 
+const academicYears = ["2024-2025", "2023-2024"];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ['A', 'B', 'C', 'D'];
 const subjects = ['Mathematics', 'Science', 'History', 'English', 'Physics', 'Chemistry'];
@@ -59,12 +60,14 @@ export default function ManageExamsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
+    const [yearFilter, setYearFilter] = useState("all");
 
     const filteredExams = exams.filter(exam => {
         const nameMatch = exam.name.toLowerCase().includes(searchTerm.toLowerCase());
         const gradeMatch = gradeFilter === 'all' || exam.grade === gradeFilter;
         const sectionMatch = sectionFilter === 'all' || exam.section === sectionFilter;
-        return nameMatch && gradeMatch && sectionMatch;
+        const yearMatch = yearFilter === 'all' || exam.academicYear === yearFilter;
+        return nameMatch && gradeMatch && sectionMatch && yearMatch;
     });
 
     const handleDelete = (id: string) => {
@@ -101,6 +104,17 @@ export default function ManageExamsPage() {
                                     <DialogDescription>Fill in the details to create a new exam entry.</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label>Academic Year</Label>
+                                        <Select>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select Year" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="examName">Exam Name</Label>
                                         <Input id="examName" placeholder="e.g., Mid-term Exam" />
@@ -232,7 +246,7 @@ export default function ManageExamsPage() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                    <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                    <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:grid sm:grid-cols-4 sm:gap-4">
                         <div className="space-y-1">
                             <Label htmlFor="examSearch">Search by Name</Label>
                             <div className="relative">
@@ -245,6 +259,18 @@ export default function ManageExamsPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="yearFilter">Filter by Academic Year</Label>
+                            <Select onValueChange={setYearFilter} defaultValue="all">
+                                <SelectTrigger id="yearFilter">
+                                    <SelectValue placeholder="Filter by year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Years</SelectItem>
+                                    {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="gradeFilter">Filter by Grade</Label>
@@ -343,6 +369,17 @@ export default function ManageExamsPage() {
                             <DialogDescription>Make changes to the exam details below.</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Academic Year</Label>
+                                <Select defaultValue={editingExam?.academicYear}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Year" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="editExamName">Exam Name</Label>
                                 <Input id="editExamName" defaultValue={editingExam?.name} />

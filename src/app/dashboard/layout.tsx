@@ -1,13 +1,14 @@
 
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { School, UserCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -25,7 +26,12 @@ const navItems = [
   { href: '/student/dashboard', label: 'Student Portal' },
 ];
 
+const academicYears = ["2024-2025", "2023-2024"];
+
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const [selectedYear, setSelectedYear] = useState(academicYears[0]);
+  
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -60,13 +66,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <DashboardNav items={navItems} />
             </SheetContent>
           </Sheet>
-          <div className="w-full flex-1">
-            {/* Can add search bar here later */}
+          <div className="w-full flex-1" />
+           <div className="flex items-center gap-4">
+            <div className="w-48">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+            </div>
+            <Button variant="secondary" size="icon" className="rounded-full">
+              <UserCircle className="h-5 w-5" />
+              <span className="sr-only">Toggle user menu</span>
+            </Button>
           </div>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <UserCircle className="h-5 w-5" />
-            <span className="sr-only">Toggle user menu</span>
-          </Button>
         </header>
         <main className="flex flex-1 flex-col gap-4 overflow-auto p-4 lg:gap-6 lg:p-6">
           {children}

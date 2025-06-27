@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Settings, Trash2, Pencil } from "lucide-react";
+import { PlusCircle, Settings, Trash2, Pencil, CalendarClock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Placeholder data
 const gradesData = [
@@ -37,11 +38,20 @@ export default function SettingsPage() {
   const [gradeFilter, setGradeFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
 
+  const [academicYears, setAcademicYears] = useState([
+    { id: 'ay1', name: '2024-2025', isCurrent: true },
+    { id: 'ay2', name: '2023-2024', isCurrent: false },
+  ]);
+
   const filteredCourses = coursesData.filter(course => {
     const gradeMatch = gradeFilter === 'all' || course.grade === gradeFilter;
     const sectionMatch = sectionFilter === 'all' || course.section === sectionFilter;
     return gradeMatch && sectionMatch;
   });
+
+  const handleSetCurrentYear = (id: string) => {
+      setAcademicYears(years => years.map(y => ({...y, isCurrent: y.id === id})));
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,9 +60,10 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold font-headline">School Settings</h1>
       </div>
       <Tabs defaultValue="courses">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="courses">Manage Courses</TabsTrigger>
           <TabsTrigger value="grades_sections">Manage Grades & Sections</TabsTrigger>
+          <TabsTrigger value="academic_years">Academic Year</TabsTrigger>
         </TabsList>
 
         <TabsContent value="courses">
@@ -306,6 +317,65 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+         <TabsContent value="academic_years">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Manage Academic Years</CardTitle>
+                        <CardDescription>Define school years and set the current one for the system.</CardDescription>
+                    </div>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button><PlusCircle className="mr-2"/> Add Year</Button>
+                        </DialogTrigger>
+                         <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Add Academic Year</DialogTitle>
+                                <DialogDescription>Enter the name of the new academic year.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="yearName">Year Name</Label>
+                                    <Input id="yearName" placeholder="e.g., 2025-2026" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit">Save Year</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </CardHeader>
+                <CardContent>
+                    <div className="border rounded-lg">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Year Name</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {academicYears.map(year => (
+                                    <TableRow key={year.id}>
+                                        <TableCell className="font-medium">{year.name}</TableCell>
+                                        <TableCell>
+                                            {year.isCurrent ? <Badge>Current</Badge> : <Badge variant="outline">Inactive</Badge>}
+                                        </TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            <Button variant="outline" size="sm" disabled={year.isCurrent} onClick={() => handleSetCurrentYear(year.id)}>Set as Current</Button>
+                                            <Button variant="ghost" size="icon" disabled={year.isCurrent}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

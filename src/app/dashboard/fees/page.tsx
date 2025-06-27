@@ -122,9 +122,10 @@ const paymentHistoryData = [
 ];
 
 const initialFeeStructureData = [
-    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee' },
-    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None' },
-    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee' },
+    { id: 'fs1', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,500', penalty: 'Standard Late Fee', academicYear: '2024-2025' },
+    { id: 'fs2', name: 'Lab Fee - Chemistry', grade: 'Grade 10', section: 'All', amount: '$150', penalty: 'None', academicYear: '2024-2025' },
+    { id: 'fs3', name: 'Tuition Fee - Fall Semester', grade: 'Grade 9', section: 'All', amount: '$2,300', penalty: 'Standard Late Fee', academicYear: '2024-2025' },
+    { id: 'fs4', name: 'Tuition Fee - Fall Semester', grade: 'Grade 10', section: 'A', amount: '$2,400', penalty: 'Standard Late Fee', academicYear: '2023-2024' },
 ];
 
 type PenaltyTier = {
@@ -163,6 +164,7 @@ const initialPenaltyData: PenaltyRule[] = [
     },
 ];
 
+const academicYears = ["2024-2025", "2023-2024"];
 const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
 const sections = ["A", "B", "C", "D", "All"];
 
@@ -171,6 +173,10 @@ export default function FeesPage() {
   const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyData);
   const [selectedMethod, setSelectedMethod] = useState("bank");
   const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
+  const [yearFilter, setYearFilter] = useState(academicYears[0]);
+
+
+  const filteredFeeSchemes = feeSchemes.filter(scheme => scheme.academicYear === yearFilter);
 
   const handleDeleteScheme = (id: string) => {
     setFeeSchemes(feeSchemes.filter(scheme => scheme.id !== id));
@@ -427,7 +433,7 @@ export default function FeesPage() {
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div>
                     <CardTitle>Fee Schemes</CardTitle>
                     <CardDescription>
@@ -448,6 +454,17 @@ export default function FeesPage() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                           <Label htmlFor="feeAcademicYear">Academic Year</Label>
+                           <Select>
+                               <SelectTrigger id="feeAcademicYear">
+                                   <SelectValue placeholder="Select Year" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                   {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                               </SelectContent>
+                           </Select>
+                        </div>
                         <div className="space-y-2">
                           <Label htmlFor="feeName">Fee Name</Label>
                           <Input
@@ -518,6 +535,17 @@ export default function FeesPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
+                 <div className="px-6 pb-4">
+                    <Label htmlFor="year-filter">Filter by Academic Year</Label>
+                    <Select value={yearFilter} onValueChange={setYearFilter}>
+                        <SelectTrigger id="year-filter" className="mt-1">
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {academicYears.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                 </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -532,7 +560,7 @@ export default function FeesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {feeSchemes.map((fee) => (
+                    {filteredFeeSchemes.map((fee) => (
                       <TableRow key={fee.id}>
                         <TableCell className="font-medium">{fee.name}</TableCell>
                         <TableCell>{fee.grade}</TableCell>
@@ -554,6 +582,17 @@ export default function FeesPage() {
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`edit-feeAcademicYear-${fee.id}`}>Academic Year</Label>
+                                   <Select defaultValue={fee.academicYear}>
+                                       <SelectTrigger id={`edit-feeAcademicYear-${fee.id}`}>
+                                           <SelectValue placeholder="Select Year" />
+                                       </SelectTrigger>
+                                       <SelectContent>
+                                           {academicYears.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                       </SelectContent>
+                                   </Select>
+                                </div>
                                 <div className="space-y-2">
                                   <Label htmlFor={`edit-feeName-${fee.id}`}>Fee Name</Label>
                                   <Input
