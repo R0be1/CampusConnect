@@ -123,41 +123,48 @@ async function main() {
   console.log('Creating users and profiles...');
 
   // Teachers
-  const teacherUser1 = await prisma.user.create({ data: { phone: '1000000001', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacherUser1 = await prisma.user.create({ data: { phone: '1000000001', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'James', lastName: 'Smith' } });
   const teacher1 = await prisma.staff.create({ data: { userId: teacherUser1.id, firstName: 'James', lastName: 'Smith', staffType: 'TEACHER', schoolId: school1.id } });
   
-  const teacherUser2 = await prisma.user.create({ data: { phone: '1000000002', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacherUser2 = await prisma.user.create({ data: { phone: '1000000002', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Maria', lastName: 'Jones' } });
   const teacher2 = await prisma.staff.create({ data: { userId: teacherUser2.id, firstName: 'Maria', lastName: 'Jones', staffType: 'TEACHER', schoolId: school1.id } });
   
-  const teacherUser3 = await prisma.user.create({ data: { phone: '1000000003', password: hashedPassword, role: 'TEACHER', schoolId: school1.id } });
+  const teacherUser3 = await prisma.user.create({ data: { phone: '1000000003', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Robert', lastName: 'Brown' } });
   const teacher3 = await prisma.staff.create({ data: { userId: teacherUser3.id, firstName: 'Robert', lastName: 'Brown', staffType: 'TEACHER', schoolId: school1.id } });
 
   // Parents
-  const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id } });
+  const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Jane', lastName: 'Doe' } });
   const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id } });
 
-  const parentUser2 = await prisma.user.create({ data: { phone: '2000000002', password: hashedPassword, role: 'PARENT', schoolId: school1.id } });
+  const parentUser2 = await prisma.user.create({ data: { phone: '2000000002', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Robert', lastName: 'Smith' } });
   const parent2 = await prisma.parent.create({ data: { userId: parentUser2.id, firstName: 'Robert', lastName: 'Smith', schoolId: school1.id } });
 
   // Students
-  const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id } });
+  const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'John', lastName: 'Doe' } });
   const student1 = await prisma.student.create({ data: { userId: studentUser1.id, firstName: 'John', lastName: 'Doe', dob: new Date('2008-05-12'), gender: 'MALE', schoolId: school1.id, gradeId: grade10.id, sectionId: section10A.id, parents: { connect: { id: parent1.id } } } });
 
-  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id } });
+  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'Alice', lastName: 'Smith' } });
   const student2 = await prisma.student.create({ data: { userId: studentUser2.id, firstName: 'Alice', lastName: 'Smith', dob: new Date('2009-02-20'), gender: 'FEMALE', schoolId: school1.id, gradeId: grade9.id, sectionId: section9B.id, parents: { connect: { id: parent2.id } } } });
   
   console.log('Finished creating users and profiles.');
 
-  // --- Course & Enrollment ---
-  console.log('Creating courses and enrollments...');
+  // --- Course, Enrollment, & Results ---
+  console.log('Creating courses, enrollments, and results...');
   const mathCourse = await prisma.course.create({ data: { name: 'Mathematics 10', gradeId: grade10.id, sectionId: section10A.id, teacherId: teacher1.id, schoolId: school1.id } });
   const historyCourse = await prisma.course.create({ data: { name: 'History 10', gradeId: grade10.id, sectionId: section10A.id, teacherId: teacher2.id, schoolId: school1.id } });
   
-  await prisma.enrollment.createMany({
-      data: [
-          { studentId: student1.id, courseId: mathCourse.id, academicYearId: academicYear2425.id },
-          { studentId: student1.id, courseId: historyCourse.id, academicYearId: academicYear2425.id },
-      ]
+  const enrollment1 = await prisma.enrollment.create({
+      data: { studentId: student1.id, courseId: mathCourse.id, academicYearId: academicYear2425.id }
+  });
+  const enrollment2 = await prisma.enrollment.create({
+      data: { studentId: student1.id, courseId: historyCourse.id, academicYearId: academicYear2425.id }
+  });
+
+  await prisma.result.createMany({
+    data: [
+      { enrollmentId: enrollment1.id, grade: "A" },
+      { enrollmentId: enrollment2.id, grade: "B+" },
+    ]
   });
   console.log('Finished creating courses and enrollments.');
 
@@ -209,6 +216,7 @@ async function main() {
           startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
           endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
           duration: 60,
+          totalMarks: 12,
           isMock: false,
           resultVisibility: 'IMMEDIATE',
           questions: {
@@ -217,13 +225,15 @@ async function main() {
                       text: 'Solve for x: 2x + 4 = 10',
                       type: 'FILL_IN_THE_BLANK',
                       options: [],
-                      correctAnswer: '3'
+                      correctAnswer: '3',
+                      points: 10
                   },
                    {
                       text: 'Is x=5 a solution to 3x = 15?',
                       type: 'TRUE_FALSE',
                       options: ['true', 'false'],
-                      correctAnswer: 'true'
+                      correctAnswer: 'true',
+                      points: 2
                   }
               ]
           }
@@ -237,7 +247,7 @@ async function main() {
           testId: algebraTest.id,
           studentId: student1.id,
           submittedAt: new Date(),
-          score: 1,
+          score: 10, // Answered first question correctly
           status: 'AWAITING_APPROVAL'
       }
   });
@@ -245,7 +255,7 @@ async function main() {
   await prisma.testAnswer.createMany({
       data: [
           { submissionId: testSubmission.id, questionId: algebraTest.questions[0].id, answer: '3' },
-          { submissionId: testSubmission.id, questionId: algebraTest.questions[1].id, answer: 'false' },
+          { submissionId: testSubmission.id, questionId: algebraTest.questions[1].id, answer: 'false' }, // Incorrect answer
       ]
   })
   console.log('Created test submission.');

@@ -177,3 +177,83 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
     return { student, parent };
   });
 }
+
+
+// --- Academics Data ---
+
+export async function getFirstStudent(schoolId: string) {
+    return prisma.student.findFirst({
+        where: { schoolId },
+        include: { user: true },
+        orderBy: { user: { firstName: 'asc' } }
+    });
+}
+
+export async function getAcademicYears(schoolId: string) {
+    return prisma.academicYear.findMany({
+        where: { schoolId },
+        orderBy: { name: 'desc' }
+    });
+}
+
+export async function getCurrentAcademicYear(schoolId: string) {
+    return prisma.academicYear.findFirst({
+        where: { schoolId, isCurrent: true }
+    });
+}
+
+export async function getGradesForStudent(studentId: string, academicYearId: string) {
+    const enrollments = await prisma.enrollment.findMany({
+        where: {
+            studentId,
+            academicYearId,
+        },
+        include: {
+            course: {
+                include: {
+                    teacher: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            },
+            results: {
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                take: 1 // Get the latest result for the course
+            }
+        }
+    });
+
+    return enrollments.map(e => ({
+        course: e.course.name,
+        grade: e.results[0]?.grade || 'N/A',
+        teacher: `${e.course.teacher.firstName} ${e.course.teacher.lastName}`
+    }));
+}
+
+export async function getScoresForStudent(studentId: string, academicYearId: string) {
+    // Note: The current schema doesn't link a Test directly to an academic year.
+    // This function fetches all test submissions for the student, regardless of year.
+    // This could be refined later if a direct link is added to the schema.
+    const submissions = await prisma.testSubmission.findMany({
+        where: {
+            studentId,
+        },
+        include: {
+            test: true
+        },
+        orderBy: {
+          submittedAt: 'desc'
+        }
+    });
+    
+    return submissions.map((s, index) => ({
+        exam: s.test.name,
+        subject: s.test.subject,
+        score: `${s.score} / ${s.test.totalMarks}`,
+        rank: `#${index + 1}` // Placeholder rank
+    }));
+}
