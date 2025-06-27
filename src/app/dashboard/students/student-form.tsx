@@ -26,10 +26,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, User } from "lucide-react";
+import { CalendarIcon, User, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
+import { Grade, Section } from "@prisma/client";
 
 const studentRegistrationSchema = z.object({
   // Student info
@@ -37,7 +38,7 @@ const studentRegistrationSchema = z.object({
   studentMiddleName: z.string().optional(),
   studentLastName: z.string().min(1, "Last name is required"),
   studentDob: z.date({ required_error: "Date of birth is required" }),
-  studentGender: z.string().min(1, "Gender is required"),
+  studentGender: z.enum(["MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
   studentPhoto: z.any().optional(),
   grade: z.string().min(1, "Grade is required"),
   section: z.string().min(1, "Section is required"),
@@ -56,22 +57,22 @@ const studentRegistrationSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(5, "Invalid zip code"),
-  schoolId: z.string().optional(),
 });
 
 export type StudentRegistrationFormValues = z.infer<typeof studentRegistrationSchema>;
 
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ['A', 'B', 'C', 'D'];
 const relations = ['Father', 'Mother', 'Guardian'];
 
 interface StudentFormProps {
   initialData?: Partial<StudentRegistrationFormValues>;
-  onSubmit: (data: StudentRegistrationFormValues) => void;
+  onSubmit: (data: StudentRegistrationFormValues, resetForm: () => void) => void;
   submitButtonText?: string;
+  isSubmitting?: boolean;
+  grades: Grade[];
+  sections: Section[];
 }
 
-export function StudentForm({ initialData, onSubmit, submitButtonText = "Register Student" }: StudentFormProps) {
+export function StudentForm({ initialData, onSubmit, submitButtonText = "Register Student", isSubmitting, grades, sections }: StudentFormProps) {
   const [studentPhotoPreview, setStudentPhotoPreview] = useState<string | undefined>();
   const [parentPhotoPreview, setParentPhotoPreview] = useState<string | undefined>();
   const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
@@ -96,13 +97,14 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
     },
   });
 
+  const resetFormAndPreviews = () => {
+    form.reset();
+    setStudentPhotoPreview(undefined);
+    setParentPhotoPreview(undefined);
+  }
+
   const handleFormSubmit = (data: StudentRegistrationFormValues) => {
-      onSubmit(data);
-      if (!initialData) { // only reset if it's a new registration
-        form.reset();
-        setStudentPhotoPreview(undefined);
-        setParentPhotoPreview(undefined);
-      }
+      onSubmit(data, resetFormAndPreviews);
   };
 
   return (
@@ -214,7 +216,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="Male" />
+                              <RadioGroupItem value="MALE" />
                             </FormControl>
                             <FormLabel className="font-normal">
                               Male
@@ -222,7 +224,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="Female" />
+                              <RadioGroupItem value="FEMALE" />
                             </FormControl>
                             <FormLabel className="font-normal">
                               Female
@@ -247,7 +249,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {grades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
+                          {grades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -267,7 +269,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                          {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -504,7 +506,10 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
           </Card>
           
           <div className="flex justify-end">
-            <Button type="submit">{submitButtonText}</Button>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitButtonText}
+            </Button>
           </div>
         </form>
       </Form>

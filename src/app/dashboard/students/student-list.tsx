@@ -11,86 +11,68 @@ import { Pencil, Trash2, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentForm, StudentRegistrationFormValues } from "./student-form";
 import { useAcademicYear } from "@/context/academic-year-context";
+import { DetailedStudent, getGrades, getSections } from "@/lib/data";
+import type { Grade, Section } from "@prisma/client";
+import { format } from "date-fns";
 
-type Student = {
-    id: string;
-    name: string;
-    grade: string;
-    section: string;
-    parentName: string;
-    phone: string;
-    enrollmentYear: string;
-    schoolId: string;
-};
+type StudentListProps = {
+    students: DetailedStudent[];
+    grades: Grade[];
+    sections: Section[];
+}
 
-// Mock data has been moved to the seed script.
-// This component will need to be updated to fetch data from the database.
-const studentsData: Student[] = [];
-
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ['A', 'B', 'C', 'D'];
-
-export function StudentList() {
-    const { selectedYear } = useAcademicYear();
-    const [students, setStudents] = useState<Student[]>(studentsData);
-    const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+export function StudentList({ students: initialStudents, grades, sections }: StudentListProps) {
+    const { selectedYear } = useAcademicYear(); // This context can be used later to filter by enrollment year
+    const [students, setStudents] = useState<DetailedStudent[]>(initialStudents);
+    const [editingStudent, setEditingStudent] = useState<DetailedStudent | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
 
     const filteredStudents = students.filter(student => {
-        const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
-        const sectionMatch = sectionFilter === 'all' || student.section === sectionFilter;
-        const yearMatch = student.enrollmentYear === selectedYear;
-        return nameMatch && gradeMatch && sectionMatch && yearMatch;
+        const name = `${student.user.firstName} ${student.user.lastName}`;
+        const nameMatch = name.toLowerCase().includes(searchTerm.toLowerCase());
+        const gradeMatch = gradeFilter === 'all' || student.grade.id === gradeFilter;
+        const sectionMatch = sectionFilter === 'all' || student.section.id === sectionFilter;
+        // Not filtering by academic year yet as enrollments are not fully wired up.
+        return nameMatch && gradeMatch && sectionMatch;
     });
 
     const handleEditSubmit = (data: StudentRegistrationFormValues) => {
         if (!editingStudent) return;
         
-        const updatedStudent: Student = {
-            id: editingStudent.id,
-            name: `${data.studentFirstName} ${data.studentLastName}`,
-            grade: data.grade,
-            section: data.section,
-            parentName: `${data.parentFirstName} ${data.parentLastName}`,
-            phone: data.parentPhone,
-            enrollmentYear: editingStudent.enrollmentYear,
-            schoolId: editingStudent.schoolId,
-        };
-
-        setStudents(currentStudents => 
-            currentStudents.map(s => (s.id === editingStudent.id ? updatedStudent : s))
-        );
+        // This is where you would call a server action to update the student
+        console.log("Updating student...", data);
         
         setEditingStudent(null); // Close the dialog
-        alert("Student information updated!");
+        alert("Student information updated! (console log)");
     };
 
-    const getInitialFormValues = (student: Student | null): Partial<StudentRegistrationFormValues> | undefined => {
+    const getInitialFormValues = (student: DetailedStudent | null): Partial<StudentRegistrationFormValues> | undefined => {
         if (!student) return undefined;
         
-        const studentNameParts = student.name.split(' ');
-        const parentNameParts = student.parentName.split(' ');
+        const parent = student.parents[0]; // Assuming one parent for simplicity
 
         return {
-            studentFirstName: studentNameParts[0] || "",
-            studentLastName: studentNameParts.slice(1).join(' ') || "",
-            grade: student.grade,
-            section: student.section,
-            parentFirstName: parentNameParts[0] || "",
-            parentLastName: parentNameParts.slice(1).join(' ') || "",
-            parentPhone: student.phone,
-            // Mocking other required fields for the form
-            studentDob: new Date('2008-01-01'),
-            studentGender: 'Male',
-            parentRelation: 'Father',
-            addressLine1: '123 Mock Street',
-            city: 'Mockville',
-            state: 'MC',
-            zipCode: '12345',
+            studentFirstName: student.user.firstName || "",
+            studentMiddleName: student.user.middleName || "",
+            studentLastName: student.user.lastName || "",
+            studentDob: student.dob,
+            studentGender: student.gender,
+            grade: student.gradeId,
+            section: student.sectionId,
+            
+            parentFirstName: parent?.user.firstName || "",
+            parentMiddleName: parent?.user.middleName || "",
+            parentLastName: parent?.user.lastName || "",
+            parentPhone: parent?.user.phone || "",
+            parentRelation: parent?.relationToStudent || "Parent",
+
+            addressLine1: student.user.addressLine1 || "",
+            city: student.user.city || "",
+            state: student.user.state || "",
+            zipCode: student.user.zipCode || "",
         };
     }
     
@@ -121,7 +103,7 @@ export function StudentList() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Grades</SelectItem>
-                        {grades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
+                        {grades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -132,7 +114,7 @@ export function StudentList() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Sections</SelectItem>
-                        {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
+                        {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -143,40 +125,39 @@ export function StudentList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Student Name</TableHead>
+                <TableHead>DOB</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Section</TableHead>
                 <TableHead>Parent Name</TableHead>
                 <TableHead>Parent Contact</TableHead>
-                <TableHead>Enrollment Year</TableHead>
-                <TableHead>School ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-mono text-sm">{student.id.toUpperCase()}</TableCell>
-                  <TableCell className="font-medium">{student.name}</TableCell>
-                  <TableCell>{student.grade}</TableCell>
-                  <TableCell>{student.section}</TableCell>
-                  <TableCell>{student.parentName}</TableCell>
-                  <TableCell>{student.phone}</TableCell>
-                  <TableCell>{student.enrollmentYear}</TableCell>
-                  <TableCell className="font-mono text-xs">{student.schoolId}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit Student</span>
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="sr-only">Delete Student</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredStudents.map((student) => {
+                const parent = student.parents[0]; // Assuming one parent for simplicity
+                return (
+                    <TableRow key={student.id}>
+                    <TableCell className="font-medium">{`${student.user.firstName} ${student.user.lastName}`}</TableCell>
+                    <TableCell>{format(student.dob, 'PPP')}</TableCell>
+                    <TableCell>{student.grade.name}</TableCell>
+                    <TableCell>{student.section.name}</TableCell>
+                    <TableCell>{parent ? `${parent.user.firstName} ${parent.user.lastName}` : 'N/A'}</TableCell>
+                    <TableCell>{parent?.user.phone ?? 'N/A'}</TableCell>
+                    <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Edit Student</span>
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete Student</span>
+                        </Button>
+                    </TableCell>
+                    </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
@@ -193,7 +174,7 @@ export function StudentList() {
             <DialogHeader>
                 <DialogTitle>Edit Student Information</DialogTitle>
                 <DialogDescription>
-                Make changes to {editingStudent?.name}'s profile. Click save when you're done.
+                Make changes to {editingStudent?.user.firstName}'s profile. Click save when you're done.
                 </DialogDescription>
             </DialogHeader>
             {editingStudent && (
@@ -202,6 +183,8 @@ export function StudentList() {
                         initialData={getInitialFormValues(editingStudent)} 
                         onSubmit={handleEditSubmit} 
                         submitButtonText="Save Changes" 
+                        grades={grades}
+                        sections={sections}
                     />
                 </div>
             )}
