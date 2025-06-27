@@ -1,11 +1,15 @@
 
+'use client';
+
 import { ReactNode } from 'react';
 import { Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export default function SystemAdminLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   return (
      <div className="flex min-h-screen w-full flex-col">
        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
@@ -14,7 +18,8 @@ export default function SystemAdminLayout({ children }: { children: ReactNode })
             <Shield className="h-6 w-6 text-primary" />
             <span className="font-headline text-xl">System Admin</span>
           </Link>
-           <Link href="/system-admin/dashboard" className="text-foreground font-semibold">Manage Schools</Link>
+           <Link href="/system-admin/dashboard" className={cn("transition-colors hover:text-foreground", pathname === "/system-admin/dashboard" ? "text-foreground font-semibold" : "text-muted-foreground")}>Dashboard</Link>
+           <Link href="/system-admin/schools" className={cn("transition-colors hover:text-foreground", pathname === "/system-admin/schools" ? "text-foreground font-semibold" : "text-muted-foreground")}>Manage Schools</Link>
         </nav>
         
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">

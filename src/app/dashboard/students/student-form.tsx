@@ -74,6 +74,7 @@ interface StudentFormProps {
 export function StudentForm({ initialData, onSubmit, submitButtonText = "Register Student" }: StudentFormProps) {
   const [studentPhotoPreview, setStudentPhotoPreview] = useState<string | undefined>();
   const [parentPhotoPreview, setParentPhotoPreview] = useState<string | undefined>();
+  const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
   
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(studentRegistrationSchema),
@@ -162,7 +163,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Birth</FormLabel>
-                      <Popover>
+                      <Popover open={isDobPickerOpen} onOpenChange={setIsDobPickerOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -185,7 +186,10 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                                field.onChange(date);
+                                setIsDobPickerOpen(false);
+                            }}
                             disabled={(date) =>
                               date > new Date() || date < new Date("1900-01-01")
                             }
