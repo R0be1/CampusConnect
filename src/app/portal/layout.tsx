@@ -1,15 +1,23 @@
 
 'use client';
 
-import { ReactNode } from 'react';
-import { School, UserCircle, Bell, LogOut, Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { ReactNode, useState } from 'react';
+import {
+  School,
+  UserCircle,
+  Bell,
+  LogOut,
+  Menu,
+  PanelLeft,
+  PanelRight,
+} from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { DashboardNav, NavItem } from '@/components/dashboard-nav';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+const navItems: NavItem[] = [
   { href: '/portal/dashboard', label: 'Dashboard' },
   { href: '/portal/academics', label: 'Academics' },
   { href: '/portal/attendance', label: 'Attendance' },
@@ -22,60 +30,104 @@ const navItems = [
 ];
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-     <div className="flex min-h-screen w-full flex-col">
-       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Link href="/portal/dashboard" className="flex items-center gap-2 text-lg font-semibold md:text-base mr-4">
-            <School className="h-6 w-6 text-primary" />
-            <span className="font-headline text-xl">Parent Portal</span>
-          </Link>
-           {navItems.map(item => (
-             <Link key={item.label} href={item.href!} className={cn("transition-colors hover:text-foreground", pathname.startsWith(item.href!) ? "text-foreground font-semibold" : "text-muted-foreground")}>{item.label}</Link>
-          ))}
-        </nav>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <nav className="grid gap-6 text-lg font-medium p-6">
-              <Link href="/portal/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
-                <School className="h-6 w-6 text-primary" />
-                <span className="font-headline text-xl">Parent Portal</span>
-              </Link>
-              {navItems.map(item => (
-                 <SheetClose asChild key={item.label}>
-                   <Link href={item.href!} className={cn("hover:text-foreground", pathname.startsWith(item.href!) ? "text-foreground font-semibold" : "text-muted-foreground")}>{item.label}</Link>
-                 </SheetClose>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
+    <div
+      className={cn(
+        'grid min-h-screen w-full transition-[grid-template-columns] duration-300 ease-in-out',
+        isCollapsed ? 'md:grid-cols-[68px_1fr]' : 'md:grid-cols-[280px_1fr]'
+      )}
+    >
+      <div className="hidden border-r bg-muted/40 md:flex md:flex-col justify-between">
+        <div>
+          <div className="flex h-16 items-center border-b px-4 lg:px-6">
+            <Link
+              href="/portal/dashboard"
+              className="flex items-center gap-2 font-semibold"
+            >
+              <School className="h-6 w-6 text-primary" />
+              <span className={cn('font-headline text-xl', isCollapsed && 'hidden')}>
+                Parent Portal
+              </span>
+            </Link>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <DashboardNav items={navItems} isCollapsed={isCollapsed} />
+          </div>
+        </div>
+        <div className="mt-auto p-4 border-t">
+          <Button
+            variant="outline"
+            size={isCollapsed ? 'icon' : 'default'}
+            className="w-full"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? (
+              <PanelRight className="h-5 w-5" />
+            ) : (
+              <>
+                <PanelLeft className="h-5 w-5" />
+                <span>Collapse</span>
+              </>
+            )}
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <header className="flex h-16 items-center gap-4 border-b bg-muted/40 px-4 lg:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col p-0">
+              <div className="flex h-16 items-center border-b px-4 lg:px-6">
+                <Link
+                  href="/portal/dashboard"
+                  className="flex items-center gap-2 font-semibold"
+                >
+                  <School className="h-6 w-6 text-primary" />
+                  <span className="font-headline text-xl">Parent Portal</span>
+                </Link>
+              </div>
+              <nav className="flex-1 overflow-auto">
+                <DashboardNav items={navItems} isCollapsed={false} />
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4 justify-end">
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Notifications</span>
             </Button>
-            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+            >
               <UserCircle className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <Link href="/">
-                    <LogOut className="h-4 w-4" />
-                    <span className="sr-only">Logout</span>
-                </Link>
+              <Link href="/">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Logout</span>
+              </Link>
             </Button>
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
+          </div>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40">
           {children}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
