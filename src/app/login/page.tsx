@@ -35,7 +35,7 @@ export default function SchoolLoginPage() {
               </div>
               <div className="space-y-2 pt-2">
                 <Button asChild type="submit" className="w-full font-bold">
-                  <Link href="/dashboard">Staff Login</Link>
+                  <Link href="/dashboard">Admin / Staff Login</Link>
                 </Button>
                  <Button asChild variant="outline" className="w-full">
                   <Link href="/student/dashboard">Student Login</Link>
