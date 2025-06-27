@@ -101,7 +101,7 @@ export function DashboardNav({ items }: DashboardNavProps) {
           );
         }
         
-        const isRootDashboard = item.href === '/dashboard' || item.href?.endsWith('/dashboard');
+        const isRootDashboard = item.href === '/dashboard';
         const isActive = item.href ? (isRootDashboard ? pathname === item.href : pathname.startsWith(item.href)) : false;
         
         return (
