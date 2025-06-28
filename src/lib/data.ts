@@ -307,7 +307,7 @@ export async function deleteStudent(studentId: string) {
 export async function getFirstStudent(schoolId: string) {
     return prisma.student.findFirst({
         where: { schoolId },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { firstName: 'asc' }
     });
 }
 
@@ -494,6 +494,7 @@ export async function getStudentsForCommunication(schoolId: string) {
   const students = await prisma.student.findMany({
     where: { schoolId },
     include: {
+      user: true,
       grade: {
         select: { name: true },
       },
