@@ -1198,7 +1198,7 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
         },
         orderBy: {
             exam: {
-                createdAt: 'asc',
+                name: 'asc',
             },
         },
     });
