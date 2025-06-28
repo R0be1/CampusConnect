@@ -981,7 +981,7 @@ export async function submitResultsForApprovalAction(examId: string, results: {s
                     where: { examId_studentId: { examId, studentId: result.studentId } }
                 });
 
-                let newStatus = currentResult?.status || 'PENDING';
+                let newStatus: any = currentResult?.status || 'PENDING';
                 if (newStatus === 'PENDING') newStatus = 'PENDING_APPROVAL';
                 if (newStatus === 'APPROVED') newStatus = 'PENDING_REAPPROVAL';
                 
@@ -1210,12 +1210,16 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     const schoolId = results[0].exam.schoolId;
     const allExamsInYear = await prisma.exam.findMany({
         where: { academicYearId, schoolId },
-        include: { results: { select: { score: true } } },
+        select: { 
+            id: true,
+            totalMarks: true,
+            results: { select: { score: true } } 
+        },
     });
 
     const classAverages: Record<string, number> = {};
     for (const exam of allExamsInYear) {
-        if (exam.results.length > 0) {
+        if (exam.results.length > 0 && exam.totalMarks > 0) {
             const totalScore = exam.results.reduce((acc, res) => acc + parseFloat(res.score), 0);
             const averagePercentage = (totalScore / exam.results.length / exam.totalMarks) * 100;
             classAverages[exam.id] = parseFloat(averagePercentage.toFixed(1));
@@ -1246,7 +1250,10 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
         const subjectData = dataBySubject[subject];
         if (subjectData.exams.length > 0) {
             const totalPercentage = subjectData.exams.reduce((acc, exam) => {
-                return acc + (exam.score / exam.totalMarks * 100);
+                if (exam.totalMarks > 0) {
+                    return acc + (exam.score / exam.totalMarks * 100);
+                }
+                return acc;
             }, 0);
             subjectData.overallScore = totalPercentage / subjectData.exams.length;
         }

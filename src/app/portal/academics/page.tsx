@@ -99,7 +99,7 @@ export default function AcademicsPortalPage() {
             {Object.entries(academicData).map(([subject, data]) => {
                 const chartData = data.exams.map(exam => ({
                     ...exam,
-                    yourScore: parseFloat(((exam.score / exam.totalMarks) * 100).toFixed(1)),
+                    yourScore: (exam.totalMarks > 0) ? parseFloat(((exam.score / exam.totalMarks) * 100).toFixed(1)) : 0,
                 }));
                 
                 return (
