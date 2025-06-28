@@ -1,7 +1,8 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory } from "@/lib/data";
+import { format } from "date-fns";
 
 export async function getAvailableStudentsAction() {
     try {
@@ -65,3 +66,22 @@ export async function getAttendanceAction(studentId: string, month: number, year
     }
 }
 export type PortalAttendanceData = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;
+
+export async function getFeesDataAction(studentId: string) {
+    try {
+        if (!studentId) {
+            return { success: false, error: "Student ID is required." };
+        }
+        const invoices = await getInvoicesForStudent(studentId);
+        const paymentHistory = await getPaymentHistory(studentId);
+        return { success: true, data: { invoices, paymentHistory } };
+    } catch (error: any) {
+        console.error("Failed to get fees data:", error);
+        return { success: false, error: "Failed to fetch fees data." };
+    }
+}
+
+export type PortalFeesData = {
+    invoices: Awaited<ReturnType<typeof getInvoicesForStudent>>;
+    paymentHistory: Awaited<ReturnType<typeof getPaymentHistory>>;
+};

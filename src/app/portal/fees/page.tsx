@@ -5,34 +5,99 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, CreditCard } from "lucide-react";
+import { DollarSign, CreditCard, Loader2, Info, Sparkles } from "lucide-react";
+import { useStudent } from "@/context/student-context";
+import { useState, useEffect } from "react";
+import { getFeesDataAction, PortalFeesData } from "../actions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const invoicesData = [
-  { id: "INV-001", item: "Tuition Fee - Grade 10", amount: "$2,500.00", dueDate: "2024-08-01", status: "Overdue", lateFee: "$125.00", total: "$2,625.00" },
-  { id: "INV-002", item: "Library Book Fine", amount: "$15.00", dueDate: "2024-07-25", status: "Overdue", lateFee: "$5.00", total: "$20.00" },
-  { id: "INV-003", item: "Lab Fee - Chemistry", amount: "$150.00", dueDate: "2024-09-01", status: "Pending", lateFee: "$0.00", total: "$150.00" },
-  { id: "INV-004", item: "Tuition Fee - Spring Semester", amount: "$2,500.00", dueDate: "2024-04-15", status: "Paid", lateFee: "$0.00", total: "$2,500.00" },
 
-];
+function FeesLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <DollarSign className="h-8 w-8 text-primary" />
+                <div>
+                    <Skeleton className="h-8 w-72 mb-2" />
+                    <Skeleton className="h-5 w-80" />
+                </div>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card><CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
+                </div>
+                <div className="lg:col-span-1">
+                    <Card className="sticky top-6"><CardHeader><Skeleton className="h-20 w-full" /></CardHeader><CardFooter><Skeleton className="h-10 w-full" /></CardFooter></Card>
+                </div>
+            </div>
+        </div>
+    )
+}
 
-const paymentHistoryData = [
-  { id: "TRN-123", date: "2024-04-15", description: "Tuition Fee - Spring Semester", amount: "$2,500", status: "Completed" },
-  { id: "TRN-124", date: "2024-02-10", description: "Book Purchase", amount: "$250", status: "Completed" },
-];
 
 export default function FeesPortalPage() {
-    const outstandingBalance = invoicesData.reduce((acc, inv) => {
-        if (inv.status === 'Overdue' || inv.status === 'Pending') {
-            return acc + parseFloat(inv.total.replace(/[$,]/g, ''));
-        }
-        return acc;
-    }, 0);
+  const { selectedStudent } = useStudent();
+  const [feesData, setFeesData] = useState<PortalFeesData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedStudent?.id) {
+        setIsLoading(true);
+        setError(null);
+        getFeesDataAction(selectedStudent.id)
+            .then(result => {
+                if (result.success && result.data) {
+                    setFeesData(result.data);
+                } else {
+                    setError(result.error || "Failed to load fee data.");
+                }
+            })
+            .catch(() => setError("An unexpected error occurred."))
+            .finally(() => setIsLoading(false));
+    }
+  }, [selectedStudent]);
+  
+  const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
+
+  const outstandingBalance = feesData?.invoices.reduce((acc, inv) => {
+    if (inv.status === 'OVERDUE' || inv.status === 'PENDING') {
+      const total = (inv.amount - (inv.concession?.amount ?? 0)) + inv.lateFee;
+      return acc + total;
+    }
+    return acc;
+  }, 0) ?? 0;
+
+  if (isLoading || !selectedStudent) {
+    return <FeesLoadingSkeleton />;
+  }
+
+  if (error) {
+    return <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
+  }
+
+  if (!feesData) {
+      return (
+         <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>No Data Available</AlertTitle>
+            <AlertDescription>
+                Fee data is not available for {selectedStudent.name}. Please select another student or check back later.
+            </AlertDescription>
+        </Alert>
+      )
+  }
 
   return (
+    <TooltipProvider>
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <DollarSign className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Fee & Payment Details</h1>
+        <h1 className="text-3xl font-bold font-headline">Fee & Payment Details for {selectedStudent.name}</h1>
       </div>
       <p className="text-muted-foreground">Review outstanding invoices and your payment history.</p>
 
@@ -48,38 +113,73 @@ export default function FeesPortalPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Invoice ID</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Item</TableHead>
                                     <TableHead>Due Date</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Action</TableHead>
+                                    <TableHead>Concession</TableHead>
+                                    <TableHead>Late Fee</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {invoicesData.map((invoice) => (
+                                {feesData.invoices.length > 0 ? feesData.invoices.map((invoice) => {
+                                    const total = (invoice.amount - (invoice.concession?.amount ?? 0)) + invoice.lateFee;
+                                    return (
                                     <TableRow key={invoice.id}>
-                                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                                        <TableCell>{invoice.item}</TableCell>
-                                        <TableCell className="font-semibold">{invoice.total}</TableCell>
-                                        <TableCell>{invoice.dueDate}</TableCell>
+                                        <TableCell className="font-medium">{invoice.feeStructure.name}</TableCell>
+                                        <TableCell>{format(new Date(invoice.dueDate), 'PPP')}</TableCell>
                                         <TableCell>
                                             <Badge variant={
-                                                invoice.status === "Overdue" ? "destructive" : 
-                                                invoice.status === "Paid" ? "default" : "secondary"
+                                                invoice.status === "OVERDUE" ? "destructive" : 
+                                                invoice.status === "PAID" ? "default" : "secondary"
                                             }>
                                                 {invoice.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            {(invoice.status === 'Overdue' || invoice.status === 'Pending') && (
-                                                <Button size="sm">
-                                                    <CreditCard className="mr-2 h-4 w-4" /> Pay
-                                                </Button>
-                                            )}
+                                        <TableCell>
+                                          {invoice.concession ? (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span className="flex items-center gap-1 cursor-help text-emerald-600">
+                                                  <Sparkles className="h-3 w-3" />
+                                                  -{formatCurrency(invoice.concession.amount)}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>{invoice.concession.name} applied.</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <span className="text-muted-foreground">-</span>
+                                          )}
+                                        </TableCell>
+                                        <TableCell className={invoice.lateFee > 0 ? 'text-destructive font-medium' : ''}>
+                                          {invoice.lateFee > 0 && invoice.lateFeeDetails ? (
+                                              <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                  <span className="flex items-center gap-1 cursor-help">
+                                                  {formatCurrency(invoice.lateFee)}
+                                                  <Info className="h-3 w-3" />
+                                                  </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                  <p>{invoice.lateFeeDetails}</p>
+                                              </TooltipContent>
+                                              </Tooltip>
+                                          ) : (
+                                              formatCurrency(invoice.lateFee)
+                                          )}
+                                        </TableCell>
+                                        <TableCell className="text-right font-semibold">{formatCurrency(total)}</TableCell>
+                                    </TableRow>
+                                    )
+                                }) : (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                            No invoices found.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
                     </div>
@@ -96,21 +196,29 @@ export default function FeesPortalPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Transaction ID</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Description</TableHead>
-                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paymentHistoryData.map((payment) => (
+                                {feesData.paymentHistory.length > 0 ? feesData.paymentHistory.map((payment) => (
                                     <TableRow key={payment.id}>
-                                        <TableCell className="font-medium">{payment.id}</TableCell>
-                                        <TableCell>{payment.date}</TableCell>
-                                        <TableCell>{payment.description}</TableCell>
-                                        <TableCell>{payment.amount}</TableCell>
+                                        <TableCell>{format(new Date(payment.paymentDate), 'PPP')}</TableCell>
+                                        <TableCell className="font-medium">{payment.invoice.feeStructure.name}</TableCell>
+                                        <TableCell>{payment.method}</TableCell>
+                                        <TableCell><Badge>{payment.status}</Badge></TableCell>
+                                        <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                     <TableRow>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            No payment history found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </div>
@@ -122,10 +230,10 @@ export default function FeesPortalPage() {
             <Card className="sticky top-6">
                 <CardHeader className="text-center">
                     <CardDescription>Total Outstanding Balance</CardDescription>
-                    <CardTitle className="text-4xl text-destructive">${outstandingBalance.toFixed(2)}</CardTitle>
+                    <CardTitle className="text-4xl text-destructive">{formatCurrency(outstandingBalance)}</CardTitle>
                 </CardHeader>
                 <CardFooter>
-                    <Button className="w-full">
+                    <Button className="w-full" disabled={outstandingBalance <= 0}>
                         <CreditCard className="mr-2 h-4 w-4" /> Pay All Outstanding
                     </Button>
                 </CardFooter>
@@ -133,5 +241,6 @@ export default function FeesPortalPage() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
