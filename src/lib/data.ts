@@ -5,7 +5,7 @@
 import { StudentRegistrationFormValues } from '@/app/dashboard/students/student-form';
 import prisma from './prisma';
 import bcrypt from 'bcrypt';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format, startOfMonth, endOfMonth } from 'date-fns';
 
 export async function getDashboardStats(schoolId: string) {
   if (!schoolId) {
@@ -1071,3 +1071,112 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
         return { success: false, error: "Failed to bulk update." };
     }
 }
+
+
+// --- Parent Portal Data ---
+
+export async function getStudentsForParentPortal() {
+    // In a real app, we'd find the students for the logged-in parent.
+    // For this prototype, just get the first two students in the school.
+    const students = await prisma.student.findMany({
+        take: 2,
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true
+        },
+        orderBy: {
+            user: {
+                createdAt: 'asc'
+            }
+        }
+    });
+    return students.map(s => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }));
+}
+
+export async function getPortalDashboardData(studentId: string, academicYearId: string) {
+    // 1. Get student and parent info
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: {
+            user: true,
+            grade: true,
+            section: true,
+            parents: {
+                include: {
+                    user: true
+                }
+            }
+        }
+    });
+
+    if (!student || !student.parents.length) {
+        throw new Error("Student or parent not found");
+    }
+    const parent = student.parents[0];
+
+    // 2. Get Attendance Summary for current month
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
+
+    const attendanceRecords = await prisma.attendance.findMany({
+        where: { studentId, date: { gte: start, lte: end } }
+    });
+    const attendanceSummary = {
+        present: attendanceRecords.filter(r => r.status === 'PRESENT').length,
+        absent: attendanceRecords.filter(r => r.status === 'ABSENT').length,
+        late: attendanceRecords.filter(r => r.status === 'LATE').length,
+        total: attendanceRecords.length,
+    };
+
+    // 3. Get Recent Grades
+    const gradesData = await getGradesForStudent(studentId, academicYearId);
+
+    // 4. Get Fee Summary
+    const invoices = await getInvoicesForStudent(studentId);
+    const outstandingInvoices = invoices.filter(inv => inv.status === 'OVERDUE' || inv.status === 'PENDING');
+    const outstandingBalance = outstandingInvoices.reduce((acc, inv) => {
+        const total = (inv.amount - (inv.concession?.amount ?? 0)) + inv.lateFee;
+        return acc + total;
+    }, 0);
+
+    // 5. Get Recent Communications
+    const recentCommunications = await prisma.communication.findMany({
+        where: { receiverId: parent.userId },
+        include: { sender: { select: { firstName: true, lastName: true } } },
+        orderBy: { sentAt: 'desc' },
+        take: 5
+    });
+
+    return {
+        student: {
+            name: `${student.firstName} ${student.lastName}`,
+            grade: student.grade.name,
+            section: student.section.name,
+            avatar: student.user.photoUrl || `https://placehold.co/80x80.png`,
+            parentName: `${parent.firstName} ${parent.lastName}`,
+        },
+        attendanceSummary,
+        gradesData: gradesData.slice(0, 4),
+        feeSummary: {
+            outstanding: outstandingBalance,
+            invoices: outstandingInvoices.map(inv => ({
+                id: inv.id,
+                item: inv.feeStructure.name,
+                total: (inv.amount - (inv.concession?.amount ?? 0)) + inv.lateFee,
+                dueDate: format(inv.dueDate, "yyyy-MM-dd"),
+                status: inv.status,
+            })),
+        },
+        recentCommunications: recentCommunications.map(msg => ({
+            id: msg.id,
+            date: format(msg.sentAt, "yyyy-MM-dd"),
+            subject: msg.subject,
+            sentBy: `${msg.sender.firstName} ${msg.sender.lastName}`,
+            unread: !msg.isRead,
+        })),
+    };
+}
+
+export type PortalDashboardData = Awaited<ReturnType<typeof getPortalDashboardData>>;

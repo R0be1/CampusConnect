@@ -1,12 +1,8 @@
 'use client';
 
-import { createContext, useState, ReactNode, useContext, useMemo } from 'react';
-
-// Mock data for parent's children
-const studentsData = [
-  { id: 's001', name: 'John Doe' },
-  { id: 's002', name: 'Alice Smith' },
-];
+import { getAvailableStudentsAction } from '@/app/portal/actions';
+import { createContext, useState, ReactNode, useContext, useMemo, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Student = {
     id: string;
@@ -14,21 +10,40 @@ type Student = {
 };
 
 type StudentContextType = {
-  selectedStudent: Student;
-  setSelectedStudent: (student: Student) => void;
+  selectedStudent: Student | null;
+  setSelectedStudent: (student: Student | null) => void;
   availableStudents: Student[];
+  isLoading: boolean;
 };
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
 export function StudentProvider({ children }: { children: ReactNode }) {
-  const [selectedStudent, setSelectedStudent] = useState<Student>(studentsData[0]);
+  const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setIsLoading(true);
+      const response = await getAvailableStudentsAction();
+      if (response.success && response.students) {
+        setAvailableStudents(response.students);
+        if (response.students.length > 0) {
+          setSelectedStudent(response.students[0]);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetchStudents();
+  }, []);
 
   const value = useMemo(() => ({
-      selectedStudent,
-      setSelectedStudent,
-      availableStudents: studentsData
-  }), [selectedStudent]);
+    selectedStudent,
+    setSelectedStudent,
+    availableStudents,
+    isLoading,
+  }), [selectedStudent, availableStudents, isLoading]);
 
   return (
     <StudentContext.Provider value={value}>

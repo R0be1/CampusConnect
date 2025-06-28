@@ -1,85 +1,76 @@
 
 "use client"
 
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowRight, BookOpen, CalendarDays, DollarSign, MessageCircle, User } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, DollarSign, MessageCircle, User, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useStudent } from "@/context/student-context";
+import { getDashboardDataAction } from "../actions";
+import { PortalDashboardData } from "@/lib/data";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { format } from "date-fns";
 
-// Mock Data for multiple children
-const allData = {
-    "John Doe": {
-        student: {
-            name: 'John Doe',
-            grade: 'Grade 10',
-            section: 'A',
-            avatar: 'https://placehold.co/80x80.png',
-            parentName: 'Jane Doe',
-        },
-        attendanceSummary: {
-            present: 18,
-            absent: 1,
-            late: 1,
-            total: 20,
-        },
-        gradesData: [
-            { course: 'Mathematics', grade: 'A', teacher: 'Mr. Smith' },
-            { course: 'History', grade: 'B+', teacher: 'Ms. Jones' },
-            { course: 'Science', grade: 'A-', teacher: 'Dr. Brown' },
-            { course: 'English Literature', grade: 'B', teacher: 'Mrs. Davis' },
-        ],
-        feeSummary: {
-            outstanding: 2645.00,
-            invoices: [
-                { id: "INV-001", item: "Tuition Fee - Grade 10", total: "$2,625.00", dueDate: "2024-08-01", status: "Overdue" },
-                { id: "INV-002", item: "Library Book Fine", total: "$20.00", dueDate: "2024-07-25", status: "Overdue" },
-            ],
-        },
-        recentCommunications: [
-            { id: "msg-001", date: "2024-08-01", subject: "Update on Q2 Mathematics Performance", sentBy: "Mr. Smith", unread: false },
-            { id: "msg-004", date: "2024-08-05", subject: "Parent-Teacher Meeting Schedule", sentBy: "Admin Office", unread: true },
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    },
-    "Alice Smith": {
-        student: {
-            name: 'Alice Smith',
-            grade: 'Grade 9',
-            section: 'B',
-            avatar: 'https://placehold.co/80x80.png',
-            parentName: 'Jane Doe',
-        },
-        attendanceSummary: {
-            present: 20,
-            absent: 0,
-            late: 0,
-            total: 20,
-        },
-        gradesData: [
-            { course: 'Mathematics', grade: 'A+', teacher: 'Mr. Smith' },
-            { course: 'History', grade: 'A', teacher: 'Ms. Jones' },
-            { course: 'Science', grade: 'A', teacher: 'Dr. Brown' },
-            { course: 'English Literature', grade: 'A-', teacher: 'Mrs. Davis' },
-        ],
-        feeSummary: {
-            outstanding: 0.00,
-            invoices: [],
-        },
-        recentCommunications: [
-             { id: "msg-005", date: "2024-08-02", subject: "Welcome to Grade 9", sentBy: "Admin Office", unread: false },
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    }
-};
-
+function DashboardLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+                <Skeleton className="h-9 w-1/2" />
+                <Skeleton className="h-5 w-3/4" />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 grid gap-6">
+                    <Card><CardHeader><Skeleton className="h-6 w-1/3" /></CardHeader><CardContent><Skeleton className="h-32 w-full" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-1/3" /></CardHeader><CardContent><Skeleton className="h-32 w-full" /></CardContent></Card>
+                </div>
+                <div className="lg:col-span-1 flex flex-col gap-6">
+                    <Card><CardHeader><Skeleton className="h-16 w-full" /></CardHeader><CardContent><Skeleton className="h-10 w-full" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>
+                    <Card><CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 export default function ParentDashboardPage() {
   const { selectedStudent } = useStudent();
-  const data = allData[selectedStudent.name as keyof typeof allData];
+  const [data, setData] = useState<PortalDashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const attendancePercentage = (data.attendanceSummary.present / data.attendanceSummary.total) * 100;
+  useEffect(() => {
+    if (selectedStudent?.id) {
+        setIsLoading(true);
+        setError(null);
+        getDashboardDataAction(selectedStudent.id)
+            .then(result => {
+                if (result.success) {
+                    setData(result.data);
+                } else {
+                    setError(result.error || "Failed to load dashboard data.");
+                }
+            })
+            .catch(() => setError("An unexpected error occurred."))
+            .finally(() => setIsLoading(false));
+    }
+  }, [selectedStudent]);
+  
+  if (isLoading || !selectedStudent) {
+    return <DashboardLoadingSkeleton />;
+  }
+  
+  if (error || !data) {
+    return <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error || 'Could not load data for this student.'}</AlertDescription></Alert>
+  }
+  
+  const attendancePercentage = data.attendanceSummary.total > 0 ? (data.attendanceSummary.present / data.attendanceSummary.total) * 100 : 0;
+  const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -104,13 +95,15 @@ export default function ParentDashboardPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.gradesData.map((item) => (
+                                {data.gradesData.length > 0 ? data.gradesData.map((item) => (
                                     <TableRow key={item.course}>
                                     <TableCell className="font-medium">{item.course}</TableCell>
                                     <TableCell>{item.teacher}</TableCell>
                                     <TableCell className="text-right font-semibold">{item.grade}</TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                    <TableRow><TableCell colSpan={3} className="text-center h-24">No grades recorded yet.</TableCell></TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -133,7 +126,7 @@ export default function ParentDashboardPage() {
                                  <div className={`mt-1.5 h-2 w-2 rounded-full ${msg.unread ? 'bg-primary animate-pulse' : 'bg-transparent'}`} />
                                  <div className="flex-1">
                                     <p className={`font-medium ${msg.unread ? 'text-foreground' : 'text-muted-foreground'}`}>{msg.subject}</p>
-                                    <p className="text-sm text-muted-foreground">From: {msg.sentBy} on {msg.date}</p>
+                                    <p className="text-sm text-muted-foreground">From: {msg.sentBy} on {format(new Date(msg.date), 'PPP')}</p>
                                  </div>
                                 <Button variant="ghost" size="sm" asChild><Link href="/portal/communication">View</Link></Button>
                             </div>
@@ -211,7 +204,7 @@ export default function ParentDashboardPage() {
                         {data.feeSummary.outstanding > 0 ? (
                              <div className="text-center mb-4 p-4 bg-destructive/10 rounded-lg">
                                 <p className="text-sm text-destructive font-medium">Outstanding Balance</p>
-                                <p className="text-3xl font-bold text-destructive">${data.feeSummary.outstanding.toFixed(2)}</p>
+                                <p className="text-3xl font-bold text-destructive">{formatCurrency(data.feeSummary.outstanding)}</p>
                             </div>
                         ) : (
                              <div className="text-center mb-4 p-4 bg-green-500/10 rounded-lg">
@@ -224,7 +217,7 @@ export default function ParentDashboardPage() {
                              {data.feeSummary.invoices.length > 0 ? data.feeSummary.invoices.map(invoice => (
                                 <div key={invoice.id} className="flex justify-between">
                                     <span className="text-muted-foreground">{invoice.item}</span>
-                                    <span className="font-medium">{invoice.total}</span>
+                                    <span className="font-medium">{formatCurrency(invoice.total)}</span>
                                 </div>
                             )) : (
                                 <p className="text-xs text-muted-foreground text-center">No overdue invoices.</p>
