@@ -1262,3 +1262,26 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     return dataBySubject;
 }
 export type AcademicsDataForPortal = Awaited<ReturnType<typeof getAcademicDataForStudentPortal>>;
+
+export async function getAttendanceForStudentPortal(studentId: string, month: number, year: number) {
+    if (!studentId) return [];
+
+    const startDate = startOfMonth(new Date(year, month));
+    const endDate = endOfMonth(new Date(year, month));
+
+    const attendanceRecords = await prisma.attendance.findMany({
+        where: {
+            studentId: studentId,
+            date: { gte: startDate, lte: endDate },
+        },
+        select: { date: true, status: true, notes: true },
+        orderBy: { date: 'asc' },
+    });
+    
+    return attendanceRecords.map(r => ({
+        date: r.date.toISOString().split('T')[0], // Return as YYYY-MM-DD string
+        status: r.status as 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED',
+        notes: r.notes
+    }));
+}
+export type AttendanceDataForPortal = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;

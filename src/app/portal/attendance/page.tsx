@@ -4,44 +4,82 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCheck } from "lucide-react";
-import { useState } from "react";
+import { UserCheck, Info, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useStudent } from "@/context/student-context";
+import { getAttendanceAction, PortalAttendanceData } from "../actions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock data for attendance
-const attendanceByMonth: Record<string, Record<string, 'present' | 'absent' | 'late'>> = {
-    "2024-07": {
-      '2024-07-01': 'present', '2024-07-02': 'present', '2024-07-03': 'present', '2024-07-04': 'present', '2024-07-05': 'present',
-      '2024-07-08': 'present', '2024-07-09': 'absent', '2024-07-10': 'present', '2024-07-11': 'present', '2024-07-12': 'late',
-      '2024-07-15': 'present', '2024-07-16': 'present', '2024-07-17': 'present', '2024-07-18': 'present', '2024-07-19': 'present',
-      '2024-07-22': 'present', '2024-07-23': 'present', '2024-07-24': 'present', '2024-07-25': 'present', '2024-07-26': 'present',
-    },
-    "2024-06": {
-        '2024-06-03': 'present', '2024-06-04': 'present', '2024-06-05': 'late', '2024-06-06': 'present', '2024-06-07': 'present',
-        '2024-06-10': 'present', '2024-06-11': 'present', '2024-06-12': 'present', '2024-06-13': 'absent', '2024-06-14': 'absent',
-    }
-};
-
-const getSummary = (data: Record<string, string>) => {
-    return {
-        present: Object.values(data).filter(d => d === 'present').length,
-        absent: Object.values(data).filter(d => d === 'absent').length,
-        late: Object.values(data).filter(d => d === 'late').length,
-        excused: 0,
-        total: Object.values(data).length
-    };
-};
+function AttendanceLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <UserCheck className="h-8 w-8 text-primary" />
+                <div>
+                    <Skeleton className="h-8 w-72 mb-2" />
+                    <Skeleton className="h-5 w-80" />
+                </div>
+            </div>
+            <Card>
+                <CardHeader><Skeleton className="h-8 w-48" /></CardHeader>
+                <CardContent className="grid gap-8 md:grid-cols-2">
+                    <Skeleton className="h-[300px] w-full" />
+                    <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 export default function AttendancePortalPage() {
-  const [month, setMonth] = useState(new Date(2024, 6)); // Default to July 2024
+  const { selectedStudent } = useStudent();
+  const [month, setMonth] = useState(new Date());
+  const [attendanceData, setAttendanceData] = useState<PortalAttendanceData>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const monthKey = month.toISOString().slice(0, 7);
-  const currentMonthData = attendanceByMonth[monthKey] || {};
-  const summary = getSummary(currentMonthData);
+  useEffect(() => {
+    if (selectedStudent?.id) {
+        setIsLoading(true);
+        setError(null);
+        getAttendanceAction(selectedStudent.id, month.getMonth(), month.getFullYear())
+            .then(result => {
+                if (result.success && result.data) {
+                    setAttendanceData(result.data);
+                } else {
+                    setError(result.error || "Failed to load attendance data.");
+                    setAttendanceData([]);
+                }
+            })
+            .catch(() => setError("An unexpected error occurred."))
+            .finally(() => setIsLoading(false));
+    }
+  }, [selectedStudent, month]);
+  
+  const attendanceMap = useMemo(() => {
+    const map = new Map<string, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>();
+    attendanceData.forEach(record => {
+        map.set(record.date, record.status);
+    });
+    return map;
+  }, [attendanceData]);
+
+  const summary = useMemo(() => {
+    return {
+        present: attendanceData.filter(d => d.status === 'PRESENT').length,
+        absent: attendanceData.filter(d => d.status === 'ABSENT').length,
+        late: attendanceData.filter(d => d.status === 'LATE').length,
+        excused: attendanceData.filter(d => d.status === 'EXCUSED').length,
+        total: attendanceData.length
+    };
+  }, [attendanceData]);
   
   const modifiers = {
-    present: (date: Date) => currentMonthData[date.toISOString().split('T')[0]] === 'present',
-    absent: (date: Date) => currentMonthData[date.toISOString().split('T')[0]] === 'absent',
-    late: (date: Date) => currentMonthData[date.toISOString().split('T')[0]] === 'late',
+    present: (date: Date) => attendanceMap.get(date.toISOString().split('T')[0]) === 'PRESENT',
+    absent: (date: Date) => attendanceMap.get(date.toISOString().split('T')[0]) === 'ABSENT',
+    late: (date: Date) => attendanceMap.get(date.toISOString().split('T')[0]) === 'LATE',
+    excused: (date: Date) => attendanceMap.get(date.toISOString().split('T')[0]) === 'EXCUSED',
   };
 
   const modifiersStyles = {
@@ -57,15 +95,26 @@ export default function AttendancePortalPage() {
       backgroundColor: 'hsl(var(--accent))',
       color: 'hsl(var(--accent-foreground))',
     },
+    excused: {
+      backgroundColor: 'hsl(var(--muted))',
+      color: 'hsl(var(--muted-foreground))',
+    },
   };
+
+  if (isLoading || !selectedStudent) {
+    return <AttendanceLoadingSkeleton />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <UserCheck className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Attendance Details</h1>
+        <h1 className="text-3xl font-bold font-headline">Attendance Details for {selectedStudent.name}</h1>
       </div>
       <p className="text-muted-foreground">View your child's attendance record by month. Use the arrows on the calendar to navigate.</p>
+      
+      {error && <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+      
       <Card>
         <CardHeader>
             <CardTitle>{month.toLocaleString('default', { month: 'long', year: 'numeric' })} Attendance</CardTitle>
@@ -113,12 +162,21 @@ export default function AttendancePortalPage() {
                                 <TableCell className="text-right">{summary.excused}</TableCell>
                             </TableRow>
                              <TableRow className="bg-muted/50">
-                                <TableCell className="font-bold">Total School Days</TableCell>
+                                <TableCell className="font-bold">Total Recorded Days</TableCell>
                                 <TableCell className="text-right font-bold">{summary.total}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
                 </div>
+                 {summary.total === 0 && !error && (
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>No Records Found</AlertTitle>
+                        <AlertDescription>
+                            There are no attendance records for {selectedStudent.name} for {month.toLocaleString('default', { month: 'long', year: 'numeric' })}.
+                        </AlertDescription>
+                    </Alert>
+                )}
             </div>
         </CardContent>
       </Card>
