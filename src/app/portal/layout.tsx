@@ -22,6 +22,7 @@ import { SchoolProvider, useSchool } from '@/context/school-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const navItems: NavItem[] = [
@@ -47,16 +48,33 @@ function SchoolDisplay({ isCollapsed }: { isCollapsed: boolean }) {
 }
 
 function StudentSelector() {
-    const { availableStudents, selectedStudent, setSelectedStudent } = useStudent();
+    const { availableStudents, selectedStudent, setSelectedStudent, isLoading } = useStudent();
+    
+    if (isLoading) {
+        return (
+             <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-5 w-24 hidden sm:block" />
+            </div>
+        )
+    }
+
+    if (!selectedStudent) {
+        return (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                No students found.
+            </div>
+        );
+    }
     
     if (availableStudents.length <= 1) {
         return (
              <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                    <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
                     <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                 </Avatar>
-                <span className="font-semibold">{selectedStudent.name}</span>
+                <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
             </div>
         )
     }
@@ -66,7 +84,7 @@ function StudentSelector() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                         <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                         <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
                          <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>

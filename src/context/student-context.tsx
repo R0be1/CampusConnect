@@ -1,3 +1,4 @@
+
 'use client';
 
 import { getAvailableStudentsAction } from '@/app/portal/actions';
@@ -7,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 type Student = {
     id: string;
     name: string;
+    avatar?: string | null;
 };
 
 type StudentContextType = {
