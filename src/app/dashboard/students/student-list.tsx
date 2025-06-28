@@ -15,7 +15,7 @@ import { DetailedStudent } from "@/lib/data";
 import type { Grade, Section } from "@prisma/client";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { updateStudentAction, deleteStudentAction } from "../actions";
+import { updateStudentAction, deleteStudentAction } from "./actions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
