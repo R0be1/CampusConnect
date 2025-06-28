@@ -19,7 +19,9 @@ export default async function RegisterStudentPage() {
              <Alert>
                 <Info className="h-4 w-4" />
                 <AlertTitle>Setup Required</AlertTitle>
-                <AlertDescription>Please create at least one grade and one section before registering students.</AlertDescription>
+                <AlertDescription>
+                    <p>Please create at least one grade and one section before registering students.</p>
+                </AlertDescription>
             </Alert>
         );
     }
