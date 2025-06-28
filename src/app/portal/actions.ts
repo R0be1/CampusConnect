@@ -1,7 +1,7 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getAvailableStudentsAction() {
@@ -80,8 +80,33 @@ export async function getFeesDataAction(studentId: string) {
         return { success: false, error: "Failed to fetch fees data." };
     }
 }
-
 export type PortalFeesData = {
     invoices: Awaited<ReturnType<typeof getInvoicesForStudent>>;
     paymentHistory: Awaited<ReturnType<typeof getPaymentHistory>>;
 };
+
+export async function getCommunicationAction(studentId: string) {
+    try {
+        if (!studentId) {
+            return { success: false, error: "Student ID is required." };
+        }
+        const communications = await getCommunicationsForParentPortal(studentId);
+        return { success: true, data: communications };
+    } catch (error: any) {
+        console.error("Failed to get communications:", error);
+        return { success: false, error: error.message || "Failed to fetch communications." };
+    }
+}
+export type PortalCommunicationData = Awaited<ReturnType<typeof getCommunicationsForParentPortal>>;
+
+
+export async function markCommunicationReadAction(communicationId: string) {
+    try {
+        await markAsReadDb(communicationId);
+        // No need to revalidate path here as it's a client-side update
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to mark communication as read:", error);
+        return { success: false, error: error.message || "Failed to mark as read." };
+    }
+}

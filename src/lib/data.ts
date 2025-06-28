@@ -1210,9 +1210,7 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     const schoolId = results[0].exam.schoolId;
     const allExamsInYear = await prisma.exam.findMany({
         where: { academicYearId, schoolId },
-        select: { 
-            id: true,
-            totalMarks: true,
+        include: { 
             results: { select: { score: true } } 
         },
     });
@@ -1236,13 +1234,15 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
                 overallScore: 0,
             };
         }
-        acc[subject].exams.push({
-            name: result.exam.name,
-            score: parseFloat(result.score),
-            totalMarks: result.exam.totalMarks,
-            rank: Math.floor(Math.random() * 10) + 1, // Mock rank for now
-            classAverage: classAverages[result.exam.id] || 80,
-        });
+        if (result.exam.totalMarks > 0) {
+            acc[subject].exams.push({
+                name: result.exam.name,
+                score: parseFloat(result.score),
+                totalMarks: result.exam.totalMarks,
+                rank: Math.floor(Math.random() * 10) + 1, // Mock rank for now
+                classAverage: classAverages[result.exam.id] || 80,
+            });
+        }
         return acc;
     }, {} as Record<string, { exams: any[], overallScore: number }>);
 
@@ -1285,3 +1285,41 @@ export async function getAttendanceForStudentPortal(studentId: string, month: nu
     }));
 }
 export type AttendanceDataForPortal = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;
+
+export async function getCommunicationsForParentPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: { parents: { select: { userId: true } } }
+    });
+
+    if (!student || !student.parents.length) {
+        return [];
+    }
+    const parentUserId = student.parents[0].userId;
+
+    return prisma.communication.findMany({
+        where: {
+            receiverId: parentUserId,
+        },
+        include: {
+            sender: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                    photoUrl: true,
+                }
+            }
+        },
+        orderBy: {
+            sentAt: 'desc'
+        }
+    });
+}
+export type PortalCommunications = Awaited<ReturnType<typeof getCommunicationsForParentPortal>>;
+
+export async function markCommunicationAsRead(communicationId: string) {
+    return prisma.communication.update({
+        where: { id: communicationId },
+        data: { isRead: true }
+    });
+}
