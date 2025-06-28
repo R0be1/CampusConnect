@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Exam, ResultStatus } from "@prisma/client";
+import { Exam } from "@prisma/client";
 import { useToast } from "@/hooks/use-toast";
 import { getResultsForExamAction, submitResultsForApprovalAction } from "./actions";
 
@@ -33,7 +33,7 @@ type StudentResult = {
   id: string; // studentId
   name: string;
   score: string;
-  status: ResultStatus;
+  status: string;
 };
 
 type EnterResultsClientProps = {
@@ -50,7 +50,7 @@ export default function EnterResultsClient({ examsForSelection }: EnterResultsCl
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [gradingType, setGradingType] = useState<'DECIMAL' | 'LETTER'>('DECIMAL');
+    const [gradingType, setGradingType] = useState<string>('DECIMAL');
 
     const handleExamSelect = async (examId: string) => {
         setSelectedExam(examId);
@@ -238,7 +238,7 @@ export default function EnterResultsClient({ examsForSelection }: EnterResultsCl
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center">
-                                                            <Badge variant={getBadgeVariant(student.status)}>{student.status}</Badge>
+                                                            <Badge variant={getBadgeVariant(student.status) as any}>{student.status}</Badge>
                                                             {student.status === 'FINALIZED' && (
                                                                 <Lock className="ml-2 h-3 w-3 text-muted-foreground" />
                                                             )}
@@ -294,4 +294,3 @@ export default function EnterResultsClient({ examsForSelection }: EnterResultsCl
         </div>
     );
 }
-

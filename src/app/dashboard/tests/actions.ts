@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -16,7 +17,7 @@ export async function createTestAction(data: any, schoolId: string, teacherId: s
 }
 
 // Action for updating test status
-export async function updateTestStatusAction(testId: string, status: "UPCOMING" | "ACTIVE" | "COMPLETED") {
+export async function updateTestStatusAction(testId: string, status: string) {
     try {
         await updateTestStatus(testId, status);
         revalidatePath('/dashboard/tests');

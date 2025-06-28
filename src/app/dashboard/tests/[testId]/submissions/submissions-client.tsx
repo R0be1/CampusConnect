@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -161,6 +162,11 @@ export function SubmissionsClient({ test: initialTest }: { test: NonNullable<Tes
                                 const studentAnswerObj = submission.answers.find(a => a.questionId === question.id);
                                 const studentAnswer = studentAnswerObj?.answer || "No Answer";
                                 const isCorrect = studentAnswer === question.correctAnswer;
+                                
+                                const options = (question.type === 'MULTIPLE_CHOICE' && question.options) ? JSON.parse(question.options) : [];
+                                const correctAnswerText = question.type === 'MULTIPLE_CHOICE' ? options[parseInt(question.correctAnswer)] : question.correctAnswer;
+                                const studentAnswerText = question.type === 'MULTIPLE_CHOICE' ? options[parseInt(studentAnswer)] : studentAnswer;
+
                                 return (
                                   <Card key={question.id} className={cn("overflow-hidden", isCorrect ? "border-green-500/50" : "border-destructive/50")}>
                                     <CardHeader className="flex flex-row items-start gap-4 bg-muted/30 p-4">
@@ -173,9 +179,9 @@ export function SubmissionsClient({ test: initialTest }: { test: NonNullable<Tes
                                       </div>
                                     </CardHeader>
                                     <CardContent className="p-4 space-y-2">
-                                      <p className="text-sm"><strong>Student's Answer:</strong> <span className={cn(isCorrect ? "text-green-700 dark:text-green-400" : "text-destructive")}>{studentAnswer}</span></p>
+                                      <p className="text-sm"><strong>Student's Answer:</strong> <span className={cn(isCorrect ? "text-green-700 dark:text-green-400" : "text-destructive")}>{studentAnswerText}</span></p>
                                       {!isCorrect && (
-                                          <p className="text-sm"><strong>Correct Answer:</strong> <span className="text-green-700 dark:text-green-400">{question.correctAnswer}</span></p>
+                                          <p className="text-sm"><strong>Correct Answer:</strong> <span className="text-green-700 dark:text-green-400">{correctAnswerText}</span></p>
                                       )}
                                     </CardContent>
                                   </Card>

@@ -29,7 +29,7 @@ export async function getClassRosterAction(gradeId: string, sectionId: string, d
 
         const attendance: AttendanceState = {};
         for (const record of attendanceRecords) {
-            attendance[record.studentId] = { status: record.status, notes: record.notes ?? '' };
+            attendance[record.studentId] = { status: record.status as AttendanceStatus, notes: record.notes ?? '' };
         }
 
         return { success: true, roster, attendance };
@@ -56,7 +56,7 @@ export async function saveAttendanceAction(
             notes: record.notes,
         }));
         
-        await upsertAttendance(dataToSave, date, teacher.id);
+        await upsertAttendance(dataToSave, date, teacher.userId);
         revalidatePath("/dashboard/attendance/records");
         return { success: true, message: "Attendance saved successfully." };
     } catch (error: any) {
@@ -67,7 +67,7 @@ export async function saveAttendanceAction(
 
 export async function getAttendanceSummaryAction(gradeId: string, sectionId: string, month: number, year: number) {
      try {
-        if (!gradeId || !sectionId || !month || !year) {
+        if (!gradeId || !sectionId || !month === undefined || !year === undefined) {
             return { success: false, error: "Missing required parameters." };
         }
         const summary = await getAttendanceSummary(gradeId, sectionId, month, year);

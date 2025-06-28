@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Exam, ResultStatus } from "@prisma/client";
+import { Exam } from "@prisma/client";
 import { useToast } from "@/hooks/use-toast";
 import { getApprovalsForExamAction, updateResultStatusAction, bulkUpdateResultStatusAction } from "./actions";
 
@@ -32,7 +32,7 @@ type StudentResult = {
   studentId: string;
   name: string;
   score: string;
-  status: ResultStatus;
+  status: string;
 };
 
 type ApproveResultsClientProps = {
@@ -171,7 +171,7 @@ export default function ApproveResultsClient({ examsWithPendingApprovals }: Appr
                                                     <TableCell className="font-medium">{student.name}</TableCell>
                                                     <TableCell className="font-semibold">{student.score}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant={getBadgeVariant(student.status)}>{student.status}</Badge>
+                                                        <Badge variant={getBadgeVariant(student.status) as any}>{student.status}</Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right space-x-2">
                                                         <AlertDialog>

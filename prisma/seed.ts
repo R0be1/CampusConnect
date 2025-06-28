@@ -176,15 +176,15 @@ async function main() {
           studentId: student1.id,
           date: new Date(),
           status: 'PRESENT',
-          markedById: teacher1.id
+          markedById: teacherUser1.id
       }
   });
 
   // --- E-Learning ---
   await prisma.learningMaterial.createMany({
     data: [
-        { title: 'Introduction to Algebra', description: 'A foundational video covering the basics...', subject: 'Mathematics', gradeId: grade10.id, type: 'VIDEO', schoolId: school1.id, uploaderId: teacher1.id },
-        { title: 'The Fall of Rome', description: 'A detailed PDF document...', subject: 'History', gradeId: grade9.id, type: 'DOCUMENT', schoolId: school1.id, uploaderId: teacher2.id },
+        { title: 'Introduction to Algebra', description: 'A foundational video covering the basics...', subject: 'Mathematics', gradeId: grade10.id, type: 'VIDEO', schoolId: school1.id, uploaderId: teacherUser1.id },
+        { title: 'The Fall of Rome', description: 'A detailed PDF document...', subject: 'History', gradeId: grade9.id, type: 'DOCUMENT', schoolId: school1.id, uploaderId: teacherUser2.id },
     ]
   });
   console.log('Created learning materials.');
@@ -240,14 +240,14 @@ async function main() {
                   {
                       text: 'Solve for x: 2x + 4 = 10',
                       type: 'FILL_IN_THE_BLANK',
-                      options: [],
+                      options: '',
                       correctAnswer: '3',
                       points: 10
                   },
                    {
                       text: 'Is x=5 a solution to 3x = 15?',
                       type: 'TRUE_FALSE',
-                      options: ['true', 'false'],
+                      options: '["true", "false"]',
                       correctAnswer: 'true',
                       points: 2
                   }
