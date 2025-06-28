@@ -1,64 +1,30 @@
 
-"use client";
-
-import { useSchool } from "@/context/school-context";
-import { StudentForm, StudentRegistrationFormValues } from "../student-form";
-import { registerStudentAction } from "../actions";
-import { useTransition } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Grade, Section } from "@prisma/client";
 import { getFirstSchool, getGrades, getSections } from "@/lib/data";
-
-type StudentRegistrationProps = {
-    grades: Grade[];
-    sections: Section[];
-    schoolId: string;
-}
-
-function StudentRegistrationClient({ grades, sections, schoolId }: StudentRegistrationProps) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
-
-  function onSubmit(data: StudentRegistrationFormValues, resetForm: () => void) {
-    startTransition(async () => {
-      const result = await registerStudentAction(data, schoolId);
-      if (result.success) {
-        toast({
-          title: "Student Registered",
-          description: result.message,
-        });
-        resetForm();
-      } else {
-        toast({
-          title: "Registration Failed",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
-    });
-  }
-
-  return (
-    <StudentForm 
-        onSubmit={onSubmit} 
-        submitButtonText={isPending ? "Registering..." : "Register Student"} 
-        isSubmitting={isPending}
-        grades={grades}
-        sections={sections}
-    />
-    );
-}
-
+import RegistrationForm from "./registration-form";
+import { redirect } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 export default async function RegisterStudentPage() {
     const school = await getFirstSchool();
-    if (!school) return <div>No school found. Please create a school first.</div>;
+    if (!school) {
+        redirect('/system-admin/schools');
+    }
     
     const grades = await getGrades(school.id);
     const sections = await getSections(school.id);
 
+    if (grades.length === 0 || sections.length === 0) {
+        return (
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Setup Required</AlertTitle>
+                <AlertDescription>Please create at least one grade and one section before registering students.</AlertDescription>
+            </Alert>
+        );
+    }
+
     return (
-        <StudentRegistrationClient grades={grades} sections={sections} schoolId={school.id} />
+        <RegistrationForm grades={grades} sections={sections} schoolId={school.id} />
     );
 }
-
