@@ -39,11 +39,13 @@ export default async function ComposeMessagePage() {
         parentPhone: s.parents[0]?.user.phone ?? 'N/A',
     }));
 
+    const uniqueSectionNames = [...new Set(sections.map(s => s.name))].sort();
+
     return (
         <CommunicationComposer 
             allStudents={formattedStudents}
             grades={grades.map(g => g.name)}
-            sections={sections.map(s => s.name)}
+            sections={uniqueSectionNames}
         />
     );
 }
