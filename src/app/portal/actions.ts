@@ -1,7 +1,7 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getAvailableStudentsAction() {
@@ -110,3 +110,47 @@ export async function markCommunicationReadAction(communicationId: string) {
         return { success: false, error: error.message || "Failed to mark as read." };
     }
 }
+
+export async function getTestsAction(studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getTestsForStudentPortal(studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch tests." };
+    }
+}
+export type PortalTestsData = Awaited<ReturnType<typeof getTestsForStudentPortal>>;
+
+export async function getTestDetailsAction(testId: string, studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getTestDetailsForStudent(testId, studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch test details." };
+    }
+}
+export type PortalTestDetailsData = NonNullable<Awaited<ReturnType<typeof getTestDetailsForStudent>>>;
+
+
+export async function submitTestAction(testId: string, studentId: string, answers: { questionId: string, answer: string }[]) {
+     try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const submission = await submitTestForStudent(testId, studentId, answers);
+        return { success: true, submissionId: submission.id };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to submit test." };
+    }
+}
+
+export async function getTestResultAction(testId: string, studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getTestResultForStudent(testId, studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch test results." };
+    }
+}
+export type PortalTestResultData = Awaited<ReturnType<typeof getTestResultForStudent>>;

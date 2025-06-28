@@ -1,65 +1,75 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, X, ArrowLeft, Clock, Info } from "lucide-react";
+import { Check, X, ArrowLeft, Clock, Info, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useStudent } from "@/context/student-context";
+import { getTestResultAction, PortalTestResultData } from "../../actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock database of tests and their settings
-const testDatabase = {
-  "test-002": {
-    id: "test-002",
-    name: "Mechanics - Unit Test",
-    type: "Standard",
-    resultVisibility: "immediate",
-    endTime: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-    questions: [
-      { id: "q1", text: "Which of the following is a vector quantity?", correctAnswer: "Velocity" },
-      { id: "q2", text: "Inertia is the property of a body to resist changes in its state of motion.", correctAnswer: "true" },
-      { id: "q3", text: "The rate of change of velocity is called ___.", correctAnswer: "acceleration" },
-      { id: "q4", text: "What is the SI unit of force?", correctAnswer: "Newton" },
-    ],
-    studentAnswers: { q1: "Velocity", q2: "true", q3: "acceleration", q4: "Pascal" },
-  },
-  "test-003": {
-    id: "test-003",
-    name: "American Revolution",
-    type: "Standard",
-    resultVisibility: "immediate",
-    endTime: "2024-08-01T12:00:00",
-    questions: [
-        { id: "q1", text: "The American Revolution was a conflict between Great Britain and thirteen of its North American colonies.", correctAnswer: "true" },
-        { id: "q2", text: "The Declaration of Independence was signed in what year?", correctAnswer: "1776" },
-    ],
-    studentAnswers: { q1: "true", q2: "1776" },
-  },
-  "test-004": {
-    id: "test-004",
-    name: "Practice Test: Chemistry",
-    type: "Mock",
-    resultVisibility: "after-end-time",
-    endTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-    questions: [
-        { id: "q1", text: "What is the chemical symbol for water?", correctAnswer: "H2O" },
-        { id: "q2", text: "The pH of a neutral solution is 7.", correctAnswer: "true" },
-    ],
-    studentAnswers: { q1: "H2O", q2: "false" },
-  }
-};
-
+function ResultsLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="text-center space-y-4">
+                    <Skeleton className="h-6 w-1/4 mx-auto" />
+                    <Skeleton className="h-16 w-1/3 mx-auto" />
+                    <Skeleton className="h-8 w-1/4 mx-auto" />
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+            <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        </div>
+    );
+}
 
 export default function TestResultPage({ params }: { params: { testId: string } }) {
-  const testId = params.testId as keyof typeof testDatabase;
-  const testData = testDatabase[testId];
+  const { selectedStudent } = useStudent();
+  const [resultData, setResultData] = useState<PortalTestResultData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!selectedStudent?.id || !params.testId) return;
 
-  if (!testData) {
+    setIsLoading(true);
+    getTestResultAction(params.testId, selectedStudent.id)
+      .then(res => {
+        if(res.success) {
+          setResultData(res.data);
+        } else {
+          setError(res.error || "Could not fetch results.");
+        }
+      })
+      .catch(() => setError("An unexpected error occurred."))
+      .finally(() => setIsLoading(false));
+
+  }, [selectedStudent, params.testId]);
+
+  if (isLoading) {
+    return <ResultsLoadingSkeleton />;
+  }
+
+  if (error || !resultData) {
     return (
-        <Card>
-            <CardHeader><CardTitle>Test Not Found</CardTitle></CardHeader>
-            <CardContent><p>The test you are looking for could not be found.</p></CardContent>
+        <Card className="max-w-md mx-auto">
+            <CardHeader><CardTitle className="text-destructive">Error</CardTitle></CardHeader>
+            <CardContent><p>{error || 'The test results you are looking for could not be found.'}</p></CardContent>
              <CardFooter>
                 <Button asChild className="w-full">
                     <Link href="/portal/tests"><ArrowLeft className="mr-2 h-4 w-4"/> Back to Tests</Link>
@@ -69,17 +79,7 @@ export default function TestResultPage({ params }: { params: { testId: string } 
     )
   }
 
-  const studentAnswers = testData.studentAnswers;
-  const areResultsVisible = () => {
-    if (testData.type === 'Mock') return true;
-    if (testData.resultVisibility === "immediate") return true;
-    if (testData.resultVisibility === "after-end-time") {
-      return new Date() > new Date(testData.endTime);
-    }
-    return false;
-  };
-
-  if (!areResultsVisible()) {
+  if (resultData && !resultData.resultsVisible) {
     return (
       <div className="flex flex-col gap-6 items-center justify-center text-center py-20">
         <Card className="max-w-md">
@@ -88,7 +88,7 @@ export default function TestResultPage({ params }: { params: { testId: string } 
             </CardHeader>
             <CardContent>
                 <p className="text-muted-foreground">
-                    Results for "{testData.name}" will be available after {new Date(testData.endTime).toLocaleString()}. Please check back later.
+                    Results for "{resultData.testName}" will be available after {new Date(resultData.endTime).toLocaleString()}. Please check back later.
                 </p>
             </CardContent>
             <CardFooter>
@@ -101,16 +101,12 @@ export default function TestResultPage({ params }: { params: { testId: string } 
     );
   }
   
-  const score = testData.questions.reduce((acc, question) => {
-    const studentAnswer = studentAnswers[question.id as keyof typeof studentAnswers];
-    return acc + (studentAnswer === question.correctAnswer ? 1 : 0);
-  }, 0);
-  const totalQuestions = testData.questions.length;
-  const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+  const { score, totalMarks, questions, testName } = resultData;
+  const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
 
   return (
     <div className="flex flex-col gap-6">
-      {testData.type === 'Mock' && (
+      {resultData.test?.isMock && (
         <Alert>
             <Info className="h-4 w-4" />
             <AlertTitle>Practice Results</AlertTitle>
@@ -121,13 +117,13 @@ export default function TestResultPage({ params }: { params: { testId: string } 
       )}
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-headline">Results: {testData.name}</CardTitle>
+          <CardTitle className="text-3xl font-headline">Results: {testName}</CardTitle>
           <CardDescription>Here's a breakdown of your child's performance.</CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-4">
             <p className="text-lg text-muted-foreground">They Scored</p>
-            <p className="text-6xl font-bold text-primary">{score} / {totalQuestions}</p>
-            <p className="text-2xl font-semibold">{percentage.toFixed(0)}%</p>
+            <p className="text-6xl font-bold text-primary">{score} / {totalMarks}</p>
+            <p className="text-2xl font-semibold">{percentage.toFixed(1)}%</p>
         </CardContent>
         <CardFooter>
             <Button asChild className="w-full">
@@ -138,9 +134,20 @@ export default function TestResultPage({ params }: { params: { testId: string } 
 
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Answer Review</h2>
-        {testData.questions.map((question, index) => {
-          const studentAnswer = studentAnswers[question.id as keyof typeof studentAnswers];
+        {questions.map((question, index) => {
+          const studentAnswerObj = resultData.answers.find(a => a.questionId === question.id);
+          const studentAnswer = studentAnswerObj?.answer;
           const isCorrect = studentAnswer === question.correctAnswer;
+          
+          let correctAnswerText: string | undefined = question.correctAnswer;
+          let studentAnswerText: string | undefined = studentAnswer;
+
+          if (question.type === 'MULTIPLE_CHOICE' && question.options) {
+            const options = JSON.parse(question.options) as string[];
+            if (question.correctAnswer) correctAnswerText = options[parseInt(question.correctAnswer)];
+            if (studentAnswer) studentAnswerText = options[parseInt(studentAnswer)];
+          }
+
           return (
             <Card key={question.id} className={cn("overflow-hidden", isCorrect ? "border-green-500/50" : "border-destructive/50")}>
               <CardHeader className="flex flex-row items-start gap-4 bg-muted/30 p-4">
@@ -148,14 +155,14 @@ export default function TestResultPage({ params }: { params: { testId: string } 
                     {isCorrect ? <Check className="h-5 w-5 text-white" /> : <X className="h-5 w-5 text-white" />}
                 </div>
                 <div>
-                    <CardTitle className="text-base">Question {index + 1}</CardTitle>
+                    <CardTitle className="text-base">Question {index + 1} ({question.points} pts)</CardTitle>
                     <CardDescription className="mt-1">{question.text}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="p-4 space-y-2">
-                <p className="text-sm"><strong>Student's Answer:</strong> <span className={cn(isCorrect ? "text-green-700 dark:text-green-400" : "text-destructive")}>{studentAnswer || "No answer"}</span></p>
+                <p className="text-sm"><strong>Student's Answer:</strong> <span className={cn(isCorrect ? "text-green-700 dark:text-green-400" : "text-destructive")}>{studentAnswerText || "No answer"}</span></p>
                 {!isCorrect && (
-                    <p className="text-sm"><strong>Correct Answer:</strong> <span className="text-green-700 dark:text-green-400">{question.correctAnswer}</span></p>
+                    <p className="text-sm"><strong>Correct Answer:</strong> <span className="text-green-700 dark:text-green-400">{correctAnswerText}</span></p>
                 )}
               </CardContent>
             </Card>
@@ -165,5 +172,3 @@ export default function TestResultPage({ params }: { params: { testId: string } 
     </div>
   );
 }
-
-    

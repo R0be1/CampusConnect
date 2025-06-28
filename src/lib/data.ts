@@ -1,4 +1,3 @@
-
 // src/lib/data.ts
 'use server';
 
@@ -1211,7 +1210,7 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     const allExamsInYear = await prisma.exam.findMany({
         where: { academicYearId, schoolId },
         include: { 
-            results: { select: { score: true } } 
+            results: { select: { score: true } },
         },
     });
 
@@ -1322,4 +1321,168 @@ export async function markCommunicationAsRead(communicationId: string) {
         where: { id: communicationId },
         data: { isRead: true }
     });
+}
+
+export async function getTestsForStudentPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { gradeId: true, sectionId: true }
+    });
+
+    if (!student) {
+        return [];
+    }
+
+    const now = new Date();
+
+    const tests = await prisma.test.findMany({
+        where: {
+            gradeId: student.gradeId,
+            sectionId: student.sectionId
+        },
+        orderBy: {
+            startTime: 'desc'
+        }
+    });
+
+    // Check if a submission exists for each test
+    const testIds = tests.map(t => t.id);
+    const submissions = await prisma.testSubmission.findMany({
+        where: {
+            studentId: studentId,
+            testId: { in: testIds }
+        },
+        select: { testId: true }
+    });
+    const submittedTestIds = new Set(submissions.map(s => s.testId));
+
+    return tests.map(test => {
+        let status: 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'SUBMITTED';
+
+        if (submittedTestIds.has(test.id)) {
+            status = 'SUBMITTED';
+        } else if (now < new Date(test.startTime)) {
+            status = 'UPCOMING';
+        } else if (now >= new Date(test.startTime) && now <= new Date(test.endTime)) {
+            status = 'ACTIVE';
+        } else {
+            status = 'COMPLETED';
+        }
+        
+        if (test.status === 'COMPLETED' && status !== 'SUBMITTED') {
+            status = 'COMPLETED';
+        }
+
+        return {
+            ...test,
+            status,
+        };
+    });
+}
+
+export async function getTestDetailsForStudent(testId: string, studentId: string) {
+    const test = await prisma.test.findUnique({
+        where: { id: testId },
+        include: { questions: {
+            select: { id: true, text: true, type: true, options: true, points: true }
+        }}
+    });
+
+    if (!test) throw new Error("Test not found.");
+
+    const student = await prisma.student.findUnique({ where: { id: studentId }});
+    if (!student || student.gradeId !== test.gradeId || student.sectionId !== test.sectionId) {
+        throw new Error("You are not eligible for this test.");
+    }
+    
+    const now = new Date();
+    if (now < new Date(test.startTime) || now > new Date(test.endTime)) {
+        throw new Error("This test is not currently active.");
+    }
+    
+    const existingSubmission = await prisma.testSubmission.findFirst({
+        where: { testId, studentId }
+    });
+    if (existingSubmission) {
+        throw new Error("You have already submitted this test.");
+    }
+
+    return test;
+}
+
+export async function submitTestForStudent(testId: string, studentId: string, answers: { questionId: string, answer: string }[]) {
+    const test = await prisma.test.findUnique({
+        where: { id: testId },
+        include: { questions: true }
+    });
+    if (!test) throw new Error("Test not found");
+
+    let score = 0;
+    for (const question of test.questions) {
+        const studentAnswer = answers.find(a => a.questionId === question.id);
+        if (studentAnswer && studentAnswer.answer === question.correctAnswer) {
+            score += question.points;
+        }
+    }
+
+    const submission = await prisma.testSubmission.create({
+        data: {
+            testId,
+            studentId,
+            score,
+            submittedAt: new Date(),
+            status: test.isMock ? 'GRADED' : 'AWAITING_APPROVAL',
+            answers: {
+                create: answers.map(a => ({
+                    questionId: a.questionId,
+                    answer: a.answer
+                }))
+            }
+        }
+    });
+
+    return submission;
+}
+
+export async function getTestResultForStudent(testId: string, studentId: string) {
+    const submission = await prisma.testSubmission.findFirst({
+        where: { testId, studentId },
+        include: {
+            test: {
+                include: {
+                    questions: true
+                }
+            },
+            answers: true
+        }
+    });
+
+    if (!submission) {
+        return null;
+    }
+    
+    const { test } = submission;
+    const now = new Date();
+    
+    const areResultsVisible = 
+        test.isMock ||
+        test.resultVisibility === "IMMEDIATE" || 
+        (test.resultVisibility === "AFTER_END_TIME" && now > new Date(test.endTime));
+    
+    if (!areResultsVisible) {
+        return {
+            id: submission.id,
+            testName: test.name,
+            endTime: test.endTime.toISOString(),
+            resultsVisible: false
+        };
+    }
+
+    return {
+        ...submission,
+        testName: test.name,
+        totalMarks: test.totalMarks,
+        questions: test.questions,
+        resultsVisible: true,
+    };
 }
