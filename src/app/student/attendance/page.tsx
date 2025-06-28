@@ -80,7 +80,9 @@ export default function AttendanceStudentPage() {
                     modifiers={modifiers}
                     modifiersStyles={modifiersStyles}
                     className="rounded-md border"
-                    disableNavigation={false}
+                    captionLayout="dropdown-buttons"
+                    fromYear={new Date().getFullYear() - 5}
+                    toYear={new Date().getFullYear() + 1}
                 />
             </div>
             <div className="space-y-4">

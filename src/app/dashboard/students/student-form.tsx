@@ -208,8 +208,8 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                           <Calendar
                             mode="single"
                             captionLayout="dropdown-buttons"
-                            fromYear={new Date().getFullYear() - 20}
-                            toYear={new Date().getFullYear() - 3}
+                            fromYear={new Date().getFullYear() - 100}
+                            toYear={new Date().getFullYear()}
                             selected={field.value}
                             onSelect={(date) => {
                                 field.onChange(date);
