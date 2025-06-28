@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,17 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
+    const [filteredSections, setFilteredSections] = useState<Section[]>(sections);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if(gradeFilter === 'all') {
+            setFilteredSections(sections);
+        } else {
+            setFilteredSections(sections.filter(s => s.gradeId === gradeFilter));
+        }
+        setSectionFilter("all");
+    }, [gradeFilter, sections]);
 
     const filteredStudents = students.filter(student => {
         const name = `${student.firstName} ${student.lastName}`;
@@ -98,7 +108,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
             studentMiddleName: student.user.middleName || "",
             studentLastName: student.lastName || "",
             studentDob: student.dob,
-            studentGender: student.gender,
+            studentGender: student.gender as "MALE" | "FEMALE" | "OTHER",
             grade: student.gradeId,
             section: student.sectionId,
             
@@ -136,7 +146,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
                 />
             </div>
             <div className="space-y-1">
-                <Select onValueChange={setGradeFilter} defaultValue="all">
+                <Select onValueChange={setGradeFilter} value={gradeFilter}>
                     <SelectTrigger>
                         <SelectValue placeholder="Filter by grade" />
                     </SelectTrigger>
@@ -147,13 +157,13 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
                 </Select>
             </div>
             <div className="space-y-1">
-                <Select onValueChange={setSectionFilter} defaultValue="all">
+                <Select onValueChange={setSectionFilter} value={sectionFilter}>
                     <SelectTrigger>
                         <SelectValue placeholder="Filter by section" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Sections</SelectItem>
-                        {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
+                        {filteredSections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>

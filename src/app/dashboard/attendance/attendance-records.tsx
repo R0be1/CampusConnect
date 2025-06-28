@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,10 +34,20 @@ export function AttendanceRecords({ grades, sections }: AttendanceRecordsProps) 
     const { toast } = useToast();
     const [selectedGrade, setSelectedGrade] = useState<string>("");
     const [selectedSection, setSelectedSection] = useState<string>("");
+    const [filteredSections, setFilteredSections] = useState<Section[]>([]);
     const [month, setMonth] = useState<Date | undefined>(new Date());
     const [isLoading, setIsLoading] = useState(false);
     const [records, setRecords] = useState<DisplayRecord[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
+
+    useEffect(() => {
+        if (selectedGrade) {
+            setFilteredSections(sections.filter(s => s.gradeId === selectedGrade));
+            setSelectedSection("");
+        } else {
+            setFilteredSections([]);
+        }
+    }, [selectedGrade, sections]);
 
     const handleFetchSummary = async () => {
         if (selectedGrade && selectedSection && month) {
@@ -74,9 +84,9 @@ export function AttendanceRecords({ grades, sections }: AttendanceRecordsProps) 
                     </div>
                     <div className="space-y-1">
                         <Label>Section</Label>
-                        <Select value={selectedSection} onValueChange={setSelectedSection}>
+                        <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade}>
                             <SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger>
-                            <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                            <SelectContent>{filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1">

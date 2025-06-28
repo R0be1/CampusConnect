@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +27,7 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
   const { toast } = useToast();
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
+  const [filteredSections, setFilteredSections] = useState<Section[]>([]);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
@@ -34,6 +35,15 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    if (selectedGrade) {
+        setFilteredSections(sections.filter(s => s.gradeId === selectedGrade));
+        setSelectedSection("");
+    } else {
+        setFilteredSections([]);
+    }
+  }, [selectedGrade, sections]);
 
   const handleFetchStudents = async () => {
     if (selectedGrade && selectedSection && date) {
@@ -111,9 +121,9 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
             </div>
              <div className="space-y-1">
               <Label>Section</Label>
-              <Select value={selectedSection} onValueChange={setSelectedSection}>
+              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade}>
                 <SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger>
-                <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
              <div className="space-y-1">

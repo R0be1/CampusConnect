@@ -57,13 +57,18 @@ export function CommunicationComposer({ allStudents, grades, sections }: Communi
 
     useEffect(() => {
         form.resetField("studentId");
-    }, [selectedGrade, selectedSection, form]);
+        setSelectedSection("all");
+    }, [selectedGrade, form]);
     
     const filteredStudents = allStudents.filter(student => {
         const gradeMatch = selectedGrade === "all" || student.grade === selectedGrade;
         const sectionMatch = selectedSection === "all" || student.section === selectedSection;
         return gradeMatch && sectionMatch;
     });
+
+    const filteredSectionsForDropdown = selectedGrade === 'all'
+        ? sections
+        : [...new Set(allStudents.filter(s => s.grade === selectedGrade).map(s => s.section))].sort();
 
     const selectedStudentId = form.watch("studentId");
     const selectedStudent = allStudents.find(s => s.id === selectedStudentId);
@@ -114,11 +119,11 @@ export function CommunicationComposer({ allStudents, grades, sections }: Communi
                         </div>
                         <div className="space-y-2">
                             <Label>Filter by Section</Label>
-                            <Select value={selectedSection} onValueChange={setSelectedSection}>
+                            <Select value={selectedSection} onValueChange={setSelectedSection} disabled={selectedGrade === 'all' && sections.length > filteredSectionsForDropdown.length}>
                                 <SelectTrigger><SelectValue placeholder="All Sections" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Sections</SelectItem>
-                                    {sections.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    {filteredSectionsForDropdown.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>

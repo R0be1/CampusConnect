@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import React from "react";
+import React, { useEffect } from "react";
 import { Grade, Section, Staff, User } from "@prisma/client";
 import { createTestAction } from "./actions";
 import { useRouter } from "next/navigation";
@@ -80,6 +81,18 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
     name: "questions",
   });
 
+  const gradeId = form.watch('gradeId');
+  const [filteredSections, setFilteredSections] = React.useState<Section[]>([]);
+
+  useEffect(() => {
+    if (gradeId) {
+      setFilteredSections(sections.filter(s => s.gradeId === gradeId));
+      form.resetField('sectionId');
+    } else {
+      setFilteredSections([]);
+    }
+  }, [gradeId, sections, form]);
+
   const watchQuestionType = (index: number) => form.watch(`questions.${index}.type`);
 
   async function onSubmit(data: TestFormValues) {
@@ -135,7 +148,7 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                         <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="sectionId" render={({ field }) => (
-                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger></FormControl><SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="subject" render={({ field }) => (
                         <FormItem><FormLabel>Subject</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger></FormControl><SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>

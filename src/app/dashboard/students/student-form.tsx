@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon, User, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Grade, Section } from "@prisma/client";
 
 const studentRegistrationSchema = z.object({
@@ -96,6 +96,27 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
       zipCode: "",
     },
   });
+
+  const selectedGradeId = form.watch("grade");
+  const [filteredSections, setFilteredSections] = useState<Section[]>([]);
+
+  useEffect(() => {
+    if (selectedGradeId) {
+        setFilteredSections(sections.filter(s => s.gradeId === selectedGradeId));
+        if (initialData?.grade !== selectedGradeId) {
+          form.resetField('section');
+        }
+    } else {
+        setFilteredSections([]);
+    }
+  }, [selectedGradeId, sections, form, initialData]);
+
+  // Pre-populate sections if editing a student
+  useEffect(() => {
+    if (initialData?.grade) {
+        setFilteredSections(sections.filter(s => s.gradeId === initialData.grade));
+    }
+  }, [initialData, sections]);
 
   const resetFormAndPreviews = () => {
     form.reset();
@@ -262,14 +283,14 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Section</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!selectedGradeId}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select section" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
+                          {filteredSections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />

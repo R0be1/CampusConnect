@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,8 +54,18 @@ export default function ManageCoursesClientPage({ initialCourses, grades, sectio
   const [coursesData, setCoursesData] = useState(initialCourses);
   const [gradeFilter, setGradeFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
+  const [filteredSections, setFilteredSections] = useState<Section[]>(sections);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseWithDetails | null>(null);
+
+  useEffect(() => {
+    if (gradeFilter === 'all') {
+      setFilteredSections(sections);
+    } else {
+      setFilteredSections(sections.filter(s => s.gradeId === gradeFilter));
+    }
+    setSectionFilter('all');
+  }, [gradeFilter, sections]);
 
   const filteredCourses = coursesData.filter(course => {
     const gradeMatch = gradeFilter === 'all' || course.gradeId === gradeFilter;
@@ -127,7 +137,7 @@ export default function ManageCoursesClientPage({ initialCourses, grades, sectio
             <div className="mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row">
                 <div className="flex-1 space-y-1">
                     <Label htmlFor="gradeFilter">Grade</Label>
-                    <Select onValueChange={setGradeFilter} defaultValue="all">
+                    <Select onValueChange={setGradeFilter} value={gradeFilter}>
                         <SelectTrigger id="gradeFilter"><SelectValue placeholder="Filter by grade" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Grades</SelectItem>
@@ -137,11 +147,11 @@ export default function ManageCoursesClientPage({ initialCourses, grades, sectio
                 </div>
                 <div className="flex-1 space-y-1">
                     <Label htmlFor="sectionFilter">Section</Label>
-                    <Select onValueChange={setSectionFilter} defaultValue="all">
+                    <Select onValueChange={setSectionFilter} value={sectionFilter}>
                         <SelectTrigger id="sectionFilter"><SelectValue placeholder="Filter by section" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Sections</SelectItem>
-                            {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
+                            {filteredSections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
@@ -230,7 +240,26 @@ function CourseForm({ course, onSave, onClose, grades, sections, teachers }: Cou
             teacherId: course?.teacherId || ""
         }
     });
+
+    const gradeId = form.watch("gradeId");
+    const [filteredSections, setFilteredSections] = useState<Section[]>([]);
     
+    useEffect(() => {
+        if(gradeId) {
+            setFilteredSections(sections.filter(s => s.gradeId === gradeId));
+            form.resetField('sectionId');
+        } else {
+            setFilteredSections([]);
+        }
+    }, [gradeId, sections, form]);
+
+    useEffect(() => {
+        // Pre-populate sections if editing
+        if (course?.gradeId) {
+            setFilteredSections(sections.filter(s => s.gradeId === course.gradeId));
+        }
+    }, [course, sections]);
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)}>
@@ -242,7 +271,7 @@ function CourseForm({ course, onSave, onClose, grades, sections, teachers }: Cou
                         <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(grade => <SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="sectionId" render={({ field }) => (
-                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl><SelectContent>{sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select a section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="teacherId" render={({ field }) => (
                         <FormItem><FormLabel>Teacher</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a teacher" /></SelectTrigger></FormControl><SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.firstName} {t.lastName}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>

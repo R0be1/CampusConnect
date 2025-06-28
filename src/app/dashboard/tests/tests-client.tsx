@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,6 +39,16 @@ export function TestsClient({ initialTests, grades, sections }: TestsClientProps
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
+    const [filteredSections, setFilteredSections] = useState<Section[]>(sections);
+
+    useEffect(() => {
+        if (gradeFilter === 'all') {
+            setFilteredSections(sections);
+        } else {
+            setFilteredSections(sections.filter(s => s.gradeId === gradeFilter));
+        }
+        setSectionFilter('all');
+    }, [gradeFilter, sections]);
 
     const filteredTests = tests.filter(test => {
         const nameMatch = test.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -104,7 +115,7 @@ export function TestsClient({ initialTests, grades, sections }: TestsClientProps
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="gradeFilter">Filter by Grade</Label>
-                            <Select onValueChange={setGradeFilter} defaultValue="all">
+                            <Select onValueChange={setGradeFilter} value={gradeFilter}>
                                 <SelectTrigger id="gradeFilter"><SelectValue placeholder="All Grades" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Grades</SelectItem>
@@ -114,11 +125,11 @@ export function TestsClient({ initialTests, grades, sections }: TestsClientProps
                         </div>
                          <div className="space-y-1">
                             <Label htmlFor="sectionFilter">Filter by Section</Label>
-                            <Select onValueChange={setSectionFilter} defaultValue="all">
+                            <Select onValueChange={setSectionFilter} value={sectionFilter}>
                                 <SelectTrigger id="sectionFilter"><SelectValue placeholder="All Sections" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Sections</SelectItem>
-                                    {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                    {filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>

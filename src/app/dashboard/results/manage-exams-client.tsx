@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -47,8 +47,18 @@ export default function ManageExamsClient({ initialExams, grades, sections, scho
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
+    const [filteredSections, setFilteredSections] = useState<Section[]>(sections);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingExam, setEditingExam] = useState<Exam | null>(null);
+    
+    useEffect(() => {
+        if (gradeFilter === 'all') {
+            setFilteredSections(sections);
+        } else {
+            setFilteredSections(sections.filter(s => s.gradeId === gradeFilter));
+        }
+        setSectionFilter('all');
+    }, [gradeFilter, sections]);
 
     const filteredExams = exams.filter(exam => {
         const nameMatch = exam.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -110,7 +120,7 @@ export default function ManageExamsClient({ initialExams, grades, sections, scho
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="gradeFilter">Filter by Grade</Label>
-                            <Select onValueChange={setGradeFilter} defaultValue="all">
+                            <Select onValueChange={setGradeFilter} value={gradeFilter}>
                                 <SelectTrigger id="gradeFilter"><SelectValue placeholder="Filter by grade" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Grades</SelectItem>
@@ -120,11 +130,11 @@ export default function ManageExamsClient({ initialExams, grades, sections, scho
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="sectionFilter">Filter by Section</Label>
-                            <Select onValueChange={setSectionFilter} defaultValue="all">
+                            <Select onValueChange={setSectionFilter} value={sectionFilter}>
                                 <SelectTrigger id="sectionFilter"><SelectValue placeholder="Filter by section" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Sections</SelectItem>
-                                    {sections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
+                                    {filteredSections.map(section => <SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -229,6 +239,18 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
         },
     });
 
+    const gradeId = form.watch('gradeId');
+    const [filteredSections, setFilteredSections] = useState<Section[]>(initialData ? sections.filter(s => s.gradeId === initialData.gradeId) : []);
+
+    useEffect(() => {
+        if (gradeId) {
+            setFilteredSections(sections.filter(s => s.gradeId === gradeId));
+            form.resetField('sectionId');
+        } else {
+            setFilteredSections([]);
+        }
+    }, [gradeId, sections, form]);
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="grid gap-4 py-4">
@@ -251,7 +273,7 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
                         <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(grade => (<SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="sectionId" render={({ field }) => (
-                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger></FormControl><SelectContent>{sections.map(section => (<SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(section => (<SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                 </div>
                 <DialogFooter>
@@ -261,4 +283,3 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
         </Form>
     );
 }
-
