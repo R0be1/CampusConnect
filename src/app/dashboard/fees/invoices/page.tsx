@@ -1,6 +1,6 @@
 
 import { getFirstSchool, getFirstStudent, getInvoicesForStudent } from "@/lib/data";
-import InvoicesClientPage from "./invoices-client";
+import InvoicesClientPage from "../invoices-client";
 import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
