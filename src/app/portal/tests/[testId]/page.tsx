@@ -22,25 +22,27 @@ const testData = {
   questions: [
     {
       id: "q1",
-      type: "multiple-choice",
+      type: "MULTIPLE_CHOICE",
       text: "Which of the following is a vector quantity?",
-      options: ["Speed", "Distance", "Mass", "Velocity"],
+      options: '["Speed", "Distance", "Mass", "Velocity"]',
     },
     {
       id: "q2",
-      type: "true-false",
+      type: "TRUE_FALSE",
       text: "Inertia is the property of a body to resist changes in its state of motion.",
+      options: '[]',
     },
     {
       id: "q3",
-      type: "fill-in-the-blank",
+      type: "FILL_IN_THE_BLANK",
       text: "The rate of change of velocity is called ___.",
+      options: '[]',
     },
     {
       id: "q4",
-      type: "multiple-choice",
+      type: "MULTIPLE_CHOICE",
       text: "What is the SI unit of force?",
-      options: ["Joule", "Watt", "Newton", "Pascal"],
+      options: '["Joule", "Watt", "Newton", "Pascal"]',
     },
   ],
 };
@@ -230,17 +232,17 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
                                 <CardDescription>{q.text}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {q.type === 'multiple-choice' && (
+                                {q.type === 'MULTIPLE_CHOICE' && (
                                     <RadioGroup onValueChange={(value) => form.setValue(`answers.${index}.answer`, value)}>
-                                        {q.options.map((opt, optIndex) => (
+                                        {(JSON.parse(q.options) as string[]).map((opt, optIndex) => (
                                             <div key={optIndex} className="flex items-center space-x-2">
-                                                <RadioGroupItem value={opt} id={`${q.id}-${optIndex}`} />
+                                                <RadioGroupItem value={String(optIndex)} id={`${q.id}-${optIndex}`} />
                                                 <Label htmlFor={`${q.id}-${optIndex}`} className="font-normal">{opt}</Label>
                                             </div>
                                         ))}
                                     </RadioGroup>
                                 )}
-                                {q.type === 'true-false' && (
+                                {q.type === 'TRUE_FALSE' && (
                                     <RadioGroup onValueChange={(value) => form.setValue(`answers.${index}.answer`, value)}>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="true" id={`${q.id}-true`} />
@@ -252,7 +254,7 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
                                         </div>
                                     </RadioGroup>
                                 )}
-                                {q.type === 'fill-in-the-blank' && (
+                                {q.type === 'FILL_IN_THE_BLANK' && (
                                     <Input
                                         {...form.register(`answers.${index}.answer`)}
                                         placeholder="Your answer..."

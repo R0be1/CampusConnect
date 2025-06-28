@@ -1,203 +1,301 @@
-// prisma/schema.prisma
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// --- Enums as Strings ---
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-// --- Core Models ---
+// --- Enums ---
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+  ACCOUNTANT
+}
+
+enum StaffType {
+  TEACHER
+  ACCOUNTANT
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum FeeInterval {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum ConcessionType {
+  PERCENTAGE
+  FIXED
+}
+
+enum PenaltyType {
+  PERCENTAGE
+  FIXED
+}
+
+enum PenaltyFrequency {
+  DAILY
+  ONE_TIME
+}
+
+enum FeeInvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING_VERIFICATION
+  COMPLETED
+  FAILED
+}
+
+enum ResultStatus {
+  PENDING
+  PENDING_APPROVAL
+  APPROVED
+  PENDING_REAPPROVAL
+  FINALIZED
+  REJECTED
+}
+
+enum LearningMaterialType {
+  VIDEO
+  DOCUMENT
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  FILL_IN_THE_BLANK
+}
+
+enum TestStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+}
+
+enum TestResultVisibility {
+  IMMEDIATE
+  AFTER_END_TIME
+}
+
+// --- Models ---
+
 model School {
-  id              String           @id @default(cuid())
-  name            String
-  accountName     String           @unique
-  branch          String
-  contactPerson   String
-  phone           String
-  address         String
-  logoUrl         String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  users           User[]
-  academicYears   AcademicYear[]
-  grades          Grade[]
-  sections        Section[]
-  courses         Course[]
-  feeStructures   FeeStructure[]
-  concessions     Concession[]
-  penaltyRules    PenaltyRule[]
-  students        Student[]
-  staff           Staff[]
-  parents         Parent[]
-  communications  Communication[]
+  id                String                @id @default(cuid())
+  name              String
+  accountName       String                @unique
+  branch            String
+  contactPerson     String
+  phone             String
+  address           String
+  logoUrl           String
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  users             User[]
+  grades            Grade[]
+  sections          Section[]
+  academicYears     AcademicYear[]
+  students          Student[]
+  staff             Staff[]
+  parents           Parent[]
+  courses           Course[]
+  feeStructures     FeeStructure[]
+  concessions       Concession[]
+  penaltyRules      PenaltyRule[]
+  feePayments       FeePayment[]
   learningMaterials LearningMaterial[]
-  tests           Test[]
-  liveSessions    LiveSession[]
+  tests             Test[]
+  exams             Exam[]
 }
 
 model User {
-  id              String        @id @default(cuid())
-  phone           String        @unique
-  password        String
-  role            String // Replaced enum UserRole
-  schoolId        String
-  school          School        @relation(fields: [schoolId], references: [id])
-  firstName       String
-  lastName        String
-  middleName      String?
-  photoUrl        String?
-  addressLine1    String?
-  city            String?
-  state           String?
-  zipCode         String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  staffProfile    Staff?
-  studentProfile  Student?
-  parentProfile   Parent?
-  sentCommunications Communication[] @relation("SentCommunications")
+  id                     String          @id @default(cuid())
+  phone                  String          @unique
+  password               String
+  role                   UserRole
+  schoolId               String
+  firstName              String
+  lastName               String
+  middleName             String?
+  addressLine1           String?
+  city                   String?
+  state                  String?
+  zipCode                String?
+  photoUrl               String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  school                 School          @relation(fields: [schoolId], references: [id])
+  staffProfile           Staff?
+  studentProfile         Student?
+  parentProfile          Parent?
+  sentCommunications     Communication[] @relation("SentCommunications")
   receivedCommunications Communication[] @relation("ReceivedCommunications")
-  attendanceMarked Attendance[]
-  materialsUploaded LearningMaterial[]
-  testsCreated    Test[]
-  liveSessionsCreated LiveSession[]
-}
-
-model Staff {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id])
-  firstName String
-  lastName  String
-  staffType String // Replaced enum StaffType
-  courses   Course[]
-  attendance Attendance[] @relation("AttendanceMarkedBy")
-}
-
-model Student {
-  id                 String                  @id @default(cuid())
-  userId             String                  @unique
-  user               User                    @relation(fields: [userId], references: [id])
-  schoolId           String
-  school             School                  @relation(fields: [schoolId], references: [id])
-  gradeId            String
-  grade              Grade                   @relation(fields: [gradeId], references: [id])
-  sectionId          String
-  section            Section                 @relation(fields: [sectionId], references: [id])
-  firstName          String
-  lastName           String
-  dob                DateTime
-  gender             String // Replaced enum Gender
-  enrollments        Enrollment[]
-  attendances        Attendance[]
-  communications     Communication[]
-  feeInvoices        FeeInvoice[]
-  concessionAssignments ConcessionAssignment[]
-  testSubmissions    TestSubmission[]
-  examResults        ExamResult[]
-  liveSessionRegistrations LiveSessionRegistration[]
-  parents            Parent[]                @relation("StudentParents")
-}
-
-model Parent {
-  id                 String    @id @default(cuid())
-  userId             String    @unique
-  user               User      @relation(fields: [userId], references: [id])
-  schoolId           String
-  school             School    @relation(fields: [schoolId], references: [id])
-  firstName          String
-  lastName           String
-  relationToStudent  String?
-  children           Student[] @relation("StudentParents")
+  attendanceMarkedBy     Attendance[]
+  materialsUploaded      LearningMaterial[]
+  testsCreated           Test[]
 }
 
 model Grade {
-  id            String         @id @default(cuid())
-  name          String
-  schoolId      String
-  school        School         @relation(fields: [schoolId], references: [id])
-  students      Student[]
-  courses       Course[]
-  exams         Exam[]
-  tests         Test[]
+  id                String               @id @default(cuid())
+  name              String               @unique
+  schoolId          String
+  school            School               @relation(fields: [schoolId], references: [id])
+  students          Student[]
+  courses           Course[]
+  exams             Exam[]
+  tests             Test[]
+  liveSessions      LiveSession[]
   learningMaterials LearningMaterial[]
-  liveSessions  LiveSession[]
-  
-  @@unique([name, schoolId])
 }
 
 model Section {
-  id            String         @id @default(cuid())
-  name          String
-  schoolId      String
-  school        School         @relation(fields: [schoolId], references: [id])
-  students      Student[]
-  courses       Course[]
-  exams         Exam[]
-  tests         Test[]
+  id       String    @id @default(cuid())
+  name     String    @unique
+  schoolId String
+  school   School    @relation(fields: [schoolId], references: [id])
+  students Student[]
+  courses  Course[]
+  exams    Exam[]
+  tests    Test[]
+}
+
+model AcademicYear {
+  id                    String                 @id @default(cuid())
+  name                  String
+  isCurrent             Boolean                @default(false)
+  schoolId              String
+  school                School                 @relation(fields: [schoolId], references: [id])
+  enrollments           Enrollment[]
+  feeInvoices           FeeInvoice[]
+  concessionAssignments ConcessionAssignment[]
+  exams                 Exam[]
 
   @@unique([name, schoolId])
 }
 
-model Course {
-  id            String       @id @default(cuid())
-  name          String
-  schoolId      String
-  school        School       @relation(fields: [schoolId], references: [id])
-  gradeId       String
-  grade         Grade        @relation(fields: [gradeId], references: [id])
-  sectionId     String
-  section       Section      @relation(fields: [sectionId], references: [id])
-  teacherId     String
-  teacher       Staff        @relation(fields: [teacherId], references: [id])
-  enrollments   Enrollment[]
-  
-  @@unique([name, gradeId, sectionId])
+model Student {
+  id                         String                    @id @default(cuid())
+  userId                     String                    @unique
+  user                       User                      @relation(fields: [userId], references: [id])
+  schoolId                   String
+  school                     School                    @relation(fields: [schoolId], references: [id])
+  gradeId                    String
+  grade                      Grade                     @relation(fields: [gradeId], references: [id])
+  sectionId                  String
+  section                    Section                   @relation(fields: [sectionId], references: [id])
+  firstName                  String
+  lastName                   String
+  dob                        DateTime
+  gender                     Gender
+  enrollments                Enrollment[]
+  attendances                Attendance[]
+  feeInvoices                FeeInvoice[]
+  parents                    Parent[]                  @relation("ParentStudent")
+  examResults                ExamResult[]
+  testSubmissions            TestSubmission[]
+  concessionAssignments      ConcessionAssignment[]
+  liveSessionRegistrations   LiveSessionRegistration[]
+  communications             Communication[]
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
 }
 
-model Enrollment {
-  id             String    @id @default(cuid())
-  studentId      String
-  student        Student   @relation(fields: [studentId], references: [id])
-  courseId       String
-  course         Course    @relation(fields: [courseId], references: [id])
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  results        Result[]
+model Staff {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  schoolId     String
+  school       School        @relation(fields: [schoolId], references: [id])
+  firstName    String
+  lastName     String
+  staffType    StaffType
+  courses      Course[]
+  attendance   Attendance[]  @relation("MarkedBy")
+  liveSessions LiveSession[]
+}
+
+model Parent {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  schoolId          String
+  school            School    @relation(fields: [schoolId], references: [id])
+  firstName         String
+  lastName          String
+  relationToStudent String?
+  students          Student[] @relation("ParentStudent")
 }
 
 model Attendance {
-  id         String   @id @default(cuid())
+  id         String           @id @default(cuid())
   studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
-  date       DateTime
-  status     String // Replaced enum AttendanceStatus
+  student    Student          @relation(fields: [studentId], references: [id])
+  date       DateTime         @db.Date
+  status     AttendanceStatus
   notes      String?
   markedById String
-  markedBy   Staff    @relation("AttendanceMarkedBy", fields: [markedById], references: [userId])
+  markedBy   Staff            @relation("MarkedBy", fields: [markedById], references: [userId])
 
   @@unique([studentId, date])
 }
 
-model Communication {
-  id         String   @id @default(cuid())
-  schoolId   String
-  school     School   @relation(fields: [schoolId], references: [id])
-  senderId   String
-  sender     User     @relation("SentCommunications", fields: [senderId], references: [id])
-  receiverId String
-  receiver   User     @relation("ReceivedCommunications", fields: [receiverId], references: [id])
-  studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
-  subject    String
-  message    String
-  sentAt     DateTime @default(now())
+model Course {
+  id          String       @id @default(cuid())
+  name        String
+  gradeId     String
+  grade       Grade        @relation(fields: [gradeId], references: [id])
+  sectionId   String
+  section     Section      @relation(fields: [sectionId], references: [id])
+  teacherId   String
+  teacher     Staff        @relation(fields: [teacherId], references: [id])
+  schoolId    String
+  school      School       @relation(fields: [schoolId], references: [id])
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([name, gradeId, sectionId])
+}
+
+model Enrollment {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [id])
+  courseId       String
+  course         Course       @relation(fields: [courseId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  results        Result[]
+
+  @@unique([studentId, courseId, academicYearId])
 }
 
 model Result {
@@ -206,39 +304,51 @@ model Result {
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
   grade        String
   createdAt    DateTime   @default(now())
-}
-
-model AcademicYear {
-  id            String       @id @default(cuid())
-  name          String
-  isCurrent     Boolean      @default(false)
-  schoolId      String
-  school        School       @relation(fields: [schoolId], references: [id])
-  enrollments   Enrollment[]
-  feeInvoices   FeeInvoice[]
-  exams         Exam[]
-  concessionAssignments ConcessionAssignment[]
-  
-  @@unique([name, schoolId])
+  updatedAt    DateTime   @updatedAt
 }
 
 model FeeStructure {
-  id           String      @id @default(cuid())
-  name         String
-  amount       Float
-  interval     String // Replaced enum FeeInterval
-  schoolId     String
-  school       School      @relation(fields: [schoolId], references: [id])
+  id            String         @id @default(cuid())
+  name          String
+  amount        Float
+  interval      FeeInterval
+  schoolId      String
+  school        School         @relation(fields: [schoolId], references: [id])
+  invoices      FeeInvoice[]
   penaltyRuleId String?
-  penaltyRule  PenaltyRule? @relation(fields: [penaltyRuleId], references: [id])
-  invoices     FeeInvoice[]
-  concessions  Concession[] @relation("FeeConcessions")
+  penaltyRule   PenaltyRule?   @relation(fields: [penaltyRuleId], references: [id])
+  concessions   Concession[]   @relation("FeeStructureConcession")
+}
+
+model Concession {
+  id                    String                 @id @default(cuid())
+  name                  String
+  type                  ConcessionType
+  value                 Float
+  description           String?
+  schoolId              String
+  school                School                 @relation(fields: [schoolId], references: [id])
+  feeStructures         FeeStructure[]         @relation("FeeStructureConcession")
+  concessionAssignments ConcessionAssignment[]
+}
+
+model ConcessionAssignment {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [id])
+  concessionId   String
+  concession     Concession   @relation(fields: [concessionId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  invoices       FeeInvoice[]
+
+  @@unique([studentId, concessionId, academicYearId])
 }
 
 model PenaltyRule {
   id            String         @id @default(cuid())
   name          String
-  gracePeriod   Int // in days
+  gracePeriod   Int
   schoolId      String
   school        School         @relation(fields: [schoolId], references: [id])
   tiers         PenaltyTier[]
@@ -246,116 +356,108 @@ model PenaltyRule {
 }
 
 model PenaltyTier {
-  id          String   @id @default(cuid())
-  ruleId      String
-  rule        PenaltyRule @relation(fields: [ruleId], references: [id])
-  fromDay     Int
-  toDay       Int?
-  value       Float
-  type        String // Replaced enum PenaltyType
-  frequency   String // Replaced enum PenaltyFrequency
-}
-
-model Concession {
-  id            String       @id @default(cuid())
-  name          String
-  type          String // Replaced enum ConcessionType
+  id            String           @id @default(cuid())
+  penaltyRuleId String
+  penaltyRule   PenaltyRule      @relation(fields: [penaltyRuleId], references: [id])
+  fromDay       Int
+  toDay         Int?
+  type          PenaltyType
   value         Float
-  description   String?
-  schoolId      String
-  school        School       @relation(fields: [schoolId], references: [id])
-  feeStructures FeeStructure[] @relation("FeeConcessions")
-  assignments   ConcessionAssignment[]
-}
-
-model ConcessionAssignment {
-    id              String      @id @default(cuid())
-    studentId       String
-    student         Student     @relation(fields: [studentId], references: [id])
-    concessionId    String
-    concession      Concession  @relation(fields: [concessionId], references: [id])
-    academicYearId  String
-    academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
-    invoices        FeeInvoice[]
-    
-    @@unique([studentId, concessionId, academicYearId])
+  frequency     PenaltyFrequency
 }
 
 model FeeInvoice {
-  id           String   @id @default(cuid())
-  studentId    String
-  student      Student  @relation(fields: [studentId], references: [id])
-  feeStructureId String
-  feeStructure FeeStructure @relation(fields: [feeStructureId], references: [id])
-  academicYearId String
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  amount       Float
-  dueDate      DateTime
-  status       String // Replaced enum FeeInvoiceStatus
-  payments     FeePayment[]
-  lateFee      Float      @default(0)
-  concessionAssignments ConcessionAssignment[]
+  id                      String                 @id @default(cuid())
+  studentId               String
+  student                 Student                @relation(fields: [studentId], references: [id])
+  feeStructureId          String
+  feeStructure            FeeStructure           @relation(fields: [feeStructureId], references: [id])
+  academicYearId          String
+  academicYear            AcademicYear           @relation(fields: [academicYearId], references: [id])
+  concessionAssignments   ConcessionAssignment[]
+  amount                  Float
+  dueDate                 DateTime
+  status                  FeeInvoiceStatus
+  payments                FeePayment[]
 }
 
 model FeePayment {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   invoiceId   String
-  invoice     FeeInvoice @relation(fields: [invoiceId], references: [id])
-  schoolId    String
+  invoice     FeeInvoice    @relation(fields: [invoiceId], references: [id])
   amount      Float
   paymentDate DateTime
   method      String
-  status      String // Replaced enum PaymentStatus
+  status      PaymentStatus
   reference   String?
-  notes       String?
+  schoolId    String
+  school      School        @relation(fields: [schoolId], references: [id])
+}
+
+model Communication {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  studentId  String
+  subject    String
+  message    String
+  read       Boolean  @default(false)
+  sentAt     DateTime @default(now())
+  schoolId   String
+
+  sender   User    @relation("SentCommunications", fields: [senderId], references: [id])
+  receiver User    @relation("ReceivedCommunications", fields: [receiverId], references: [id])
+  student  Student @relation(fields: [studentId], references: [id])
 }
 
 model LearningMaterial {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   title       String
   description String?
-  type        String // Replaced enum LearningMaterialType
   subject     String
-  url         String?
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
   gradeId     String
-  grade       Grade    @relation(fields: [gradeId], references: [id])
+  grade       Grade                @relation(fields: [gradeId], references: [id])
+  type        LearningMaterialType
+  url         String?
   uploaderId  String
-  uploader    User     @relation(fields: [uploaderId], references: [id])
-  createdAt   DateTime @default(now())
+  uploader    User                 @relation(fields: [uploaderId], references: [id])
+  schoolId    String
+  school      School               @relation(fields: [schoolId], references: [id])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 }
 
 model Test {
-  id                 String         @id @default(cuid())
-  name               String
-  schoolId           String
-  school             School         @relation(fields: [schoolId], references: [id])
-  gradeId            String
-  grade              Grade          @relation(fields: [gradeId], references: [id])
-  sectionId          String
-  section            Section        @relation(fields: [sectionId], references: [id])
-  subject            String
-  teacherId          String
-  teacher            User           @relation(fields: [teacherId], references: [id])
-  startTime          DateTime
-  endTime            DateTime
-  duration           Int // In minutes
-  totalMarks         Int
-  status             String         @default("UPCOMING") // Replaced enum TestStatus
-  isMock             Boolean        @default(false)
-  resultVisibility   String         @default("IMMEDIATE") // Replaced enum TestResultVisibility
-  questions          Question[]
-  submissions        TestSubmission[]
-  createdAt          DateTime       @default(now())
+  id               String               @id @default(cuid())
+  name             String
+  gradeId          String
+  grade            Grade                @relation(fields: [gradeId], references: [id])
+  sectionId        String
+  section          Section              @relation(fields: [sectionId], references: [id])
+  subject          String
+  teacherId        String
+  teacher          User                 @relation(fields: [teacherId], references: [id])
+  startTime        DateTime
+  endTime          DateTime
+  duration         Int
+  totalMarks       Int
+  status           TestStatus           @default(UPCOMING)
+  isMock           Boolean
+  resultVisibility TestResultVisibility
+  schoolId         String
+  school           School               @relation(fields: [schoolId], references: [id])
+  questions        Question[]
+  submissions      TestSubmission[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 }
 
 model Question {
-  id            String          @id @default(cuid())
+  id            String       @id @default(cuid())
   testId        String
-  test          Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  test          Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
   text          String
-  type          String // Replaced enum QuestionType
+  type          QuestionType
   options       String
   correctAnswer String
   points        Int
@@ -363,15 +465,15 @@ model Question {
 }
 
 model TestSubmission {
-  id        String       @id @default(cuid())
-  testId    String
-  test      Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
-  studentId String
-  student   Student      @relation(fields: [studentId], references: [id])
-  submittedAt DateTime   @default(now())
-  score     Int
-  status    String       @default("AWAITING_APPROVAL") // PENDING, AWAITING_APPROVAL, GRADED
-  answers   TestAnswer[]
+  id          String       @id @default(cuid())
+  testId      String
+  test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student      @relation(fields: [studentId], references: [id])
+  submittedAt DateTime
+  score       Float
+  status      String // 'AWAITING_APPROVAL', 'GRADED'
+  answers     TestAnswer[]
 }
 
 model TestAnswer {
@@ -379,13 +481,15 @@ model TestAnswer {
   submissionId String
   submission   TestSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   questionId   String
-  question     Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question     Question       @relation(fields: [questionId], references: [id])
   answer       String
 }
 
 model Exam {
   id             String       @id @default(cuid())
   name           String
+  weightage      Float
+  gradingType    String // 'DECIMAL', 'LETTER'
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
   gradeId        String
@@ -393,43 +497,38 @@ model Exam {
   sectionId      String
   section        Section      @relation(fields: [sectionId], references: [id])
   subject        String
-  weightage      Float
-  gradingType    String       @default("DECIMAL") // DECIMAL, LETTER
   schoolId       String
   school         School       @relation(fields: [schoolId], references: [id])
   results        ExamResult[]
 }
 
 model ExamResult {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   examId    String
-  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  exam      Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student      @relation(fields: [studentId], references: [id])
   score     String
-  status    String   @default("PENDING") // Replaced enum ResultStatus
-  createdAt DateTime @default(now())
-  
+  status    ResultStatus
+
   @@unique([examId, studentId])
 }
 
-
 model LiveSession {
-  id            String                  @id @default(cuid())
+  id            String                    @id @default(cuid())
   topic         String
   description   String?
   subject       String
-  schoolId      String
-  school        School                  @relation(fields: [schoolId], references: [id])
   gradeId       String
-  grade         Grade                   @relation(fields: [gradeId], references: [id])
-  teacherId     String
-  teacher       User                    @relation(fields: [teacherId], references: [id])
+  grade         Grade                     @relation(fields: [gradeId], references: [id])
   startTime     DateTime
-  duration      Int // In minutes
-  status        String                  @default("UPCOMING") // UPCOMING, ACTIVE, COMPLETED
-  fee           Float                   @default(0)
-  meetingUrl    String?
+  duration      Int
+  fee           Float                     @default(0)
+  status        String // "UPCOMING", "ACTIVE", "COMPLETED"
+  teacherId     String
+  teacher       Staff                     @relation(fields: [teacherId], references: [id])
+  schoolId      String
+  school        School                    @relation(fields: [schoolId], references: [id])
   registrations LiveSessionRegistration[]
 }
 
@@ -440,6 +539,6 @@ model LiveSessionRegistration {
   studentId     String
   student       Student     @relation(fields: [studentId], references: [id])
   registeredAt  DateTime    @default(now())
-  
+
   @@unique([liveSessionId, studentId])
 }
