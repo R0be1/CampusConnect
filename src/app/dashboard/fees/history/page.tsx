@@ -1,6 +1,6 @@
 
 import { getFirstSchool, getFirstStudent, getPaymentHistory } from "@/lib/data";
-import HistoryClientPage from "./history-client";
+import HistoryClientPage from "../history-client";
 import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
