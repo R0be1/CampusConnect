@@ -1255,9 +1255,11 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
             let totalWeightedScore = 0;
             let totalWeightage = 0;
 
+            const allExamsForSubject = allExamsInYear.filter(e => e.subject === subject);
+
             subjectData.exams.forEach((exam) => {
                 if (exam.totalMarks > 0) {
-                    const examDetails = allExamsInYear.find(e => e.name === exam.name && e.subject === subject);
+                    const examDetails = allExamsForSubject.find(e => e.name === exam.name);
                     const weightage = examDetails?.weightage || 0;
                     totalWeightedScore += (exam.score / exam.totalMarks) * weightage;
                     totalWeightage += weightage;
@@ -1662,3 +1664,86 @@ export async function updateParentAddress(userId: string, data: { line1: string;
         }
     });
 }
+
+// --- Student Portal Data ---
+export async function getStudentDashboardData(studentId: string, academicYearId: string) {
+    // 1. Get student info
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: {
+            user: true,
+            grade: true,
+            section: true,
+        }
+    });
+
+    if (!student) {
+        throw new Error("Student not found");
+    }
+
+    // 2. Get Upcoming Tests
+    const now = new Date();
+    const upcomingTests = await prisma.test.findMany({
+        where: {
+            gradeId: student.gradeId,
+            sectionId: student.sectionId,
+            startTime: { gte: now },
+            status: 'UPCOMING'
+        },
+        orderBy: {
+            startTime: 'asc'
+        },
+        take: 2 // Limit to 2 for the dashboard
+    });
+
+    // 3. Get Recent Grades from Exams
+    const recentGrades = await prisma.examResult.findMany({
+        where: {
+            studentId,
+            exam: {
+                academicYearId,
+            }
+        },
+        include: {
+            exam: true
+        },
+        orderBy: {
+            exam: {
+                name: 'desc'
+            }
+        },
+        take: 2 // Limit to 2 for the dashboard
+    });
+
+    // 4. Get Attendance Summary for current month
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
+
+    const attendanceRecords = await prisma.attendance.findMany({
+        where: { studentId, date: { gte: start, lte: end } }
+    });
+    const attendanceSummary = {
+        present: attendanceRecords.filter(r => r.status === 'PRESENT').length,
+        absent: attendanceRecords.filter(r => r.status === 'ABSENT').length,
+        late: attendanceRecords.filter(r => r.status === 'LATE').length,
+        total: attendanceRecords.length,
+    };
+
+    return {
+        student: {
+            name: `${student.firstName} ${student.lastName}`,
+            grade: student.grade.name,
+            section: student.section.name,
+            avatar: student.user.photoUrl,
+        },
+        upcomingTests,
+        recentGrades: recentGrades.map(g => ({
+            course: g.exam.subject,
+            exam: g.exam.name,
+            grade: g.score,
+        })),
+        attendanceSummary,
+    };
+}
+export type StudentDashboardData = Awaited<ReturnType<typeof getStudentDashboardData>>;
