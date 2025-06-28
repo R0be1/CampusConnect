@@ -1,7 +1,8 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession } from "@/lib/data";
+import { revalidatePath } from "next/cache";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getAvailableStudentsAction() {
@@ -183,5 +184,37 @@ export async function registerForSessionAction(sessionId: string, studentId: str
         return { success: true, message: "Successfully registered for the session!" };
     } catch (error: any) {
         return { success: false, error: error.message || "Failed to register for the session." };
+    }
+}
+
+export async function getProfileAction(studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getProfileDataForPortal(studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch profile data." };
+    }
+}
+export type PortalProfileData = NonNullable<Awaited<ReturnType<typeof getProfileDataForPortal>>>;
+
+
+export async function updateParentContactAction(userId: string, data: { phone: string; alternatePhone?: string | null }) {
+    try {
+        await updateParentContactInfo(userId, data);
+        revalidatePath('/portal/profile');
+        return { success: true, message: "Contact info updated successfully." };
+    } catch (error: any) {
+        return { success: false, error: "Failed to update contact info." };
+    }
+}
+
+export async function updateParentAddressAction(userId: string, data: { line1: string; city: string; state: string; zipCode: string }) {
+    try {
+        await updateParentAddress(userId, data);
+        revalidatePath('/portal/profile');
+        return { success: true, message: "Address updated successfully." };
+    } catch (error: any) {
+        return { success: false, error: "Failed to update address." };
     }
 }

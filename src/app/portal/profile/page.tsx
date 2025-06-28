@@ -5,44 +5,134 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Shield, Home, Edit } from "lucide-react";
+import { User, Shield, Home, Edit, Loader2 } from "lucide-react";
+import { useStudent } from "@/context/student-context";
+import { useState, useEffect } from "react";
+import { getProfileAction, PortalProfileData, updateParentContactAction, updateParentAddressAction } from "../actions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock Data
-const studentProfile = {
-  id: "s001",
-  firstName: "John",
-  middleName: "Michael",
-  lastName: "Doe",
-  dob: "2008-05-12",
-  gender: "Male",
-  grade: "Grade 10",
-  section: "A"
-};
 
-const parentProfile = {
-  firstName: "Jane",
-  middleName: "Anne",
-  lastName: "Doe",
-  relation: "Mother",
-  phone: "(123) 456-7890",
-  alternatePhone: ""
-};
-
-const address = {
-  line1: "123 Main St",
-  city: "Anytown",
-  state: "CA",
-  zipCode: "12345"
-};
+function ProfileLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <User className="h-8 w-8 text-primary" />
+                <div>
+                    <Skeleton className="h-8 w-64 mb-2" />
+                    <Skeleton className="h-5 w-80" />
+                </div>
+            </div>
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                <Card>
+                    <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                         <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+            <Card>
+                <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 export default function ProfilePortalPage() {
+  const { selectedStudent } = useStudent();
+  const { toast } = useToast();
+  const [profileData, setProfileData] = useState<PortalProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingContact, setIsUpdatingContact] = useState(false);
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [parentPhone, setParentPhone] = useState("");
+  const [parentAlternatePhone, setParentAlternatePhone] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+
+  useEffect(() => {
+    if (selectedStudent?.id) {
+        setIsLoading(true);
+        setError(null);
+        getProfileAction(selectedStudent.id)
+            .then(result => {
+                if (result.success && result.data) {
+                    setProfileData(result.data);
+                    setParentPhone(result.data.parent.phone || "");
+                    setParentAlternatePhone(result.data.parent.alternatePhone || "");
+                    setAddressLine1(result.data.address.line1 || "");
+                    setCity(result.data.address.city || "");
+                    setState(result.data.address.state || "");
+                    setZipCode(result.data.address.zipCode || "");
+                } else {
+                    setError(result.error || "Failed to load profile data.");
+                }
+            })
+            .catch(() => setError("An unexpected error occurred."))
+            .finally(() => setIsLoading(false));
+    }
+  }, [selectedStudent]);
+
+  const handleContactUpdate = async () => {
+    if (!profileData) return;
+    setIsUpdatingContact(true);
+    const result = await updateParentContactAction(profileData.parent.userId, { phone: parentPhone, alternatePhone: parentAlternatePhone });
+    if(result.success) {
+        toast({ title: "Success", description: result.message });
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+    setIsUpdatingContact(false);
+  };
+  
+  const handleAddressUpdate = async () => {
+      if (!profileData) return;
+      setIsUpdatingAddress(true);
+      const result = await updateParentAddressAction(profileData.parent.userId, { line1: addressLine1, city, state, zipCode });
+      if(result.success) {
+        toast({ title: "Success", description: result.message });
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+      setIsUpdatingAddress(false);
+  };
+
+  if (isLoading || !selectedStudent) {
+    return <ProfileLoadingSkeleton />;
+  }
+
+  if (error || !profileData) {
+      return (
+          <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error || 'Could not load profile data for this student.'}</AlertDescription></Alert>
+      )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <User className="h-8 w-8 text-primary" />
         <h1 className="text-3xl font-bold font-headline">Profile Management</h1>
       </div>
-      <p className="text-muted-foreground">View and manage student and parent information.</p>
+      <p className="text-muted-foreground">View and manage student and parent information for {profileData.student.firstName}.</p>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card>
@@ -52,13 +142,13 @@ export default function ProfilePortalPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <div><Label>First Name</Label><Input readOnly value={studentProfile.firstName} /></div>
-                    <div><Label>Last Name</Label><Input readOnly value={studentProfile.lastName} /></div>
+                    <div><Label>First Name</Label><Input readOnly value={profileData.student.firstName} /></div>
+                    <div><Label>Last Name</Label><Input readOnly value={profileData.student.lastName} /></div>
                 </div>
-                 <div><Label>Date of Birth</Label><Input readOnly value={studentProfile.dob} /></div>
+                 <div><Label>Date of Birth</Label><Input readOnly value={profileData.student.dob} /></div>
                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Grade</Label><Input readOnly value={studentProfile.grade} /></div>
-                    <div><Label>Section</Label><Input readOnly value={studentProfile.section} /></div>
+                    <div><Label>Grade</Label><Input readOnly value={profileData.student.grade} /></div>
+                    <div><Label>Section</Label><Input readOnly value={profileData.student.section} /></div>
                  </div>
             </CardContent>
         </Card>
@@ -70,13 +160,14 @@ export default function ProfilePortalPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <div><Label>First Name</Label><Input defaultValue={parentProfile.firstName} /></div>
-                    <div><Label>Last Name</Label><Input defaultValue={parentProfile.lastName} /></div>
+                    <div><Label>First Name</Label><Input readOnly value={profileData.parent.firstName} /></div>
+                    <div><Label>Last Name</Label><Input readOnly value={profileData.parent.lastName} /></div>
                 </div>
-                 <div><Label>Phone Number</Label><Input type="tel" defaultValue={parentProfile.phone} /></div>
-                 <div><Label>Alternate Phone Number</Label><Input type="tel" defaultValue={parentProfile.alternatePhone} /></div>
+                 <div><Label>Phone Number</Label><Input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} /></div>
+                 <div><Label>Alternate Phone Number</Label><Input type="tel" value={parentAlternatePhone} onChange={(e) => setParentAlternatePhone(e.target.value)} /></div>
                 <div className="flex justify-end">
-                    <Button>
+                    <Button onClick={handleContactUpdate} disabled={isUpdatingContact}>
+                        {isUpdatingContact && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         <Edit className="mr-2 h-4 w-4" />
                         Update Contact Info
                     </Button>
@@ -91,14 +182,15 @@ export default function ProfilePortalPage() {
                 <CardDescription>Update your residential address.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div><Label>Address Line 1</Label><Input defaultValue={address.line1} /></div>
+                 <div><Label>Address Line 1</Label><Input value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} /></div>
                 <div className="grid grid-cols-3 gap-4">
-                    <div><Label>City</Label><Input defaultValue={address.city} /></div>
-                    <div><Label>State / Province</Label><Input defaultValue={address.state} /></div>
-                    <div><Label>Zip / Postal Code</Label><Input defaultValue={address.zipCode} /></div>
+                    <div><Label>City</Label><Input value={city} onChange={(e) => setCity(e.target.value)} /></div>
+                    <div><Label>State / Province</Label><Input value={state} onChange={(e) => setState(e.target.value)} /></div>
+                    <div><Label>Zip / Postal Code</Label><Input value={zipCode} onChange={(e) => setZipCode(e.target.value)} /></div>
                 </div>
                  <div className="flex justify-end">
-                    <Button>
+                    <Button onClick={handleAddressUpdate} disabled={isUpdatingAddress}>
+                        {isUpdatingAddress && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         <Edit className="mr-2 h-4 w-4" />
                         Update Address
                     </Button>

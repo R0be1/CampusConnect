@@ -1218,7 +1218,10 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     const classAverages: Record<string, number> = {};
     for (const exam of allExamsInYear) {
         if (exam.results.length > 0 && exam.totalMarks > 0) {
-            const totalScore = exam.results.reduce((acc, res) => acc + parseFloat(res.score), 0);
+            const totalScore = exam.results.reduce((acc, res) => {
+                const scoreNum = parseFloat(res.score);
+                return acc + (isNaN(scoreNum) ? 0 : scoreNum);
+            }, 0);
             const averagePercentage = (totalScore / exam.results.length / exam.totalMarks) * 100;
             classAverages[exam.id] = parseFloat(averagePercentage.toFixed(1));
         } else {
@@ -1249,13 +1252,18 @@ export async function getAcademicDataForStudentPortal(studentId: string, academi
     for (const subject in dataBySubject) {
         const subjectData = dataBySubject[subject];
         if (subjectData.exams.length > 0) {
-            const totalPercentage = subjectData.exams.reduce((acc, exam) => {
+            let totalWeightedScore = 0;
+            let totalWeightage = 0;
+
+            subjectData.exams.forEach((exam) => {
                 if (exam.totalMarks > 0) {
-                    return acc + (exam.score / exam.totalMarks * 100);
+                    const examDetails = allExamsInYear.find(e => e.name === exam.name && e.subject === subject);
+                    const weightage = examDetails?.weightage || 0;
+                    totalWeightedScore += (exam.score / exam.totalMarks) * weightage;
+                    totalWeightage += weightage;
                 }
-                return acc;
-            }, 0);
-            subjectData.overallScore = totalPercentage / subjectData.exams.length;
+            });
+            subjectData.overallScore = totalWeightage > 0 ? (totalWeightedScore / totalWeightage) * 100 : 0;
         }
     }
 
@@ -1397,8 +1405,10 @@ export async function getTestDetailsForStudent(testId: string, studentId: string
     }
     
     const now = new Date();
-    if (now < new Date(test.startTime) || now > new Date(test.endTime)) {
-        throw new Error("This test is not currently active.");
+    if (test.status !== 'ACTIVE') {
+         if (now < new Date(test.startTime) || now > new Date(test.endTime)) {
+            throw new Error("This test is not currently active.");
+        }
     }
     
     const existingSubmission = await prisma.testSubmission.findFirst({
@@ -1467,6 +1477,7 @@ export async function getTestResultForStudent(testId: string, studentId: string)
     
     const areResultsVisible = 
         test.isMock ||
+        submission.status === 'GRADED' ||
         test.resultVisibility === "IMMEDIATE" || 
         (test.resultVisibility === "AFTER_END_TIME" && now > new Date(test.endTime));
     
@@ -1510,7 +1521,7 @@ export async function getLearningMaterialsForPortal(studentId: string) {
         }
     });
 }
-export type PortalLearningMaterials = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
+export type PortalELearningData = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
 
 export async function getLiveSessionsForPortal(studentId: string) {
     const student = await prisma.student.findUnique({
@@ -1573,6 +1584,81 @@ export async function registerForLiveSession(sessionId: string, studentId: strin
         data: {
             liveSessionId: sessionId,
             studentId: studentId
+        }
+    });
+}
+
+export async function getProfileDataForPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: {
+            user: true,
+            grade: { select: { name: true } },
+            section: { select: { name: true } },
+            parents: {
+                include: {
+                    user: true
+                },
+                take: 1
+            }
+        }
+    });
+
+    if (!student || !student.parents.length) {
+        return null;
+    }
+
+    const parent = student.parents[0];
+
+    return {
+        student: {
+            id: student.id,
+            firstName: student.firstName,
+            middleName: student.user.middleName,
+            lastName: student.lastName,
+            dob: student.dob ? format(student.dob, "yyyy-MM-dd") : '',
+            gender: student.gender,
+            grade: student.grade.name,
+            section: student.section.name
+        },
+        parent: {
+            id: parent.id,
+            userId: parent.userId,
+            firstName: parent.firstName,
+            middleName: parent.user.middleName,
+            lastName: parent.lastName,
+            relation: parent.relationToStudent,
+            phone: parent.user.phone,
+            alternatePhone: parent.user.alternatePhone
+        },
+        address: {
+            line1: student.user.addressLine1,
+            city: student.user.city,
+            state: student.user.state,
+            zipCode: student.user.zipCode
+        }
+    };
+}
+export type PortalProfileData = NonNullable<Awaited<ReturnType<typeof getProfileDataForPortal>>>;
+
+export async function updateParentContactInfo(userId: string, data: { phone: string; alternatePhone?: string | null }) {
+    return prisma.user.update({
+        where: { id: userId },
+        data: {
+            phone: data.phone,
+            alternatePhone: data.alternatePhone,
+        }
+    });
+}
+
+export async function updateParentAddress(userId: string, data: { line1: string; city: string; state: string; zipCode: string }) {
+     return prisma.user.update({
+        where: { id: userId },
+        data: {
+            addressLine1: data.line1,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode
         }
     });
 }
