@@ -1,6 +1,6 @@
 
 import { redirect } from "next/navigation";
-import AssignClientPage from "./assign-client";
+import AssignClientPage from "../assign-client";
 import { getCurrentAcademicYear, getFirstSchool, getStudentsWithDetails, getConcessions, getConcessionAssignments } from "@/lib/data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";

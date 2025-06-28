@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { TestWithSubmissions } from "@/lib/data";
-import { approveSubmissionAction, approveAllSubmissionsAction } from "../actions";
+import { approveSubmissionAction, approveAllSubmissionsAction } from "../../actions";
 import { useToast } from "@/hooks/use-toast";
 
 

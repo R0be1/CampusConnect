@@ -1,6 +1,6 @@
 
 import { redirect } from "next/navigation";
-import ConcessionsClientPage from "./concessions-client";
+import ConcessionsClientPage from "../concessions-client";
 import { getConcessions, getFeeStructures, getFirstSchool } from "@/lib/data";
 
 export default async function ConcessionsPage() {

@@ -8,7 +8,7 @@ import { Check, X, ArrowLeft, Clock, Info, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getTestResultAction, StudentPortalTestResultData } from "../../actions";
+import { getTestResultAction, StudentPortalTestResultData } from "../../../actions";
 import { getFirstStudent } from "@/lib/data";
 import { Skeleton } from "@/components/ui/skeleton";
 

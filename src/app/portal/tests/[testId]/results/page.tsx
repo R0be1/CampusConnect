@@ -9,7 +9,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudent } from "@/context/student-context";
-import { getTestResultAction, PortalTestResultData } from "../../actions";
+import { getTestResultAction, PortalTestResultData } from "../../../actions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ResultsLoadingSkeleton() {
