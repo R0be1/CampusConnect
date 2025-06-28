@@ -140,14 +140,12 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
     const handleVisibilityChange = () => {
         if (document.hidden) {
             setIsPaused(true);
-            console.log("User switched tabs/windows. Pausing exam.");
         }
     };
 
     const handleFullscreenChange = () => {
         if (!document.fullscreenElement) {
             setIsPaused(true);
-            console.log("User exited fullscreen. Pausing exam.");
         }
     };
 
@@ -181,7 +179,6 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
   };
 
   const onSubmit = (data: ExamFormValues) => {
-    console.log("Submitting exam:", data);
     if(document.fullscreenElement) {
         document.exitFullscreen();
     }
@@ -189,7 +186,6 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
   };
 
   const handleTimeUp = () => {
-    console.log("Time's up! Submitting automatically.");
     form.handleSubmit(onSubmit)();
   };
   

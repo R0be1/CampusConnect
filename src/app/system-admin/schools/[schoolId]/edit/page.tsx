@@ -99,7 +99,6 @@ function SchoolForm({ school }: { school: School }) {
         if (!phone.trim()) { toast({ title: "Validation Error", description: "Phone Number is required.", variant: "destructive" }); return; }
 
         const updatedSchool = { id: school.id, name, accountName, branch, contactPerson, phone, address, logoUrl };
-        console.log("Saving school data:", updatedSchool);
         // In a real app, you'd send this to your backend.
         toast({ title: "School Updated", description: "The school's details have been saved." });
         router.push('/system-admin/schools');
@@ -146,4 +145,3 @@ function SchoolForm({ school }: { school: School }) {
         </Card>
     );
 }
-

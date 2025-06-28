@@ -28,7 +28,6 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsLoading(true);
-    console.log(`Sending OTP to ${phone}`);
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
@@ -53,7 +52,6 @@ export default function ForgotPasswordPage() {
     }
 
     setIsLoading(true);
-    console.log("Resetting password...");
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);

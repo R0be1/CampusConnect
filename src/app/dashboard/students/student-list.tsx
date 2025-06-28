@@ -45,12 +45,11 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
         if (!editingStudent) return;
         
         // This is where you would call a server action to update the student
-        console.log("Updating student...", data);
         
         setEditingStudent(null); // Close the dialog
         toast({
           title: "Student Updated",
-          description: "Student information has been saved (console log).",
+          description: "Student information has been saved.",
         });
     };
 

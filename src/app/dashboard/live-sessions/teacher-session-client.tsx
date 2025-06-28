@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from 'react';
@@ -28,13 +29,11 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
     const screenVideoRef = useRef<HTMLVideoElement>(null);
 
     const handleToggleCamera = () => {
-        console.log("Toggle Camera clicked!");
         setIsCameraOn(prev => !prev);
         toast({ title: "Camera Button Clicked!", description: "Functionality will be added next." });
     };
 
     const handleToggleScreenShare = () => {
-        console.log("Toggle Screen Share clicked!");
         setIsSharingScreen(prev => !prev);
         toast({ title: "Share Screen Button Clicked!", description: "Functionality will be added next." });
     };
