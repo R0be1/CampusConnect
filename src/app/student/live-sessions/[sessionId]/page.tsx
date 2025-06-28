@@ -1,22 +1,62 @@
 
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Monitor, Hand, Mic, Video, Send } from "lucide-react";
+import { ArrowLeft, Monitor, Hand, Mic, Video, Send, Loader2 } from "lucide-react";
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-// Mock Data
-const sessionDetails = {
-    id: 'session-01',
-    topic: 'Advanced Algebra Concepts',
-};
+import { getLiveSessionAction } from '../../actions';
+import type { LiveSession } from '@prisma/client';
 
 export default function StudentSessionPage({ params }: { params: { sessionId: string } }) {
+    const [sessionDetails, setSessionDetails] = useState<LiveSession | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [handRaised, setHandRaised] = useState(false);
+
+    useEffect(() => {
+        if (params.sessionId) {
+            getLiveSessionAction(params.sessionId)
+                .then(result => {
+                    if (result.success && result.data) {
+                        setSessionDetails(result.data as LiveSession);
+                    } else {
+                        setError(result.error || "Session not found.");
+                    }
+                })
+                .catch(() => setError("Failed to load session details."))
+                .finally(() => setIsLoading(false));
+        }
+    }, [params.sessionId]);
+
+    if (isLoading) {
+        return (
+             <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    if (error || !sessionDetails) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Error</CardTitle>
+                    <CardDescription>{error || 'The session could not be loaded.'}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Button asChild variant="outline">
+                        <Link href="/student/live-sessions">
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sessions
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start h-[calc(100vh-100px)]">
@@ -35,7 +75,7 @@ export default function StudentSessionPage({ params }: { params: { sessionId: st
                             <CardTitle>{sessionDetails.topic}</CardTitle>
                             <CardDescription>Live Learning Session</CardDescription>
                         </div>
-                         <Button asChild variant="destructive-outline">
+                         <Button asChild variant="destructive">
                             <Link href="/student/live-sessions">
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Leave Session
                             </Link>

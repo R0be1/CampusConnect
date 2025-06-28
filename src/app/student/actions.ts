@@ -1,7 +1,8 @@
 
 "use server";
 
-import { getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal } from "@/lib/data";
+import { revalidatePath } from "next/cache";
+import { getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getLiveSessionById } from "@/lib/data";
 
 export async function getStudentAttendanceAction(studentId: string, month: number, year: number) {
     try {
@@ -71,3 +72,36 @@ export async function getELearningMaterialsAction(studentId: string) {
     }
 }
 export type StudentPortalELearningData = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
+
+export async function getLiveSessionsAction(studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getLiveSessionsForPortal(studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch live sessions." };
+    }
+}
+export type StudentPortalLiveSessionsData = Awaited<ReturnType<typeof getLiveSessionsForPortal>>;
+
+export async function registerForSessionAction(sessionId: string, studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        await registerForLiveSession(sessionId, studentId);
+        revalidatePath('/student/live-sessions');
+        return { success: true, message: "Successfully registered for the session!" };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to register for the session." };
+    }
+}
+
+export async function getLiveSessionAction(sessionId: string) {
+    try {
+        if (!sessionId) return { success: false, error: "Session ID is required." };
+        const data = await getLiveSessionById(sessionId);
+        if (!data) return { success: false, error: "Session not found." };
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch live session." };
+    }
+}
