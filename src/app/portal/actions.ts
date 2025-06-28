@@ -1,7 +1,7 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal } from "@/lib/data";
 
 export async function getAvailableStudentsAction() {
     try {
@@ -31,3 +31,23 @@ export async function getDashboardDataAction(studentId: string) {
     return { success: false, error: error.message || "Failed to fetch dashboard data." };
   }
 }
+
+export async function getAcademicsAction(studentId: string) {
+  try {
+    if (!studentId) {
+        return { success: false, error: "Student ID is required." };
+    }
+    const school = await getFirstSchool();
+    if (!school) throw new Error("School not found");
+    
+    const academicYear = await getCurrentAcademicYear(school.id);
+    if (!academicYear) throw new Error("Current academic year not set");
+
+    const data = await getAcademicDataForStudentPortal(studentId, academicYear.id);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Failed to get academics data:", error);
+    return { success: false, error: error.message || "Failed to fetch academics data." };
+  }
+}
+export type PortalAcademicsData = Awaited<ReturnType<typeof getAcademicDataForStudentPortal>>;

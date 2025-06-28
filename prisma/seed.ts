@@ -273,6 +273,7 @@ async function main() {
       data: {
           name: 'Mid-term Exam',
           weightage: 40,
+          totalMarks: 100,
           gradingType: 'DECIMAL',
           academicYearId: academicYear2425.id,
           gradeId: grade10.id,
@@ -286,6 +287,7 @@ async function main() {
       data: {
           name: 'Final Exam',
           weightage: 60,
+          totalMarks: 100,
           gradingType: 'LETTER',
           academicYearId: academicYear2425.id,
           gradeId: grade10.id,

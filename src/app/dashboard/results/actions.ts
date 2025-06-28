@@ -8,7 +8,13 @@ import { revalidatePath } from "next/cache";
 export async function createExamAction(data: any, schoolId: string, academicYearId: string) {
     try {
         await prisma.exam.create({
-            data: { ...data, schoolId, academicYearId, weightage: parseFloat(data.weightage) }
+            data: { 
+                ...data, 
+                schoolId, 
+                academicYearId, 
+                weightage: parseFloat(data.weightage),
+                totalMarks: parseFloat(data.totalMarks)
+            }
         });
         revalidatePath('/dashboard/results/manage-exams');
         return { success: true, message: "Exam created successfully." };
@@ -22,7 +28,11 @@ export async function updateExamAction(examId: string, data: any) {
     try {
         await prisma.exam.update({
             where: { id: examId },
-            data: { ...data, weightage: parseFloat(data.weightage) }
+            data: { 
+                ...data, 
+                weightage: parseFloat(data.weightage),
+                totalMarks: parseFloat(data.totalMarks)
+            }
         });
         revalidatePath('/dashboard/results/manage-exams');
         return { success: true, message: "Exam updated successfully." };

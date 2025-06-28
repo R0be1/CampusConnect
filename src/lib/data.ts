@@ -1082,8 +1082,13 @@ export async function getStudentsForParentPortal() {
         take: 2,
         select: {
             id: true,
-            firstName: true,
-            lastName: true
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                photoUrl: true,
+              }
+            }
         },
         orderBy: {
             user: {
@@ -1091,7 +1096,7 @@ export async function getStudentsForParentPortal() {
             }
         }
     });
-    return students.map(s => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }));
+    return students.map(s => ({ id: s.id, name: `${s.user.firstName} ${s.user.lastName}`, avatar: s.user.photoUrl }));
 }
 
 export async function getPortalDashboardData(studentId: string, academicYearId: string) {
@@ -1178,5 +1183,75 @@ export async function getPortalDashboardData(studentId: string, academicYearId: 
         })),
     };
 }
-
 export type PortalDashboardData = Awaited<ReturnType<typeof getPortalDashboardData>>;
+
+export async function getAcademicDataForStudentPortal(studentId: string, academicYearId: string) {
+    const results = await prisma.examResult.findMany({
+        where: {
+            studentId,
+            exam: {
+                academicYearId,
+            },
+        },
+        include: {
+            exam: true,
+        },
+        orderBy: {
+            exam: {
+                createdAt: 'asc',
+            },
+        },
+    });
+
+    if (!results.length) {
+        return null;
+    }
+
+    const schoolId = results[0].exam.schoolId;
+    const allExamsInYear = await prisma.exam.findMany({
+        where: { academicYearId, schoolId },
+        include: { results: { select: { score: true } } },
+    });
+
+    const classAverages: Record<string, number> = {};
+    for (const exam of allExamsInYear) {
+        if (exam.results.length > 0) {
+            const totalScore = exam.results.reduce((acc, res) => acc + parseFloat(res.score), 0);
+            const averagePercentage = (totalScore / exam.results.length / exam.totalMarks) * 100;
+            classAverages[exam.id] = parseFloat(averagePercentage.toFixed(1));
+        } else {
+            classAverages[exam.id] = 0;
+        }
+    }
+
+    const dataBySubject = results.reduce((acc, result) => {
+        const subject = result.exam.subject;
+        if (!acc[subject]) {
+            acc[subject] = {
+                exams: [],
+                overallScore: 0,
+            };
+        }
+        acc[subject].exams.push({
+            name: result.exam.name,
+            score: parseFloat(result.score),
+            totalMarks: result.exam.totalMarks,
+            rank: Math.floor(Math.random() * 10) + 1, // Mock rank for now
+            classAverage: classAverages[result.exam.id] || 80,
+        });
+        return acc;
+    }, {} as Record<string, { exams: any[], overallScore: number }>);
+
+    for (const subject in dataBySubject) {
+        const subjectData = dataBySubject[subject];
+        if (subjectData.exams.length > 0) {
+            const totalPercentage = subjectData.exams.reduce((acc, exam) => {
+                return acc + (exam.score / exam.totalMarks * 100);
+            }, 0);
+            subjectData.overallScore = totalPercentage / subjectData.exams.length;
+        }
+    }
+
+    return dataBySubject;
+}
+export type AcademicsDataForPortal = Awaited<ReturnType<typeof getAcademicDataForStudentPortal>>;

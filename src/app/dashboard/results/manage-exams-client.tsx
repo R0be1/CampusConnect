@@ -22,6 +22,7 @@ import { Exam, Grade, Section } from "@prisma/client";
 const examSchema = z.object({
     name: z.string().min(1, "Exam name is required."),
     weightage: z.string().min(1, "Weightage is required."),
+    totalMarks: z.string().min(1, "Total marks are required."),
     gradingType: z.enum(['DECIMAL', 'LETTER']),
     gradeId: z.string().min(1, "Please select a grade."),
     sectionId: z.string().min(1, "Please select a section."),
@@ -232,6 +233,7 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
         defaultValues: {
             name: initialData?.name || '',
             weightage: String(initialData?.weightage || ''),
+            totalMarks: String(initialData?.totalMarks || ''),
             gradingType: initialData?.gradingType || 'DECIMAL',
             gradeId: initialData?.gradeId || '',
             sectionId: initialData?.sectionId || '',
@@ -268,12 +270,17 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
                         <FormItem><FormLabel>Grading Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Grading Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="DECIMAL">Decimal</SelectItem><SelectItem value="LETTER">Letter Grade</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                     )} />
                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="totalMarks" render={({ field }) => (
+                        <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                      <FormField control={form.control} name="gradeId" render={({ field }) => (
                         <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(grade => (<SelectItem key={grade.id} value={grade.id}>{grade.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="sectionId" render={({ field }) => (
-                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(section => (<SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select Section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(section => (<SelectItem key={section.id} value={section.id}>{section.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                 </div>
                 <DialogFooter>
