@@ -6,6 +6,7 @@ import { StudentRegistrationFormValues } from '@/app/dashboard/students/student-
 import prisma from './prisma';
 import bcrypt from 'bcrypt';
 import { differenceInDays, format, startOfMonth, endOfMonth } from 'date-fns';
+import type { School } from '@prisma/client';
 
 export async function getDashboardStats(schoolId: string) {
   if (!schoolId) {
@@ -1799,6 +1800,7 @@ export async function getStudentDashboardData(studentId: string, academicYearId:
 }
 export type StudentDashboardData = Awaited<ReturnType<typeof getStudentDashboardData>>;
 
+// --- System Admin ---
 export async function getSystemAdminDashboardStats() {
   const totalSchoolsPromise = prisma.school.count();
   const totalStudentsPromise = prisma.student.count();
@@ -1809,4 +1811,31 @@ export async function getSystemAdminDashboardStats() {
   ]);
 
   return { totalSchools, totalStudents };
+}
+
+export async function getSchools() {
+    return prisma.school.findMany({
+        orderBy: { name: 'asc' }
+    });
+}
+
+export async function getSchoolById(id: string) {
+    return prisma.school.findUnique({
+        where: { id }
+    });
+}
+
+export async function createSchool(data: Omit<School, 'id' | 'createdAt' | 'updatedAt'>) {
+    return prisma.school.create({ data });
+}
+
+export async function updateSchool(id: string, data: Partial<Omit<School, 'id' | 'createdAt' | 'updatedAt'>>) {
+    return prisma.school.update({
+        where: { id },
+        data,
+    });
+}
+
+export async function deleteSchool(id: string) {
+    return prisma.school.delete({ where: { id } });
 }
