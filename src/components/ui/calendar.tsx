@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -17,6 +18,9 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DayPicker
+      captionLayout="dropdown-buttons"
+      fromYear={1920}
+      toYear={new Date().getFullYear() + 10}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
