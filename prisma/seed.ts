@@ -88,35 +88,25 @@ async function main() {
 
   // Grades & Sections
   const grade10 = await prisma.grade.create({
-    data: {
-      name: 'Grade 10',
-      schoolId: school1.id,
-      sections: {
-        create: [
-          { name: 'A', schoolId: school1.id }, 
-          { name: 'B', schoolId: school1.id }
-        ],
-      },
-    },
-    include: { sections: true },
+    data: { name: 'Grade 10', schoolId: school1.id },
   });
   const grade9 = await prisma.grade.create({
-    data: {
-        name: 'Grade 9',
-        schoolId: school1.id,
-        sections: {
-            create: [
-              { name: 'A', schoolId: school1.id },
-              { name: 'B', schoolId: school1.id }
-            ]
-        }
-    },
-    include: { sections: true }
+    data: { name: 'Grade 9', schoolId: school1.id },
+  });
+
+  const section10A = await prisma.section.create({
+    data: { name: 'A', gradeId: grade10.id, schoolId: school1.id },
+  });
+  const section10B = await prisma.section.create({
+    data: { name: 'B', gradeId: grade10.id, schoolId: school1.id },
+  });
+  const section9A = await prisma.section.create({
+    data: { name: 'A', gradeId: grade9.id, schoolId: school1.id },
+  });
+  const section9B = await prisma.section.create({
+    data: { name: 'B', gradeId: grade9.id, schoolId: school1.id },
   });
   console.log(`Created grades with sections.`);
-  const section10A = grade10.sections.find((s) => s.name === 'A')!;
-  const section10B = grade10.sections.find((s) => s.name === 'B')!;
-  const section9B = grade9.sections.find((s) => s.name === 'B')!;
 
   // Hash a common password
   const hashedPassword = await bcrypt.hash('password123', 10);
@@ -136,10 +126,10 @@ async function main() {
 
   // Parents
   const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Jane', lastName: 'Doe' } });
-  const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id } });
+  const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id, relationToStudent: 'Mother' } });
 
   const parentUser2 = await prisma.user.create({ data: { phone: '2000000002', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Robert', lastName: 'Smith' } });
-  const parent2 = await prisma.parent.create({ data: { userId: parentUser2.id, firstName: 'Robert', lastName: 'Smith', schoolId: school1.id } });
+  const parent2 = await prisma.parent.create({ data: { userId: parentUser2.id, firstName: 'Robert', lastName: 'Smith', schoolId: school1.id, relationToStudent: 'Father' } });
 
   // Students
   const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'John', lastName: 'Doe' } });
@@ -247,7 +237,7 @@ async function main() {
                    {
                       text: 'Is x=5 a solution to 3x = 15?',
                       type: 'TRUE_FALSE',
-                      options: '["true", "false"]',
+                      options: JSON.stringify(["true", "false"]),
                       correctAnswer: 'true',
                       points: 2
                   }
@@ -324,7 +314,7 @@ async function main() {
       duration: 60,
       fee: 25.00,
       status: 'UPCOMING',
-      teacherId: teacherUser1.id,
+      teacherId: teacher1.id,
       schoolId: school1.id,
     },
   });
