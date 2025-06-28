@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createStudentWithParent } from "@/lib/data";
+import { createStudentWithParent, updateStudentWithParent } from "@/lib/data";
 import { StudentRegistrationFormValues } from "./student-form";
 
 export async function registerStudentAction(data: StudentRegistrationFormValues, schoolId: string) {
@@ -17,4 +17,15 @@ export async function registerStudentAction(data: StudentRegistrationFormValues,
     }
     return { success: false, message: "Failed to register student. Please try again." };
   }
+}
+
+export async function updateStudentAction(studentId: string, data: StudentRegistrationFormValues) {
+    try {
+        const result = await updateStudentWithParent(studentId, data);
+        revalidatePath("/dashboard/students/list");
+        return { success: true, message: `Successfully updated ${result?.firstName}.`, updatedStudent: result };
+    } catch (error: any) {
+        console.error("Failed to update student:", error);
+        return { success: false, message: "Failed to update student. Please try again." };
+    }
 }

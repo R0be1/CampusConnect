@@ -180,6 +180,87 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
   });
 }
 
+export async function updateStudentWithParent(studentId: string, data: StudentRegistrationFormValues) {
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+    include: { parents: { include: { user: true } } }
+  });
+
+  if (!student) {
+    throw new Error('Student not found');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    // 1. Update Student profile
+    await tx.student.update({
+      where: { id: studentId },
+      data: {
+        firstName: data.studentFirstName,
+        lastName: data.studentLastName,
+        dob: data.studentDob,
+        gender: data.studentGender,
+        gradeId: data.grade,
+        sectionId: data.section,
+      }
+    });
+
+    // 2. Update Student's associated User record
+    await tx.user.update({
+      where: { id: student.userId },
+      data: {
+        firstName: data.studentFirstName,
+        lastName: data.studentLastName,
+        middleName: data.studentMiddleName,
+        addressLine1: data.addressLine1,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+      }
+    });
+
+    // 3. Update Parent's profile and associated User record
+    const parent = student.parents[0];
+    if (parent) {
+      await tx.parent.update({
+        where: { id: parent.id },
+        data: {
+          firstName: data.parentFirstName,
+          lastName: data.parentLastName,
+          relationToStudent: data.parentRelation,
+        }
+      });
+      await tx.user.update({
+        where: { id: parent.userId },
+        data: {
+          firstName: data.parentFirstName,
+          lastName: data.parentLastName,
+          middleName: data.parentMiddleName,
+          phone: data.parentPhone,
+          addressLine1: data.addressLine1,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+        }
+      });
+    }
+    
+    // Return the full updated record for UI update
+    return tx.student.findUnique({
+      where: { id: studentId },
+      include: {
+        user: true,
+        grade: true,
+        section: true,
+        parents: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+  });
+}
+
 
 // --- Academics Data ---
 
@@ -376,12 +457,8 @@ export async function getStudentsForCommunication(schoolId: string) {
     where: { schoolId },
     select: {
       id: true,
-      user: {
-        select: {
-            firstName: true,
-            lastName: true
-        }
-      },
+      firstName: true,
+      lastName: true,
       grade: {
         select: { name: true },
       },
@@ -404,7 +481,7 @@ export async function getStudentsForCommunication(schoolId: string) {
     },
   });
 
-  students.sort((a,b) => (a.user.firstName ?? '').localeCompare(b.user.firstName ?? ''));
+  students.sort((a,b) => (a.firstName ?? '').localeCompare(b.firstName ?? ''));
   return students;
 }
 
@@ -439,13 +516,9 @@ export async function getCommunicationHistory(senderId: string) {
       subject: true,
       student: {
         select: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-            }
-          }
-        },
+          firstName: true,
+          lastName: true,
+        }
       },
       sender: {
         select: {

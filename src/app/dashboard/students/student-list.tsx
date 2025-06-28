@@ -7,14 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StudentForm, StudentRegistrationFormValues } from "./student-form";
 import { useAcademicYear } from "@/context/academic-year-context";
-import { DetailedStudent, getGrades, getSections } from "@/lib/data";
+import { DetailedStudent } from "@/lib/data";
 import type { Grade, Section } from "@prisma/client";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { updateStudentAction } from "./actions";
 
 type StudentListProps = {
     students: DetailedStudent[];
@@ -26,6 +27,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const { selectedYear } = useAcademicYear(); // This context can be used later to filter by enrollment year
     const [students, setStudents] = useState<DetailedStudent[]>(initialStudents);
     const [editingStudent, setEditingStudent] = useState<DetailedStudent | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
@@ -41,16 +43,27 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
         return nameMatch && gradeMatch && sectionMatch;
     });
 
-    const handleEditSubmit = (data: StudentRegistrationFormValues) => {
+    const handleEditSubmit = async (data: StudentRegistrationFormValues) => {
         if (!editingStudent) return;
+        setIsUpdating(true);
         
-        // This is where you would call a server action to update the student
+        const result = await updateStudentAction(editingStudent.id, data);
         
-        setEditingStudent(null); // Close the dialog
-        toast({
-          title: "Student Updated",
-          description: "Student information has been saved.",
-        });
+        if (result.success && result.updatedStudent) {
+            setStudents(prev => prev.map(s => s.id === editingStudent.id ? result.updatedStudent as DetailedStudent : s));
+            setEditingStudent(null);
+            toast({
+              title: "Student Updated",
+              description: result.message,
+            });
+        } else {
+            toast({
+              title: "Update Failed",
+              description: result.message || "An unknown error occurred.",
+              variant: "destructive"
+            });
+        }
+        setIsUpdating(false);
     };
 
     const getInitialFormValues = (student: DetailedStudent | null): Partial<StudentRegistrationFormValues> | undefined => {
@@ -186,7 +199,8 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
                     <StudentForm 
                         initialData={getInitialFormValues(editingStudent)} 
                         onSubmit={handleEditSubmit} 
-                        submitButtonText="Save Changes" 
+                        submitButtonText={isUpdating ? "Saving..." : "Save Changes"}
+                        isSubmitting={isUpdating}
                         grades={grades}
                         sections={sections}
                     />
