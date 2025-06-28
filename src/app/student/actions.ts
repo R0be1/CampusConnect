@@ -1,7 +1,7 @@
 
 "use server";
 
-import { getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent } from "@/lib/data";
+import { getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal } from "@/lib/data";
 
 export async function getStudentAttendanceAction(studentId: string, month: number, year: number) {
     try {
@@ -60,3 +60,14 @@ export async function getTestResultAction(testId: string, studentId: string) {
     }
 }
 export type StudentPortalTestResultData = Awaited<ReturnType<typeof getTestResultForStudent>>;
+
+export async function getELearningMaterialsAction(studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getLearningMaterialsForPortal(studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch e-learning materials." };
+    }
+}
+export type StudentPortalELearningData = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
