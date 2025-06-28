@@ -338,7 +338,7 @@ export async function getGradesForStudent(studentId: string, academicYearId: str
             },
             results: {
                 orderBy: {
-                    createdAt: 'desc'
+                    date: 'desc'
                 },
                 take: 1
             }
