@@ -15,7 +15,9 @@ import { DetailedStudent } from "@/lib/data";
 import type { Grade, Section } from "@prisma/client";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { updateStudentAction } from "./actions";
+import { updateStudentAction, deleteStudentAction } from "../actions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 type StudentListProps = {
     students: DetailedStudent[];
@@ -28,6 +30,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const [students, setStudents] = useState<DetailedStudent[]>(initialStudents);
     const [editingStudent, setEditingStudent] = useState<DetailedStudent | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
@@ -43,7 +46,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
         return nameMatch && gradeMatch && sectionMatch;
     });
 
-    const handleEditSubmit = async (data: StudentRegistrationFormValues) => {
+    const handleEditSubmit = async (data: StudentRegistrationFormValues, resetForm: () => void) => {
         if (!editingStudent) return;
         setIsUpdating(true);
         
@@ -64,6 +67,25 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
             });
         }
         setIsUpdating(false);
+    };
+    
+    const handleDelete = async (studentId: string) => {
+        setIsDeleting(true);
+        const result = await deleteStudentAction(studentId);
+        if (result.success) {
+            setStudents(prev => prev.filter(s => s.id !== studentId));
+            toast({
+                title: "Student Deleted",
+                description: result.message,
+            });
+        } else {
+            toast({
+                title: "Deletion Failed",
+                description: result.message,
+                variant: "destructive",
+            });
+        }
+        setIsDeleting(false);
     };
 
     const getInitialFormValues = (student: DetailedStudent | null): Partial<StudentRegistrationFormValues> | undefined => {
@@ -167,10 +189,34 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
                             <Pencil className="h-4 w-4" />
                             <span className="sr-only">Edit Student</span>
                         </Button>
-                        <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                        <span className="sr-only">Delete Student</span>
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    <span className="sr-only">Delete Student</span>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the student
+                                        "{`${student.firstName} ${student.lastName}`}" and all their associated data.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        disabled={isDeleting}
+                                        onClick={() => handleDelete(student.id)}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Delete Student
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </TableCell>
                     </TableRow>
                 )

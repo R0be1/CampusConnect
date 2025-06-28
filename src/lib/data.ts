@@ -103,7 +103,7 @@ export async function getStudentsWithDetails(schoolId: string) {
     },
   });
   
-  students.sort((a, b) => (a.firstName ?? '').localeCompare(b.firstName ?? ''));
+  students.sort((a, b) => a.firstName.localeCompare(b.firstName));
 
   return students;
 }
@@ -143,10 +143,11 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
     });
 
     // 2. Create Student User and Profile
+    // Using a unique identifier for student phone since it's a unique field in the User model
     const studentPhone = `${data.parentPhone}-S${Date.now()}`;
     const studentUser = await tx.user.create({
         data: {
-            phone: studentPhone,
+            phone: studentPhone, 
             password: hashedPassword,
             role: 'STUDENT',
             schoolId: schoolId,
@@ -183,7 +184,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
 export async function updateStudentWithParent(studentId: string, data: StudentRegistrationFormValues) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
-    include: { parents: { include: { user: true } } }
+    include: { user: true, parents: { include: { user: true } } }
   });
 
   if (!student) {
@@ -205,22 +206,25 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
     });
 
     // 2. Update Student's associated User record
-    await tx.user.update({
-      where: { id: student.userId },
-      data: {
-        firstName: data.studentFirstName,
-        lastName: data.studentLastName,
-        middleName: data.studentMiddleName,
-        addressLine1: data.addressLine1,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-      }
-    });
+    if (student.user) {
+        await tx.user.update({
+          where: { id: student.userId },
+          data: {
+            firstName: data.studentFirstName,
+            lastName: data.studentLastName,
+            middleName: data.studentMiddleName,
+            addressLine1: data.addressLine1,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+          }
+        });
+    }
+
 
     // 3. Update Parent's profile and associated User record
     const parent = student.parents[0];
-    if (parent) {
+    if (parent && parent.user) {
       await tx.parent.update({
         where: { id: parent.id },
         data: {
@@ -258,6 +262,42 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
         },
       },
     });
+  });
+}
+
+export async function deleteStudent(studentId: string) {
+  return prisma.$transaction(async (tx) => {
+    const student = await tx.student.findUnique({
+      where: { id: studentId },
+      select: { userId: true },
+    });
+
+    if (!student) {
+      throw new Error("Student not found.");
+    }
+    
+    // First, disconnect parents to avoid violating foreign key constraints
+    // on the join table if parents are not being deleted.
+    await tx.student.update({
+      where: { id: studentId },
+      data: {
+        parents: {
+          set: [],
+        },
+      },
+    });
+
+    // Now, delete the student record.
+    await tx.student.delete({
+      where: { id: studentId },
+    });
+
+    // Finally, delete the associated user record for the student.
+    await tx.user.delete({
+      where: { id: student.userId },
+    });
+
+    return { success: true };
   });
 }
 
@@ -342,7 +382,6 @@ export async function getScoresForStudent(studentId: string, academicYearId: str
 export async function getFirstTeacher(schoolId: string) {
     return prisma.staff.findFirst({
         where: { schoolId, staffType: 'TEACHER' },
-        include: { user: true }
     });
 }
 
@@ -445,7 +484,6 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
         };
     });
 
-    // Sort the final summary by name
     summary.sort((a,b) => a.name.localeCompare(b.name));
 
     return summary;
@@ -455,10 +493,7 @@ export async function getAttendanceSummary(gradeId: string, sectionId: string, m
 export async function getStudentsForCommunication(schoolId: string) {
   const students = await prisma.student.findMany({
     where: { schoolId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
+    include: {
       grade: {
         select: { name: true },
       },
@@ -466,22 +501,15 @@ export async function getStudentsForCommunication(schoolId: string) {
         select: { name: true },
       },
       parents: {
-        select: {
-          user: {
-            select: {
-              id: true,
-              phone: true,
-              firstName: true,
-              lastName: true
-            },
-          },
+        include: {
+            user: true
         },
         take: 1, // Assume one parent for simplicity
       },
     },
   });
 
-  students.sort((a,b) => (a.firstName ?? '').localeCompare(b.firstName ?? ''));
+  students.sort((a,b) => a.firstName.localeCompare(b.firstName));
   return students;
 }
 
@@ -510,14 +538,15 @@ export async function createCommunication(
 export async function getCommunicationHistory(senderId: string) {
   return prisma.communication.findMany({
     where: { senderId },
-    select: {
-      id: true,
-      sentAt: true,
-      subject: true,
+    include: {
       student: {
         select: {
-          firstName: true,
-          lastName: true,
+            user: {
+                select: {
+                    firstName: true,
+                    lastName: true
+                }
+            }
         }
       },
       sender: {
@@ -937,7 +966,6 @@ export async function getResultsForExamAction(examId: string) {
         });
         return { success: true, data, gradingType: exam?.gradingType };
     } catch (e: any) {
-        console.error(e);
         return { success: false, error: "Failed to fetch results." };
     }
 }
@@ -967,7 +995,6 @@ export async function submitResultsForApprovalAction(examId: string, results: {s
         revalidatePath('/dashboard/results/approve-results');
         return { success: true, message: "Results submitted for approval." };
     } catch (e: any) {
-        console.error(e);
         return { success: false, error: "Failed to submit results." };
     }
 }
@@ -977,7 +1004,7 @@ export async function getApprovalsForExamAction(examId: string) {
      try {
         const results = await prisma.examResult.findMany({
             where: { examId, status: { in: ['PENDING_APPROVAL', 'PENDING_REAPPROVAL'] } },
-            include: { student: { include: {firstName: true, lastName: true} } }
+            include: { student: {select: {firstName: true, lastName: true}} }
         });
          const data = results.map(r => ({
             id: r.id, 
@@ -988,7 +1015,6 @@ export async function getApprovalsForExamAction(examId: string) {
          }));
         return { success: true, data };
     } catch (e: any) {
-        console.error(e);
         return { success: false, error: "Failed to fetch approvals." };
     }
 }
@@ -1013,7 +1039,6 @@ export async function updateResultStatusAction(resultId: string, action: 'approv
         revalidatePath('/dashboard/results/approve-results');
         return { success: true };
     } catch (e: any) {
-        console.error(e);
         return { success: false, error: "Failed to update status." };
     }
 }
@@ -1042,9 +1067,6 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
         revalidatePath('/dashboard/results/approve-results');
         return { success: true };
     } catch (e: any) {
-        console.error(e);
         return { success: false, error: "Failed to bulk update." };
     }
 }
-
-    
