@@ -28,6 +28,7 @@ export default async function CommunicationHistoryPage() {
 
     const formattedHistory = historyData.map(msg => ({
         id: msg.id,
+        sentAt: msg.sentAt, // Pass raw date for filtering
         date: format(msg.sentAt, 'PPP'),
         student: msg.student ? `${msg.student.user.firstName} ${msg.student.user.lastName}` : 'N/A',
         subject: msg.subject,
