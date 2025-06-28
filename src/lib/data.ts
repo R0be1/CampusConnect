@@ -1798,3 +1798,15 @@ export async function getStudentDashboardData(studentId: string, academicYearId:
     };
 }
 export type StudentDashboardData = Awaited<ReturnType<typeof getStudentDashboardData>>;
+
+export async function getSystemAdminDashboardStats() {
+  const totalSchoolsPromise = prisma.school.count();
+  const totalStudentsPromise = prisma.student.count();
+
+  const [totalSchools, totalStudents] = await Promise.all([
+    totalSchoolsPromise,
+    totalStudentsPromise,
+  ]);
+
+  return { totalSchools, totalStudents };
+}

@@ -1,8 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSystemAdminDashboardStats } from "@/lib/data";
 import { School, Users } from "lucide-react";
 
-export default function SystemAdminDashboardPage() {
+export default async function SystemAdminDashboardPage() {
+  const stats = await getSystemAdminDashboardStats();
+
   return (
     <div>
       <h1 className="text-3xl font-bold font-headline mb-6">System Dashboard</h1>
@@ -13,7 +16,7 @@ export default function SystemAdminDashboardPage() {
             <School className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">{stats.totalSchools.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Currently onboarded</p>
           </CardContent>
         </Card>
@@ -23,7 +26,7 @@ export default function SystemAdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,239</div>
+            <div className="text-2xl font-bold">{stats.totalStudents.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Across all schools</p>
           </CardContent>
         </Card>
