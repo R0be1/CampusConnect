@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StudentForm, StudentRegistrationFormValues } from "../student-form";
+import { StudentForm, StudentRegistrationFormValues } from "./student-form";
 import { useAcademicYear } from "@/context/academic-year-context";
 import { DetailedStudent, getGrades, getSections } from "@/lib/data";
 import type { Grade, Section } from "@prisma/client";
