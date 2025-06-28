@@ -1,7 +1,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentAcademicYear, getFirstSchool, getFeeStructures, getPenaltyRules } from "@/lib/data";
-import StructureClientPage from "./structure-client";
+import StructureClientPage from "../structure-client";
 
 export default async function FeeStructurePage() {
     const school = await getFirstSchool();
