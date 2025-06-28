@@ -1643,6 +1643,57 @@ export async function getProfileDataForPortal(studentId: string) {
 }
 export type PortalProfileData = NonNullable<Awaited<ReturnType<typeof getProfileDataForPortal>>>;
 
+export async function getStudentProfileForStudentPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        include: {
+            user: true,
+            grade: { select: { name: true } },
+            section: { select: { name: true } },
+            parents: {
+                include: {
+                    user: true
+                },
+                take: 1
+            }
+        }
+    });
+
+    if (!student) {
+        return null;
+    }
+
+    const parent = student.parents[0];
+
+    return {
+        student: {
+            id: student.id,
+            firstName: student.firstName,
+            middleName: student.user.middleName,
+            lastName: student.lastName,
+            dob: student.dob ? format(student.dob, "yyyy-MM-dd") : '',
+            gender: student.gender,
+            grade: student.grade.name,
+            section: student.section.name,
+            phone: student.user.phone,
+        },
+        parent: parent ? {
+            firstName: parent.firstName,
+            lastName: parent.lastName,
+            relation: parent.relationToStudent,
+            phone: parent.user.phone,
+        } : null,
+        address: {
+            line1: student.user.addressLine1,
+            city: student.user.city,
+            state: student.user.state,
+            zipCode: student.user.zipCode
+        }
+    };
+}
+export type StudentProfileData = NonNullable<Awaited<ReturnType<typeof getStudentProfileForStudentPortal>>>;
+
+
 export async function updateParentContactInfo(userId: string, data: { phone: string; alternatePhone?: string | null }) {
     return prisma.user.update({
         where: { id: userId },
