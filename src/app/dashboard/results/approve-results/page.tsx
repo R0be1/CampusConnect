@@ -1,7 +1,6 @@
-
 import { getFirstSchool, getCurrentAcademicYear, getExamsWithPendingApprovals } from "@/lib/data";
 import { redirect } from "next/navigation";
-import ApproveResultsClient from "./approve-results-client";
+import ApproveResultsClient from "../approve-results-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 

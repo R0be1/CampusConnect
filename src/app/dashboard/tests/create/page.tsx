@@ -1,5 +1,5 @@
 import { getFirstSchool, getGrades, getSections, getTeachers } from "@/lib/data";
-import { CreateTestForm } from "./create-test-form";
+import { CreateTestForm } from "../create-test-form";
 import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";

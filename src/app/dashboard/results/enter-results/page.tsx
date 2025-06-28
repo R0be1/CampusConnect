@@ -1,7 +1,6 @@
-
 import { getFirstSchool, getCurrentAcademicYear, getExamsForYear } from "@/lib/data";
 import { redirect } from "next/navigation";
-import EnterResultsClient from "./enter-results-client";
+import EnterResultsClient from "../enter-results-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 

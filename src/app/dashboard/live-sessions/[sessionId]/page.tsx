@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
-import { TeacherSessionClient } from "./teacher-session-client";
+import { TeacherSessionClient } from "../teacher-session-client";
 
 export default async function TeacherSessionPage({ params }: { params: { sessionId: string } }) {
     const session = await getLiveSessionById(params.sessionId);
