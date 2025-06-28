@@ -1,6 +1,7 @@
+
 import { redirect } from "next/navigation";
 import { getFirstSchool, getGrades, getFirstTeacher } from "@/lib/data";
-import { ScheduleForm } from "./schedule-form";
+import { ScheduleForm } from "../schedule-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
