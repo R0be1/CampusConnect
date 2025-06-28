@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, BookOpen, CalendarDays, ClipboardList, User, Info } from "lucide-react";
 import Link from "next/link";
-import { getFirstSchool, getCurrentAcademicYear, getStudentDashboardData } from "@/lib/data";
+import { getFirstSchool, getFirstStudent, getCurrentAcademicYear, getStudentDashboardData } from "@/lib/data";
 import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from 'date-fns';
