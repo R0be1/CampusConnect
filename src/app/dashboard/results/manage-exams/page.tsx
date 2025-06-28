@@ -1,7 +1,7 @@
 
 import { getFirstSchool, getCurrentAcademicYear, getExamsForYear, getGrades, getSections } from "@/lib/data";
 import { redirect } from "next/navigation";
-import ManageExamsClient from "./manage-exams-client";
+import ManageExamsClient from "../manage-exams-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
@@ -38,4 +38,3 @@ export default async function ManageExamsPage() {
         />
     );
 }
-
