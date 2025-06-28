@@ -1,3 +1,4 @@
+
 // src/lib/data.ts
 'use server';
 
@@ -1314,7 +1315,7 @@ export async function getCommunicationsForParentPortal(studentId: string) {
         }
     });
 }
-export type PortalCommunications = Awaited<ReturnType<typeof getCommunicationsForParentPortal>>;
+export type PortalCommunicationData = Awaited<ReturnType<typeof getCommunicationsForParentPortal>>;
 
 export async function markCommunicationAsRead(communicationId: string) {
     return prisma.communication.update({
@@ -1486,3 +1487,28 @@ export async function getTestResultForStudent(testId: string, studentId: string)
         resultsVisible: true,
     };
 }
+
+export async function getLearningMaterialsForPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { gradeId: true }
+    });
+
+    if (!student) {
+        return [];
+    }
+
+    return prisma.learningMaterial.findMany({
+        where: {
+            gradeId: student.gradeId
+        },
+        include: {
+            grade: { select: { name: true } }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+}
+
+export type PortalLearningMaterials = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
