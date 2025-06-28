@@ -148,7 +148,7 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                         <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="sectionId" render={({ field }) => (
-                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Section</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''} disabled={!gradeId}><FormControl><SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger></FormControl><SelectContent>{filteredSections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="subject" render={({ field }) => (
                         <FormItem><FormLabel>Subject</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger></FormControl><SelectContent>{subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
@@ -178,6 +178,9 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                                         date.setMinutes(currentVal.getMinutes());
                                         field.onChange(date);
                                     }}
+                                    captionLayout="dropdown-buttons"
+                                    fromYear={new Date().getFullYear()}
+                                    toYear={new Date().getFullYear() + 5}
                                     initialFocus />
                                 <div className="p-3 border-t border-border">
                                     <Input type="time"
@@ -214,6 +217,9 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                                         date.setMinutes(currentVal.getMinutes());
                                         field.onChange(date);
                                     }}
+                                    captionLayout="dropdown-buttons"
+                                    fromYear={new Date().getFullYear()}
+                                    toYear={new Date().getFullYear() + 5}
                                     initialFocus />
                                 <div className="p-3 border-t border-border">
                                     <Input type="time"

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react";
@@ -117,7 +118,7 @@ export function ScheduleForm({ grades, schoolId, teacherId }: ScheduleFormProps)
                                     </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
-                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus fromDate={new Date()} />
+                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus fromDate={new Date()} captionLayout="dropdown-buttons" fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 5} />
                                     <div className="p-3 border-t border-border">
                                         <Input type="time" onChange={(e) => {
                                             const time = e.target.value.split(':');

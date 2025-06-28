@@ -145,7 +145,10 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
                         onSelect={(newDate) => {
                             setDate(newDate);
                             setIsDatePickerOpen(false);
-                        }} 
+                        }}
+                        captionLayout="dropdown-buttons"
+                        fromYear={new Date().getFullYear() - 1}
+                        toYear={new Date().getFullYear() + 1}
                         initialFocus 
                     />
                     </PopoverContent>

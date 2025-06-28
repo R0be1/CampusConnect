@@ -207,6 +207,9 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
+                            captionLayout="dropdown-buttons"
+                            fromYear={new Date().getFullYear() - 20}
+                            toYear={new Date().getFullYear() - 3}
                             selected={field.value}
                             onSelect={(date) => {
                                 field.onChange(date);
