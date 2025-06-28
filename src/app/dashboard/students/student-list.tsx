@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StudentForm, StudentRegistrationFormValues } from "./student-form";
+import { StudentForm, StudentRegistrationFormValues } from "../student-form";
 import { useAcademicYear } from "@/context/academic-year-context";
 import { DetailedStudent, getGrades, getSections } from "@/lib/data";
 import type { Grade, Section } from "@prisma/client";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 type StudentListProps = {
     students: DetailedStudent[];
@@ -29,6 +30,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const [searchTerm, setSearchTerm] = useState("");
     const [gradeFilter, setGradeFilter] = useState("all");
     const [sectionFilter, setSectionFilter] = useState("all");
+    const { toast } = useToast();
 
     const filteredStudents = students.filter(student => {
         const name = `${student.firstName} ${student.lastName}`;
@@ -46,7 +48,10 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
         console.log("Updating student...", data);
         
         setEditingStudent(null); // Close the dialog
-        alert("Student information updated! (console log)");
+        toast({
+          title: "Student Updated",
+          description: "Student information has been saved (console log).",
+        });
     };
 
     const getInitialFormValues = (student: DetailedStudent | null): Partial<StudentRegistrationFormValues> | undefined => {

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Clock, Send, ShieldAlert, AlertTriangle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for a specific test. In a real app, this would be fetched.
 const testData = {
@@ -123,6 +124,7 @@ const WarningOverlay = ({ onResume }: { onResume: () => void }) => {
 
 export default function ExamPage({ params }: { params: { testId: string } }) {
   const router = useRouter();
+  const { toast } = useToast();
   const form = useForm<ExamFormValues>({
     defaultValues: {
       answers: testData.questions.map(q => ({ questionId: q.id, answer: "" })),
@@ -164,7 +166,11 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
         setExamStarted(true);
     } catch (err) {
         console.error("Failed to enter fullscreen mode:", err);
-        alert("Could not enter fullscreen mode. Please enable it in your browser settings.");
+        toast({
+            title: "Fullscreen Required",
+            description: "Could not enter fullscreen mode. Please enable it in your browser settings to start the exam.",
+            variant: "destructive"
+        });
         setExamStarted(true); 
     }
   };
