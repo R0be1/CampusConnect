@@ -22,11 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, User, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState, useEffect } from "react";
@@ -39,7 +38,6 @@ const studentRegistrationSchema = z.object({
   studentLastName: z.string().min(1, "Last name is required"),
   studentDob: z.date({ required_error: "Date of birth is required" }),
   studentGender: z.enum(["MALE", "FEMALE", "OTHER"], { required_error: "Gender is required" }),
-  studentPhoto: z.any().optional(),
   grade: z.string().min(1, "Grade is required"),
   section: z.string().min(1, "Section is required"),
 
@@ -50,7 +48,6 @@ const studentRegistrationSchema = z.object({
   parentRelation: z.string().min(1, "Relationship is required"),
   parentPhone: z.string().min(10, "Phone number must be at least 10 digits"),
   parentAlternatePhone: z.string().min(10, "Must be at least 10 digits").optional().or(z.literal('')),
-  parentPhoto: z.any().optional(),
   
   // Address info
   addressLine1: z.string().min(1, "Address is required"),
@@ -73,8 +70,6 @@ interface StudentFormProps {
 }
 
 export function StudentForm({ initialData, onSubmit, submitButtonText = "Register Student", isSubmitting, grades, sections }: StudentFormProps) {
-  const [studentPhotoPreview, setStudentPhotoPreview] = useState<string | undefined>();
-  const [parentPhotoPreview, setParentPhotoPreview] = useState<string | undefined>();
   const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
   
   const form = useForm<StudentRegistrationFormValues>({
@@ -83,13 +78,11 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
       studentFirstName: "",
       studentMiddleName: "",
       studentLastName: "",
-      studentPhoto: undefined,
       parentFirstName: "",
       parentMiddleName: "",
       parentLastName: "",
       parentPhone: "",
       parentAlternatePhone: "",
-      parentPhoto: undefined,
       addressLine1: "",
       city: "",
       state: "",
@@ -118,14 +111,12 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
     }
   }, [initialData, sections]);
 
-  const resetFormAndPreviews = () => {
+  const resetForm = () => {
     form.reset();
-    setStudentPhotoPreview(undefined);
-    setParentPhotoPreview(undefined);
   }
 
   const handleFormSubmit = (data: StudentRegistrationFormValues) => {
-      onSubmit(data, resetFormAndPreviews);
+      onSubmit(data, resetForm);
   };
 
   return (
@@ -301,38 +292,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                   )}
                 />
               </div>
-                <FormField
-                  control={form.control}
-                  name="studentPhoto"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Student Photo</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-6">
-                            <Avatar className="h-24 w-24 border">
-                                <AvatarImage src={studentPhotoPreview} data-ai-hint="person portrait" />
-                                <AvatarFallback>
-                                    <User className="h-10 w-10" />
-                                </AvatarFallback>
-                            </Avatar>
-                            <Input 
-                                type="file" 
-                                accept="image/*" 
-                                className="max-w-xs"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if(file) {
-                                        field.onChange(file);
-                                        setStudentPhotoPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
             </CardContent>
           </Card>
 
@@ -431,38 +390,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                   )}
                 />
               </div>
-               <FormField
-                  control={form.control}
-                  name="parentPhoto"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parent/Guardian Photo (Optional)</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-6">
-                            <Avatar className="h-24 w-24 border">
-                                <AvatarImage src={parentPhotoPreview} data-ai-hint="person portrait" />
-                                <AvatarFallback>
-                                    <User className="h-10 w-10" />
-                                </AvatarFallback>
-                            </Avatar>
-                            <Input 
-                                type="file" 
-                                accept="image/*" 
-                                className="max-w-xs"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if(file) {
-                                        field.onChange(file);
-                                        setParentPhotoPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
             </CardContent>
           </Card>
 
