@@ -1,25 +1,92 @@
 
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Radio, ArrowRight, DollarSign } from "lucide-react";
+import { Radio, ArrowRight, DollarSign, Loader2 } from "lucide-react";
 import Link from 'next/link';
+import { useStudent } from '@/context/student-context';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getLiveSessionsAction, registerForSessionAction } from '../actions';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import type { PortalLiveSessionsData } from '@/lib/data';
 
-const liveSessionsData = [
-  { id: 'session-01', topic: 'Advanced Algebra Concepts', subject: 'Mathematics', teacher: 'Mr. Smith', dateTime: '2024-09-15 at 2:00 PM', fee: 25.00, isRegistered: true, status: 'Upcoming' as const },
-  { id: 'session-02', topic: 'Introduction to Newtonian Physics', subject: 'Physics', teacher: 'Dr. Brown', dateTime: '2024-09-16 at 10:00 AM', fee: 30.00, isRegistered: false, status: 'Upcoming' as const },
-  { id: 'session-03', topic: 'Live Q&A for Final Exams', subject: 'History', teacher: 'Ms. Jones', dateTime: '2024-08-20 at 4:00 PM', fee: 0, isRegistered: true, status: 'Completed' as const },
-];
+
+function LiveSessionsLoadingSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <Radio className="h-8 w-8 text-primary" />
+                <div>
+                    <Skeleton className="h-8 w-64 mb-2" />
+                    <Skeleton className="h-5 w-80" />
+                </div>
+            </div>
+            <div className="space-y-4">
+                <Skeleton className="h-8 w-1/3" />
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(3)].map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
+                            <CardContent><Skeleton className="h-12 w-full" /></CardContent>
+                            <CardFooter><Skeleton className="h-10 w-full" /></CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
 
 export default function PortalLiveSessionsPage() {
-  const [sessions, setSessions] = useState(liveSessionsData);
-  const studentName = 'John Doe'; // Mock student name
+  const { selectedStudent } = useStudent();
+  const { toast } = useToast();
+  const [sessions, setSessions] = useState<PortalLiveSessionsData>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedStudent?.id) {
+      setIsLoading(true);
+      setError(null);
+      getLiveSessionsAction(selectedStudent.id)
+        .then(result => {
+          if (result.success && result.data) {
+            setSessions(result.data);
+          } else {
+            setError(result.error || "Failed to load live sessions.");
+          }
+        })
+        .catch(() => setError("An unexpected error occurred."))
+        .finally(() => setIsLoading(false));
+    }
+  }, [selectedStudent]);
+
+  const handleRegister = async (sessionId: string) => {
+    if (!selectedStudent?.id) return;
+    setIsRegistering(sessionId);
+    const result = await registerForSessionAction(sessionId, selectedStudent.id);
+    if (result.success) {
+        toast({ title: "Registration Successful", description: result.message });
+        // Optimistically update the UI
+        setSessions(prev => prev.map(s => s.id === sessionId ? {...s, isRegistered: true} : s));
+    } else {
+        toast({ title: "Registration Failed", description: result.error, variant: "destructive" });
+    }
+    setIsRegistering(null);
+  }
 
   const mySessions = sessions.filter(s => s.isRegistered);
   const availableSessions = sessions.filter(s => !s.isRegistered);
+
+  if (isLoading || !selectedStudent) {
+    return <LiveSessionsLoadingSkeleton />;
+  }
   
   return (
     <div className="flex flex-col gap-6">
@@ -27,22 +94,29 @@ export default function PortalLiveSessionsPage() {
         <Radio className="h-8 w-8 text-primary" />
         <h1 className="text-3xl font-bold font-headline">Live Learning Sessions</h1>
       </div>
-      <p className="text-muted-foreground">View and register your child, {studentName}, for live learning sessions.</p>
+      <p className="text-muted-foreground">View and register {selectedStudent.name} for live learning sessions.</p>
+
+      {error && <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
 
       {mySessions.length > 0 && (
         <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">{studentName}'s Registered Sessions</h2>
+            <h2 className="text-2xl font-semibold">{selectedStudent.name}'s Registered Sessions</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {mySessions.map(session => (
                     <Card key={session.id} className="flex flex-col">
                         <CardHeader>
                             <CardTitle>{session.topic}</CardTitle>
-                            <CardDescription>{session.subject} with {session.teacher}</CardDescription>
+                            <CardDescription>{session.subject} with {session.teacher.firstName} {session.teacher.lastName}</CardDescription>
                         </CardHeader>
                          <CardContent className="flex-1">
-                            <p className="text-sm text-muted-foreground">Scheduled for: {session.dateTime}</p>
-                            <Badge variant={session.status === 'Upcoming' ? 'secondary' : 'outline'} className="mt-2">{session.status}</Badge>
+                            <p className="text-sm text-muted-foreground">Scheduled for: {format(new Date(session.startTime), 'PPP p')}</p>
+                            <Badge variant={session.status === 'UPCOMING' ? 'secondary' : 'default'} className="mt-2">{session.status}</Badge>
                          </CardContent>
+                          <CardFooter>
+                            <Button className="w-full" disabled={session.status !== 'UPCOMING'} asChild>
+                                <Link href={`/student/live-sessions/${session.id}`}>Tell {selectedStudent.name} to Join</Link>
+                            </Button>
+                        </CardFooter>
                     </Card>
                 ))}
             </div>
@@ -50,24 +124,27 @@ export default function PortalLiveSessionsPage() {
       )}
 
       <div className="space-y-4 pt-6 border-t">
-        <h2 className="text-2xl font-semibold">Available Sessions for {studentName}</h2>
+        <h2 className="text-2xl font-semibold">Available Sessions for {selectedStudent.name}</h2>
          {availableSessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {availableSessions.map(session => (
                     <Card key={session.id} className="flex flex-col">
                         <CardHeader>
                             <CardTitle>{session.topic}</CardTitle>
-                            <CardDescription>{session.subject} with {session.teacher}</CardDescription>
+                            <CardDescription>{session.subject} with {session.teacher.firstName} {session.teacher.lastName}</CardDescription>
                         </CardHeader>
                          <CardContent className="flex-1">
-                            <p className="text-sm text-muted-foreground">Scheduled for: {session.dateTime}</p>
+                            <p className="text-sm text-muted-foreground">Scheduled for: {format(new Date(session.startTime), 'PPP p')}</p>
                             <div className="flex items-center font-semibold text-lg mt-4">
                                 <DollarSign className="h-5 w-5 mr-1" />
                                 {session.fee > 0 ? session.fee.toFixed(2) : 'Free'}
                             </div>
                          </CardContent>
                         <CardFooter>
-                            <Button className="w-full">Register & Pay for {studentName}</Button>
+                            <Button className="w-full" onClick={() => handleRegister(session.id)} disabled={isRegistering === session.id}>
+                                {isRegistering === session.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Register {selectedStudent.name}
+                            </Button>
                         </CardFooter>
                     </Card>
                 ))}

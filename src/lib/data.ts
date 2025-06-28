@@ -1284,7 +1284,7 @@ export async function getAttendanceForStudentPortal(studentId: string, month: nu
         notes: r.notes
     }));
 }
-export type AttendanceDataForPortal = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;
+export type PortalAttendanceData = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;
 
 export async function getCommunicationsForParentPortal(studentId: string) {
     const student = await prisma.student.findUnique({
@@ -1510,5 +1510,69 @@ export async function getLearningMaterialsForPortal(studentId: string) {
         }
     });
 }
-
 export type PortalLearningMaterials = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
+
+export async function getLiveSessionsForPortal(studentId: string) {
+    const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { gradeId: true }
+    });
+
+    if (!student) {
+        return [];
+    }
+
+    // Get all sessions for the student's grade
+    const sessions = await prisma.liveSession.findMany({
+        where: {
+            gradeId: student.gradeId,
+            status: { in: ['UPCOMING', 'ACTIVE'] } // Only show relevant sessions
+        },
+        include: {
+            teacher: {
+                select: {
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            registrations: {
+                where: {
+                    studentId: studentId
+                }
+            }
+        },
+        orderBy: {
+            startTime: 'asc'
+        }
+    });
+
+    // Add an 'isRegistered' flag
+    return sessions.map(session => ({
+        ...session,
+        isRegistered: session.registrations.length > 0
+    }));
+}
+export type PortalLiveSessionsData = Awaited<ReturnType<typeof getLiveSessionsForPortal>>;
+
+export async function registerForLiveSession(sessionId: string, studentId: string) {
+    // Check if already registered
+    const existingRegistration = await prisma.liveSessionRegistration.findFirst({
+        where: {
+            liveSessionId: sessionId,
+            studentId: studentId,
+        }
+    });
+
+    if (existingRegistration) {
+        throw new Error("Already registered for this session.");
+    }
+    
+    // In a real app, you would handle payment here if fee > 0
+
+    return prisma.liveSessionRegistration.create({
+        data: {
+            liveSessionId: sessionId,
+            studentId: studentId
+        }
+    });
+}

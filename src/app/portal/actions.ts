@@ -1,7 +1,7 @@
 
 "use server";
 
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getAvailableStudentsAction() {
@@ -62,7 +62,7 @@ export async function getAttendanceAction(studentId: string, month: number, year
         return { success: true, data };
     } catch (error: any) {
         console.error("Failed to get attendance data:", error);
-        return { success: false, error: error.message || "Failed to fetch attendance data." };
+        return { success: false, error: "Failed to fetch attendance data." };
     }
 }
 export type PortalAttendanceData = Awaited<ReturnType<typeof getAttendanceForStudentPortal>>;
@@ -165,3 +165,23 @@ export async function getELearningMaterialsAction(studentId: string) {
     }
 }
 export type PortalELearningData = Awaited<ReturnType<typeof getLearningMaterialsForPortal>>;
+
+export async function getLiveSessionsAction(studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        const data = await getLiveSessionsForPortal(studentId);
+        return { success: true, data };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to fetch live sessions." };
+    }
+}
+
+export async function registerForSessionAction(sessionId: string, studentId: string) {
+    try {
+        if (!studentId) return { success: false, error: "Student ID is required." };
+        await registerForLiveSession(sessionId, studentId);
+        return { success: true, message: "Successfully registered for the session!" };
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to register for the session." };
+    }
+}
