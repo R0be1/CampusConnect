@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "npx ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.13.0",
