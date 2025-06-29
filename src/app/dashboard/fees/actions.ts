@@ -120,9 +120,14 @@ export async function deletePenaltyRuleAction(id: string) {
 }
 
 // --- Concession Actions ---
-export async function createConcessionAction(data: any, schoolId: string) {
+export async function createConcessionAction(payload: any) {
   try {
-    const { name, type, value, description, applicableFeeStructureIds } = data;
+    const { name, type, value, description, applicableFeeStructureIds, schoolId } = payload;
+    
+    if (!schoolId) {
+        throw new Error("School ID is missing.");
+    }
+
     await prisma.concession.create({
       data: {
         name,

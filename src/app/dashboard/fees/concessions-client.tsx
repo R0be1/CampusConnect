@@ -72,9 +72,10 @@ export default function ConcessionsClientPage({ initialConcessions, feeStructure
     };
     
     const handleSaveConcession = async (data: ConcessionFormValues) => {
+        const payload = { ...data, schoolId };
         const result = editingConcession
             ? await updateConcessionAction(editingConcession.id, data)
-            : await createConcessionAction(data, schoolId);
+            : await createConcessionAction(payload);
 
         if (result.success) {
             window.location.reload();
