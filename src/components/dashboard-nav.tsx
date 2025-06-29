@@ -79,7 +79,7 @@ export function DashboardNav({ items, isCollapsed }: DashboardNavProps) {
                   <TooltipTrigger asChild>
                     <CollapsibleTrigger asChild>
                       <button
-                        className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", isParentActive && "text-primary", isCollapsed && "justify-center")}
+                        className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground/80 transition-all hover:text-sidebar-primary", isParentActive && "text-sidebar-primary", isCollapsed && "justify-center")}
                       >
                         <Icon className="h-5 w-5" />
                         <span className={cn("truncate", isCollapsed && "sr-only")}>{item.label}</span>
@@ -92,7 +92,7 @@ export function DashboardNav({ items, isCollapsed }: DashboardNavProps) {
                 
                 {!isCollapsed && (
                     <CollapsibleContent>
-                        <div className="my-1 ml-4 flex flex-col gap-1 border-l pl-4">
+                        <div className="my-1 ml-4 flex flex-col gap-1 border-l pl-4 border-sidebar-border">
                             {item.subItems.map(subItem => {
                                 const isSubItemActive = subItem.href ? pathname === subItem.href : false;
                                 return (
@@ -100,8 +100,8 @@ export function DashboardNav({ items, isCollapsed }: DashboardNavProps) {
                                     key={subItem.label}
                                     href={subItem.href!}
                                     className={cn(
-                                    "rounded-md px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                                    isSubItemActive && "bg-muted text-primary font-semibold"
+                                    "rounded-md px-3 py-2 text-sidebar-foreground/80 transition-all hover:text-sidebar-primary",
+                                    isSubItemActive && "bg-sidebar-accent text-sidebar-primary font-semibold"
                                     )}
                                 >
                                     {subItem.label}
@@ -123,7 +123,7 @@ export function DashboardNav({ items, isCollapsed }: DashboardNavProps) {
                 <TooltipTrigger asChild>
                     <Link
                         href={item.href!}
-                        className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", isActive && "bg-muted text-primary", isCollapsed && "h-9 w-9 justify-center p-0")}
+                        className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground/80 transition-all hover:text-sidebar-primary", isActive && "bg-sidebar-accent text-sidebar-primary", isCollapsed && "h-9 w-9 justify-center p-0")}
                     >
                         <Icon className={cn("h-5 w-5")} />
                         <span className={cn(isCollapsed && "sr-only")}>{item.label}</span>

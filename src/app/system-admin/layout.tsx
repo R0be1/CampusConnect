@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ReactNode, useState } from 'react';
@@ -31,16 +32,16 @@ function InnerLayout({ children }: { children: ReactNode }) {
         "grid min-h-screen w-full transition-[grid-template-columns] duration-300 ease-in-out",
         isCollapsed ? "md:grid-cols-[68px_1fr]" : "md:grid-cols-[280px_1fr]"
     )}>
-      <div className="hidden border-r bg-muted/40 md:flex md:flex-col justify-between">
+      <div className="hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:flex-col justify-between">
         <div>
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
             <AdminPanelDisplay isCollapsed={isCollapsed} />
           </div>
           <div className="flex-1 overflow-auto">
             <DashboardNav items={navItems} isCollapsed={isCollapsed} />
           </div>
         </div>
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-4 border-t border-sidebar-border">
           <Button variant="outline" size={isCollapsed ? "icon" : "default"} className="w-full" onClick={() => setIsCollapsed(!isCollapsed)}>
               {isCollapsed ? <PanelRight className="h-5 w-5" /> : <><PanelLeft className="h-5 w-5" /><span>Collapse</span></>}
               <span className="sr-only">Toggle Sidebar</span>
@@ -56,8 +57,8 @@ function InnerLayout({ children }: { children: ReactNode }) {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col p-0">
-              <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <SheetContent side="left" className="flex flex-col p-0 bg-sidebar text-sidebar-foreground">
+              <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
                 <AdminPanelDisplay isCollapsed={false} />
               </div>
               <nav className="flex-1 overflow-auto">
