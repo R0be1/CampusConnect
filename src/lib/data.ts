@@ -113,103 +113,77 @@ export async function getStudentsWithDetails(schoolId: string) {
 export type DetailedStudent = Awaited<ReturnType<typeof getStudentsWithDetails>>[0];
 
 export async function createStudentWithParent(data: StudentRegistrationFormValues, schoolId: string) {
-  const hashedPassword = await bcrypt.hash('password123', 10); // Default password
+    const hashedPassword = await bcrypt.hash('password123', 10);
 
-  return prisma.$transaction(async (tx) => {
-    // 1. Find or Create Parent User and Profile
-    let parentUser = await tx.user.findUnique({
-      where: { phone: data.parentPhone },
-    });
-
-    let parent;
-
-    if (parentUser) {
-      // Parent user exists, find their parent profile
-      parent = await tx.parent.findFirst({
-        where: { userId: parentUser.id },
-      });
-      if (!parent) {
-        // This case is unlikely if data is consistent, but good to handle.
-        parent = await tx.parent.create({
-          data: {
-            userId: parentUser.id,
-            firstName: data.parentFirstName,
-            lastName: data.parentLastName,
-            schoolId: schoolId,
-            relationToStudent: data.parentRelation,
-          },
+    return prisma.$transaction(async (tx) => {
+        // Check if parent already exists by phone number
+        let parent = await tx.parent.findFirst({
+            where: { user: { phone: data.parentPhone } },
+            include: { user: true }
         });
-      }
-    } else {
-      // Parent user does not exist, create new user and profile
-      parentUser = await tx.user.create({
-        data: {
-          phone: data.parentPhone,
-          alternatePhone: data.parentAlternatePhone || null,
-          password: hashedPassword,
-          role: 'PARENT',
-          schoolId: schoolId,
-          firstName: data.parentFirstName,
-          lastName: data.parentLastName,
-          middleName: data.parentMiddleName,
-          addressLine1: data.addressLine1,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
-        },
-      });
 
-      parent = await tx.parent.create({
-        data: {
-          userId: parentUser.id,
-          firstName: data.parentFirstName,
-          lastName: data.parentLastName,
-          schoolId: schoolId,
-          relationToStudent: data.parentRelation,
-        },
-      });
-    }
+        if (!parent) {
+            // Create a new parent if not found
+            const parentUser = await tx.user.create({
+                data: {
+                    phone: data.parentPhone,
+                    password: hashedPassword,
+                    role: 'PARENT',
+                    schoolId,
+                    firstName: data.parentFirstName,
+                    lastName: data.parentLastName,
+                    middleName: data.parentMiddleName,
+                    addressLine1: data.addressLine1,
+                    city: data.city,
+                    state: data.state,
+                    zipCode: data.zipCode,
+                }
+            });
+            parent = await tx.parent.create({
+                data: {
+                    userId: parentUser.id,
+                    firstName: data.parentFirstName,
+                    lastName: data.parentLastName,
+                    schoolId,
+                    relationToStudent: data.parentRelation,
+                },
+                include: { user: true }
+            });
+        }
 
-    if (!parent) {
-      throw new Error('Could not find or create parent profile.');
-    }
+        const studentPhone = `${data.parentPhone}-S${Date.now()}`;
+        const studentUser = await tx.user.create({
+            data: {
+                phone: studentPhone,
+                password: hashedPassword,
+                role: 'STUDENT',
+                schoolId,
+                firstName: data.studentFirstName,
+                lastName: data.studentLastName,
+                middleName: data.studentMiddleName,
+                addressLine1: parent.user.addressLine1,
+                city: parent.user.city,
+                state: parent.user.state,
+                zipCode: parent.user.zipCode,
+            }
+        });
 
-    // 2. Create Student User and Profile
-    const studentPhone = `${data.parentPhone}-S${Date.now()}`;
-    const studentUser = await tx.user.create({
-      data: {
-        phone: studentPhone,
-        password: hashedPassword,
-        role: 'STUDENT',
-        schoolId: schoolId,
-        firstName: data.studentFirstName,
-        lastName: data.studentLastName,
-        middleName: data.studentMiddleName,
-        addressLine1: data.addressLine1,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-      },
+        const student = await tx.student.create({
+            data: {
+                userId: studentUser.id,
+                firstName: data.studentFirstName,
+                lastName: data.studentLastName,
+                schoolId,
+                gradeId: data.grade,
+                sectionId: data.section,
+                dob: data.studentDob,
+                gender: data.studentGender,
+                parents: { connect: { id: parent.id } }
+            }
+        });
+
+        return { student, parent };
     });
-
-    const student = await tx.student.create({
-      data: {
-        userId: studentUser.id,
-        firstName: data.studentFirstName,
-        lastName: data.studentLastName,
-        schoolId: schoolId,
-        gradeId: data.grade,
-        sectionId: data.section,
-        dob: data.studentDob,
-        gender: data.studentGender,
-        parents: {
-          connect: { id: parent.id },
-        },
-      },
-    });
-
-    return { student, parent };
-  });
 }
 
 export async function updateStudentWithParent(studentId: string, data: StudentRegistrationFormValues) {
@@ -223,7 +197,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
   }
 
   return prisma.$transaction(async (tx) => {
-    // 1. Update Student profile
     await tx.student.update({
       where: { id: studentId },
       data: {
@@ -236,7 +209,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
       }
     });
 
-    // 2. Update Student's associated User record
     if (student.user) {
         await tx.user.update({
           where: { id: student.userId },
@@ -252,8 +224,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
         });
     }
 
-
-    // 3. Update Parent's profile and associated User record
     const parent = student.parents[0];
     if (parent && parent.user) {
       await tx.parent.update({
@@ -271,7 +241,7 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
           lastName: data.parentLastName,
           middleName: data.parentMiddleName,
           phone: data.parentPhone,
-          alternatePhone: data.parentAlternatePhone,
+          alternatePhone: data.parentAlternatePhone || null,
           addressLine1: data.addressLine1,
           city: data.city,
           state: data.state,
@@ -280,7 +250,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
       });
     }
     
-    // Return the full updated record for UI update
     return tx.student.findUnique({
       where: { id: studentId },
       include: {
@@ -308,8 +277,6 @@ export async function deleteStudent(studentId: string) {
       throw new Error("Student not found.");
     }
     
-    // First, disconnect parents to avoid violating foreign key constraints
-    // on the join table if parents are not being deleted.
     await tx.student.update({
       where: { id: studentId },
       data: {
@@ -319,12 +286,10 @@ export async function deleteStudent(studentId: string) {
       },
     });
 
-    // Now, delete the student record.
     await tx.student.delete({
       where: { id: studentId },
     });
 
-    // Finally, delete the associated user record for the student.
     await tx.user.delete({
       where: { id: student.userId },
     });
@@ -1108,35 +1073,12 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
-    // In a real app, we'd find students for the logged-in parent.
-    // For this prototype, find the first student who has a parent,
-    // and then use that parent to fetch all their associated children.
-    const studentWithParent = await prisma.student.findFirst({
+    // In a real app, this parentId would come from the user's session.
+    // For this prototype, we'll find a parent who is guaranteed to have children from the seed data.
+    const parentWithChildren = await prisma.parent.findFirst({
         where: {
-            parents: {
-                some: {} // Ensure the student has at least one parent
-            }
-        },
-        include: {
-            parents: {
-                include: {
-                    students: {
-                        include: {
-                            user: {
-                                select: {
-                                    firstName: true,
-                                    lastName: true,
-                                    photoUrl: true,
-                                }
-                            }
-                        },
-                        orderBy: {
-                             user: {
-                                firstName: 'asc'
-                            }
-                        }
-                    }
-                }
+            students: {
+                some: {} // Find a parent that has at least one student linked
             }
         },
         orderBy: {
@@ -1146,18 +1088,37 @@ export async function getStudentsForParentPortal() {
         }
     });
 
-    if (!studentWithParent || !studentWithParent.parents.length) {
+    if (!parentWithChildren) {
         return [];
     }
-    
-    // Use the first parent of that student to get all their children
-    const parentWithAllStudents = studentWithParent.parents[0];
 
-    return parentWithAllStudents.students.map(s => ({
-        id: s.id,
-        name: `${s.user.firstName} ${s.user.lastName}`,
-        avatar: s.user.photoUrl
-    }));
+    // Now fetch all students for that specific parent
+    const students = await prisma.student.findMany({
+        where: {
+            parents: {
+                some: {
+                    id: parentWithChildren.id
+                }
+            }
+        },
+        select: {
+            id: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                photoUrl: true,
+              }
+            }
+        },
+        orderBy: {
+            user: {
+                createdAt: 'asc'
+            }
+        }
+    });
+
+    return students.map(s => ({ id: s.id, name: `${s.user.firstName} ${s.user.lastName}`, avatar: s.user.photoUrl }));
 }
 
 export async function getPortalDashboardData(studentId: string, academicYearId: string) {
