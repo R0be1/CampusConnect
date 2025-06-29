@@ -41,7 +41,7 @@ export default async function SchoolProfilePage() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center gap-4 p-4 border rounded-lg">
-                    <Image src={schoolData.logoUrl || 'https://placehold.co/64x64.png'} alt={schoolData.name} width={64} height={64} className="rounded-md" data-ai-hint="logo" />
+                    <Image src={schoolData.logoUrl || 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png'} alt={schoolData.name} width={64} height={64} className="rounded-md" data-ai-hint="logo" />
                     <div>
                         <h2 className="text-2xl font-bold font-headline">{schoolData.name}</h2>
                         <p className="text-muted-foreground">{schoolData.branch}</p>

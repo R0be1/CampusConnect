@@ -55,7 +55,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
                   children: p.children.map(s => ({
                       id: s.id,
                       name: `${s.firstName} ${s.lastName}`,
-                      avatar: s.user.photoUrl || `https://placehold.co/40x40.png`
+                      avatar: s.user.photoUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
                   }))
               }));
               setAvailableParents(formattedParents);
@@ -82,7 +82,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
                const formattedStudents: Student[] = students.map(s => ({
                    id: s.id,
                    name: `${s.firstName} ${s.lastName}`,
-                   avatar: s.user.photoUrl || `https://placehold.co/40x40.png`
+                   avatar: s.user.photoUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
                }));
                setAvailableStudents(formattedStudents);
                if (formattedStudents.length > 0) {

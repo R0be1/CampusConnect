@@ -64,7 +64,7 @@ async function main() {
       contactPerson: 'Mr. John Appleseed',
       phone: '555-0101',
       address: '123 Education Lane, Knowledge City, 12345',
-      logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png',
+      logoUrl: 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png',
     },
   });
   console.log(`Created school: ${school1.name}`);
@@ -110,30 +110,31 @@ async function main() {
 
   // Hash a common password
   const hashedPassword = await bcrypt.hash('password123', 10);
+  const userPhotoUrl = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
   // --- Users & Profiles ---
   console.log('Creating users and profiles...');
 
   // Teachers
-  const teacherUser1 = await prisma.user.create({ data: { phone: '1000000001', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'James', lastName: 'Smith' } });
+  const teacherUser1 = await prisma.user.create({ data: { phone: '1000000001', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'James', lastName: 'Smith', photoUrl: userPhotoUrl } });
   const teacher1 = await prisma.staff.create({ data: { userId: teacherUser1.id, firstName: 'James', lastName: 'Smith', staffType: 'TEACHER', schoolId: school1.id } });
   
-  const teacherUser2 = await prisma.user.create({ data: { phone: '1000000002', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Maria', lastName: 'Jones' } });
+  const teacherUser2 = await prisma.user.create({ data: { phone: '1000000002', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Maria', lastName: 'Jones', photoUrl: userPhotoUrl } });
   const teacher2 = await prisma.staff.create({ data: { userId: teacherUser2.id, firstName: 'Maria', lastName: 'Jones', staffType: 'TEACHER', schoolId: school1.id } });
   
-  const teacherUser3 = await prisma.user.create({ data: { phone: '1000000003', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Robert', lastName: 'Brown' } });
+  const teacherUser3 = await prisma.user.create({ data: { phone: '1000000003', password: hashedPassword, role: 'TEACHER', schoolId: school1.id, firstName: 'Robert', lastName: 'Brown', photoUrl: userPhotoUrl } });
   const teacher3 = await prisma.staff.create({ data: { userId: teacherUser3.id, firstName: 'Robert', lastName: 'Brown', staffType: 'TEACHER', schoolId: school1.id } });
 
   // Parents
-  const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Jane', lastName: 'Doe' } });
+  const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Jane', lastName: 'Doe', photoUrl: userPhotoUrl } });
   const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id, relationToStudent: 'Mother' } });
 
   // Students
-  const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'John', lastName: 'Doe' } });
+  const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'John', lastName: 'Doe', photoUrl: userPhotoUrl } });
   const student1 = await prisma.student.create({ data: { userId: studentUser1.id, firstName: 'John', lastName: 'Doe', dob: new Date('2008-05-12'), gender: 'MALE', schoolId: school1.id, gradeId: grade10.id, sectionId: section10A.id, parents: { connect: { id: parent1.id } } } });
 
   // Make Alice Doe the sister of John Doe, under the same parent
-  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'Alice', lastName: 'Doe' } });
+  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'Alice', lastName: 'Doe', photoUrl: userPhotoUrl } });
   const student2 = await prisma.student.create({ data: { userId: studentUser2.id, firstName: 'Alice', lastName: 'Doe', dob: new Date('2009-02-20'), gender: 'FEMALE', schoolId: school1.id, gradeId: grade9.id, sectionId: section9B.id, parents: { connect: { id: parent1.id } } } });
   
   console.log('Finished creating users and profiles.');

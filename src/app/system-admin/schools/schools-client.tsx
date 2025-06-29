@@ -90,7 +90,7 @@ export default function SchoolsClient({ initialSchools }: { initialSchools: Scho
                             {schools.map(school => (
                                 <TableRow key={school.id}>
                                     <TableCell className="font-medium flex items-center gap-2">
-                                        <Image src={school.logoUrl || 'https://placehold.co/24x24.png'} alt={school.name} width={24} height={24} className="rounded-sm" data-ai-hint="logo" />
+                                        <Image src={school.logoUrl || 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png'} alt={school.name} width={24} height={24} className="rounded-sm" data-ai-hint="logo" />
                                         {school.name}
                                     </TableCell>
                                     <TableCell className="font-mono text-xs">{school.accountName}</TableCell>
@@ -159,7 +159,7 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
         if (!phone.trim()) { toast({ title: "Validation Error", description: "Phone Number is required.", variant: "destructive" }); return; }
         
         setIsSaving(true);
-        const data = { name, accountName, branch, contactPerson, phone, address, logoUrl: logoUrl || 'https://placehold.co/40x40.png' };
+        const data = { name, accountName, branch, contactPerson, phone, address, logoUrl: logoUrl || 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png' };
         await onSave(data);
         setIsSaving(false);
     };
@@ -180,7 +180,7 @@ function SchoolForm({ school, onSave, onClose }: SchoolFormProps) {
                 <div className="space-y-2">
                     <Label htmlFor="logoUrl">School Logo URL</Label>
                      <div className="flex items-center gap-6">
-                        <Image src={logoUrl || 'https://placehold.co/64x64.png'} alt="Logo Preview" width={64} height={64} className="rounded-md border bg-muted" data-ai-hint="logo" />
+                        <Image src={logoUrl || 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png'} alt="Logo Preview" width={64} height={64} className="rounded-md border bg-muted" data-ai-hint="logo" />
                         <Input 
                             id="logoUrl"
                             value={logoUrl}

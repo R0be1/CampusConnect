@@ -129,6 +129,7 @@ export type DetailedStudent = Awaited<ReturnType<typeof getStudentsWithDetails>>
 
 export async function createStudentWithParent(data: StudentRegistrationFormValues, schoolId: string) {
     const hashedPassword = await bcrypt.hash('password123', 10);
+    const userPhotoUrl = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
     return prisma.$transaction(async (tx) => {
         // Check if parent already exists by phone number
@@ -152,6 +153,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
                     city: data.city,
                     state: data.state,
                     zipCode: data.zipCode,
+                    photoUrl: userPhotoUrl,
                 }
             });
             parent = await tx.parent.create({
@@ -180,6 +182,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
                 city: parent.user.city,
                 state: parent.user.state,
                 zipCode: parent.user.zipCode,
+                photoUrl: userPhotoUrl,
             }
         });
 
@@ -1186,7 +1189,7 @@ export async function getPortalDashboardData(studentId: string, academicYearId: 
             name: `${student.firstName} ${student.lastName}`,
             grade: student.grade.name,
             section: student.section.name,
-            avatar: student.user.photoUrl || `https://placehold.co/80x80.png`,
+            avatar: student.user.photoUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
             parentName: `${parent.firstName} ${parent.lastName}`,
         },
         attendanceSummary,
@@ -1343,6 +1346,7 @@ export async function getCommunicationsForParentPortal(studentId: string) {
                 select: {
                     firstName: true,
                     lastName: true,
+                    photoUrl: true,
                 }
             }
         },
@@ -1810,7 +1814,7 @@ export async function getStudentDashboardData(studentId: string, academicYearId:
             name: `${student.firstName} ${student.lastName}`,
             grade: student.grade.name,
             section: student.section.name,
-            avatar: student.user.photoUrl,
+            avatar: student.user.photoUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
         },
         upcomingTests,
         recentGrades: recentGrades.map(g => ({

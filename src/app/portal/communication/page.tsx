@@ -97,7 +97,7 @@ export default function CommunicationPortalPage() {
                     <AccordionTrigger className="px-6 py-4 hover:no-underline">
                         <div className="flex items-center gap-4 text-left w-full">
                             <Avatar>
-                                <AvatarImage src={msg.sender.photoUrl || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                                <AvatarImage src={msg.sender.photoUrl || `https://cdn-icons-png.flaticon.com/512/149/149071.png`} data-ai-hint="person portrait" />
                                 <AvatarFallback>{`${msg.sender.firstName?.[0] || ''}${msg.sender.lastName?.[0] || ''}`}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">

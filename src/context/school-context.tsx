@@ -10,7 +10,7 @@ const schoolData = {
   name: 'Greenwood High',
   accountName: 'greenwood-high',
   branch: 'Main Campus', 
-  logoUrl: 'https://placehold.co/40x40/6366f1/ffffff.png' 
+  logoUrl: 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png' 
 };
 
 type School = {

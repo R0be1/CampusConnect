@@ -55,7 +55,7 @@ export default function SchoolProfileForm({ school }: { school: School }) {
                         <div className="space-y-2">
                             <Label htmlFor="logoUrl">School Logo URL</Label>
                              <div className="flex items-center gap-6">
-                                <Image src={school.logoUrl || 'https://placehold.co/64x64.png'} alt="Logo Preview" width={64} height={64} className="rounded-md border bg-muted" data-ai-hint="logo" />
+                                <Image src={school.logoUrl || 'https://static.vecteezy.com/system/resources/previews/022/530/575/non_2x/school-building-exterior-vector-illustration-png.png'} alt="Logo Preview" width={64} height={64} className="rounded-md border bg-muted" data-ai-hint="logo" />
                                 <Input 
                                     id="logoUrl"
                                     name="logoUrl"

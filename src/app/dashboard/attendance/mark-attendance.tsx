@@ -173,7 +173,7 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
                       {students.map(student => (
                         <div key={student.id} className="p-4 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-4">
                             <Avatar>
-                                <AvatarImage src={`https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
+                                <AvatarImage src={'https://cdn-icons-png.flaticon.com/512/149/149071.png'} data-ai-hint="person portrait" />
                                 <AvatarFallback>{student.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                             </Avatar>
                             <div className="flex-grow">
