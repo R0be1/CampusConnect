@@ -685,6 +685,25 @@ export async function getPaymentHistory(studentId: string) {
     });
 }
 
+export async function createFeePayment(data: {
+    invoiceId: string;
+    amount: number;
+    method: string;
+    reference: string;
+    schoolId: string;
+}) {
+    return prisma.feePayment.create({
+        data: {
+            invoiceId: data.invoiceId,
+            amount: data.amount,
+            method: data.method,
+            reference: data.reference,
+            schoolId: data.schoolId,
+            status: 'PENDING_VERIFICATION' // Default status
+        }
+    })
+}
+
 // --- Results Data ---
 export async function getExamsForYear(schoolId: string, academicYearId: string) {
     return prisma.exam.findMany({
@@ -1090,6 +1109,19 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 
 
 // --- Parent Portal Data ---
+export async function getFeesDataForPortal(studentId: string) {
+    if (!studentId) {
+        return null;
+    }
+    const invoices = await getInvoicesForStudent(studentId);
+    const paymentHistory = await getPaymentHistory(studentId);
+    return {
+        invoices,
+        paymentHistory
+    };
+}
+export type PortalFeesData = Awaited<ReturnType<typeof getFeesDataForPortal>>;
+
 
 export async function getParentsWithChildrenForPortal() {
     const school = await getFirstSchool();
