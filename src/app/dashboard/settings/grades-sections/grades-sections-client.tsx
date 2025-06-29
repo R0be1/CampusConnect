@@ -34,7 +34,7 @@ type ManageGradesSectionsClientPageProps = {
 }
 
 const sortGrades = (grades: GradeWithSections[]) => {
-    return [...grades].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    return [...grades].sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
 }
 
 export default function ManageGradesSectionsClientPage({ initialGradesWithSections }: ManageGradesSectionsClientPageProps) {

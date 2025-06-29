@@ -73,15 +73,16 @@ export async function getFirstSchool() {
 }
 
 export async function getGrades(schoolId: string) {
-    return prisma.grade.findMany({
+    const grades = await prisma.grade.findMany({
         where: { schoolId },
-        orderBy: { name: 'asc' }
     });
+    // Sort descending numerically (e.g., Grade 10, Grade 9, Grade 1)
+    return grades.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
 }
 
 export async function getGradesWithSections(schoolId: string) {
     if (!schoolId) return [];
-    return prisma.grade.findMany({
+    const grades = await prisma.grade.findMany({
         where: { schoolId },
         include: {
             sections: {
@@ -90,10 +91,9 @@ export async function getGradesWithSections(schoolId: string) {
                 }
             }
         },
-        orderBy: {
-            name: 'asc'
-        }
     });
+    // Sort descending numerically (e.g., Grade 10, Grade 9, Grade 1)
+    return grades.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
 }
 
 export async function getSections(schoolId: string) {
@@ -1091,7 +1091,7 @@ export async function getParentsWithChildrenForPortal() {
     const school = await getFirstSchool();
     if (!school) return [];
 
-    return prisma.parent.findMany({
+    const parents = await prisma.parent.findMany({
         where: {
             schoolId: school.id,
             children: {
@@ -1112,15 +1112,13 @@ export async function getParentsWithChildrenForPortal() {
                         }
                     },
                 },
-                 orderBy: {
+                orderBy: {
                     firstName: 'asc'
                 }
             }
-        },
-        orderBy: {
-            firstName: 'asc'
         }
     });
+    return parents.sort((a,b) => a.firstName.localeCompare(b.firstName));
 }
 export type ParentsWithChildren = Awaited<ReturnType<typeof getParentsWithChildrenForPortal>>;
 
