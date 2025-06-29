@@ -51,10 +51,10 @@ export function StudentProvider({ children }: { children: ReactNode }) {
           if (result.success && result.parents) {
               const formattedParents: Parent[] = result.parents.map(p => ({
                   id: p.id,
-                  name: `${p.user.firstName} ${p.user.lastName}`,
+                  name: `${p.firstName} ${p.lastName}`,
                   children: p.students.map(s => ({
                       id: s.id,
-                      name: `${s.user.firstName} ${s.user.lastName}`,
+                      name: `${s.firstName} ${s.lastName}`,
                       avatar: s.user.photoUrl || `https://placehold.co/40x40.png`
                   }))
               }));

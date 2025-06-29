@@ -1102,16 +1102,13 @@ export async function getParentsWithChildrenForPortal() {
         include: {
             user: {
                 select: {
-                    firstName: true,
-                    lastName: true
+                    photoUrl: true
                 }
             },
             students: {
                 include: {
                     user: {
                         select: {
-                            firstName: true,
-                            lastName: true,
                             photoUrl: true
                         }
                     },
