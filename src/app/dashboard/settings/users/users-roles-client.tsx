@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -15,9 +16,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Loader2, Users, CheckCircle, Shield, PlusCircle } from "lucide-react";
-import { createUserAction, updateUserRoleAction, deleteUserAction } from "./actions";
+import { createUserAction, updateUserRoleAction, deleteUserAction, updateRolePermissionsAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Types
 type UserData = {
@@ -28,9 +30,14 @@ type UserData = {
     role: string;
 };
 
+type Permission = 'create' | 'read' | 'update' | 'delete';
+type RolePermissions = Record<string, string[]>;
+type AllPermissions = Record<string, RolePermissions>;
+
 type UsersRolesClientProps = {
     initialUsers: UserData[];
     staffRoles: string[];
+    initialPermissions: AllPermissions;
 };
 
 const userSchema = z.object({
@@ -43,7 +50,7 @@ const userSchema = z.object({
 type UserFormValues = z.infer<typeof userSchema>;
 
 
-function ManageUsersTab({ initialUsers, staffRoles }: UsersRolesClientProps) {
+function ManageUsersTab({ initialUsers, staffRoles }: { initialUsers: UserData[], staffRoles: string[] }) {
     const { toast } = useToast();
     const [users, setUsers] = useState(initialUsers);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -228,51 +235,40 @@ const modules = [
     { id: 'academics', name: 'Academics' },
     { id: 'attendance', name: 'Attendance' },
     { id: 'communication', name: 'Communication' },
-    { id: 'fees', name: 'Fees &amp; Invoices' },
+    { id: 'fees', name: 'Fees & Invoices' },
     { id: 'results', name: 'Results & Exams' },
     { id: 'tests', name: 'Tests & Quizzes' },
     { id: 'elearning', name: 'E-Learning' },
     { id: 'livesessions', name: 'Live Sessions' },
     { id: 'settings', name: 'Settings' },
 ];
-type Permission = 'create' | 'read' | 'update' | 'delete';
 
-function RoleForm({ roleName: initialRoleName, onClose }: { roleName?: string, onClose: () => void }) {
-    const { toast } = useToast();
-    const [roleName, setRoleName] = useState(initialRoleName || "");
-    
-    // In a real implementation, this would come from the database for the given role
-    const [permissions, setPermissions] = useState<Record<string, Record<Permission, boolean>>>(() => {
-        const initial: Record<string, Record<Permission, boolean>> = {};
-        modules.forEach(m => {
-            initial[m.id] = { create: false, read: false, update: false, delete: false };
-        });
-        return initial;
-    });
+function RoleForm({ roleName, initialPermissions, onClose, onSave }: { roleName: string, initialPermissions: RolePermissions, onClose: () => void, onSave: (roleName: string, permissions: RolePermissions) => void }) {
+    const [permissions, setPermissions] = useState<RolePermissions>(initialPermissions);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handlePermissionChange = (moduleId: string, permission: Permission, value: boolean) => {
-        setPermissions(prev => ({
-            ...prev,
-            [moduleId]: { ...prev[moduleId], [permission]: value }
-        }));
+        setPermissions(prev => {
+            const modulePerms = new Set(prev[moduleId] || []);
+            if (value) {
+                modulePerms.add(permission);
+            } else {
+                modulePerms.delete(permission);
+            }
+            const sortedPerms = Array.from(modulePerms).sort();
+            return { ...prev, [moduleId]: sortedPerms };
+        });
     };
 
-    const handleSave = () => {
-        // In a real app, this would be a server action to save the role and permissions.
-        toast({
-            title: "Prototype Feature",
-            description: "Role management is a prototype. Your changes have not been saved.",
-        });
-        onClose();
+    const handleSave = async () => {
+        setIsSaving(true);
+        await onSave(roleName, permissions);
+        setIsSaving(false);
     };
 
     return (
         <>
             <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-2">
-                <div className="space-y-2">
-                    <Label htmlFor="role-name">Role Name</Label>
-                    <Input id="role-name" value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g., Librarian" />
-                </div>
                 <div className="border rounded-lg">
                     <Table>
                         <TableHeader>
@@ -291,7 +287,7 @@ function RoleForm({ roleName: initialRoleName, onClose }: { roleName?: string, o
                                     {(['create', 'read', 'update', 'delete'] as Permission[]).map(p => (
                                         <TableCell key={p} className="text-center">
                                             <Checkbox
-                                                checked={permissions[module.id]?.[p]}
+                                                checked={permissions[module.id]?.includes(p)}
                                                 onCheckedChange={(checked) => handlePermissionChange(module.id, p, !!checked)}
                                             />
                                         </TableCell>
@@ -304,19 +300,35 @@ function RoleForm({ roleName: initialRoleName, onClose }: { roleName?: string, o
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave}>Save Role</Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    Save Permissions
+                </Button>
             </DialogFooter>
         </>
     );
 }
 
-function ManageRolesTab() {
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string[], initialPermissions: AllPermissions }) {
+    const { toast } = useToast();
+    const [permissions, setPermissions] = useState(initialPermissions);
+    const [editingRole, setEditingRole] = useState<string | null>(null);
+
+    const handleSavePermissions = async (roleName: string, updatedPermissions: RolePermissions) => {
+        const result = await updateRolePermissionsAction(roleName, updatedPermissions);
+        if (result.success) {
+            setPermissions(prev => ({...prev, [roleName]: updatedPermissions}));
+            setEditingRole(null);
+            toast({ title: "Success", description: result.message });
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+    };
     
-    const rolePermissions: Record<string, string[]> = {
-        ADMIN: ["Full access to all modules and settings"],
-        TEACHER: ["Manage assigned courses, mark attendance, create tests, enter results"],
-        ACCOUNTANT: ["Manage fee structures, invoices, and payments"],
+    const descriptions: Record<string, string> = {
+        ADMIN: "Full access to all modules and settings.",
+        TEACHER: "Manage assigned courses, mark attendance, create tests, enter results.",
+        ACCOUNTANT: "Manage fee structures, invoices, and payments.",
     };
 
     return (
@@ -325,46 +337,62 @@ function ManageRolesTab() {
                  <div>
                     <CardTitle>Role Management</CardTitle>
                     <CardDescription>
-                        Define custom roles and their specific permissions within the application.
+                        Define permissions for each role within the application.
                     </CardDescription>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                         <Button><PlusCircle className="mr-2" />Create New Role</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-3xl">
-                        <DialogHeader>
-                            <DialogTitle>Create New Role</DialogTitle>
-                            <DialogDescription>Define a name and set permissions for this new role.</DialogDescription>
-                        </DialogHeader>
-                        <RoleForm onClose={() => setIsDialogOpen(false)} />
-                    </DialogContent>
-                </Dialog>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span tabIndex={0}>
+                                <Button disabled><PlusCircle className="mr-2" />Create New Role</Button>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Creating new roles requires database changes which are not supported.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </CardHeader>
             <CardContent className="space-y-4">
-                {Object.entries(rolePermissions).map(([role, permissions]) => (
+                {staffRoles.map(role => (
                     <Card key={role}>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Shield className="h-6 w-6 text-primary" />
                                 <div>
                                     <CardTitle className="text-lg capitalize">{role.toLowerCase()}</CardTitle>
-                                    <CardDescription className="text-xs">{permissions[0]}</CardDescription>
+                                    <CardDescription className="text-xs">{descriptions[role]}</CardDescription>
                                 </div>
                             </div>
-                            <Button variant="outline" size="sm" disabled>
+                            <Button variant="outline" size="sm" onClick={() => setEditingRole(role)}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Edit (Default Role)
+                                Edit Permissions
                             </Button>
                         </CardHeader>
                     </Card>
                 ))}
+                 <Dialog open={!!editingRole} onOpenChange={(isOpen) => !isOpen && setEditingRole(null)}>
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Edit Permissions for <span className="capitalize">{editingRole?.toLowerCase()}</span></DialogTitle>
+                            <DialogDescription>Select the permissions for this role.</DialogDescription>
+                        </DialogHeader>
+                        {editingRole && (
+                            <RoleForm
+                                roleName={editingRole}
+                                initialPermissions={permissions[editingRole]}
+                                onClose={() => setEditingRole(null)}
+                                onSave={handleSavePermissions}
+                            />
+                        )}
+                    </DialogContent>
+                </Dialog>
             </CardContent>
         </Card>
     )
 }
 
-export function UsersRolesClient({ initialUsers, staffRoles }: UsersRolesClientProps) {
+export function UsersRolesClient({ initialUsers, staffRoles, initialPermissions }: UsersRolesClientProps) {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
@@ -384,7 +412,7 @@ export function UsersRolesClient({ initialUsers, staffRoles }: UsersRolesClientP
                     <RegisterUserTab staffRoles={staffRoles} />
                 </TabsContent>
                 <TabsContent value="permissions" className="mt-6">
-                    <ManageRolesTab />
+                    <ManageRolesTab staffRoles={staffRoles} initialPermissions={initialPermissions} />
                 </TabsContent>
             </Tabs>
         </div>

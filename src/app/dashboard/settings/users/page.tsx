@@ -1,8 +1,10 @@
+
 import { getFirstSchool, getUsersWithStaffProfile } from "@/lib/data";
 import { redirect } from "next/navigation";
 import { UsersRolesClient } from "./users-roles-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { getRolePermissionsAction } from "./actions";
 
 export default async function UsersAndRolesPage() {
     const school = await getFirstSchool();
@@ -16,7 +18,10 @@ export default async function UsersAndRolesPage() {
         );
     }
 
-    const users = await getUsersWithStaffProfile(school.id);
+    const [users, permissions] = await Promise.all([
+        getUsersWithStaffProfile(school.id),
+        getRolePermissionsAction()
+    ]);
     
     // In a real app with a proper RBAC system, roles would be dynamic.
     // For this prototype, we'll use a static list based on the schema's StaffType enum.
@@ -36,6 +41,7 @@ export default async function UsersAndRolesPage() {
         <UsersRolesClient
             initialUsers={formattedUsers}
             staffRoles={staffRoles}
+            initialPermissions={permissions || {}}
         />
     );
 }

@@ -1,0 +1,118 @@
+
+{
+  "ADMIN": {
+    "students": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "academics": [
+      "read"
+    ],
+    "attendance": [
+      "create",
+      "read",
+      "update"
+    ],
+    "communication": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "fees": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "results": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "tests": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "elearning": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "livesessions": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "settings": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ]
+  },
+  "TEACHER": {
+    "students": [
+      "read"
+    ],
+    "academics": [
+      "read"
+    ],
+    "attendance": [
+      "create",
+      "read"
+    ],
+    "communication": [
+      "create",
+      "read"
+    ],
+    "fees": [],
+    "results": [
+      "create",
+      "read"
+    ],
+    "tests": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "elearning": [
+      "create",
+      "delete",
+      "read",
+      "update"
+    ],
+    "livesessions": [
+      "create",
+      "delete",
+      "read"
+    ],
+    "settings": []
+  },
+  "ACCOUNTANT": {
+    "students": [
+      "read"
+    ],
+    "academics": [],
+    "attendance": [],
+    "communication": [],
+    "fees": [
+      "create",
+      "read",
+      "update"
+    ],
+    "results": [],
+    "tests": [],
+    "elearning": [],
+    "livesessions": [],
+    "settings": []
+  }
+}
