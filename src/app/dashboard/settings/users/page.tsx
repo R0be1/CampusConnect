@@ -23,9 +23,9 @@ export default async function UsersAndRolesPage() {
         getRolePermissionsAction()
     ]);
     
-    // In a real app with a proper RBAC system, roles would be dynamic.
-    // For this prototype, we'll use a static list based on the schema's StaffType enum.
-    const staffRoles = ["ADMIN", "TEACHER", "ACCOUNTANT"];
+    // Roles are now dynamically read from the permissions file.
+    const staffRoles = Object.keys(permissions || {});
+    const assignableRoles = ["ADMIN", "TEACHER", "ACCOUNTANT"];
     
     const formattedUsers = users
         .filter(u => u.staffProfile) // Ensure staff profile exists
@@ -41,6 +41,7 @@ export default async function UsersAndRolesPage() {
         <UsersRolesClient
             initialUsers={formattedUsers}
             staffRoles={staffRoles}
+            assignableRoles={assignableRoles}
             initialPermissions={permissions || {}}
         />
     );

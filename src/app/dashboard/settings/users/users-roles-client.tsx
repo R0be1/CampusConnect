@@ -16,10 +16,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Loader2, Users, CheckCircle, Shield, PlusCircle } from "lucide-react";
-import { createUserAction, updateUserRoleAction, deleteUserAction, updateRolePermissionsAction } from "./actions";
+import { createRoleAction, createUserAction, updateUserRoleAction, deleteUserAction, updateRolePermissionsAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Types
 type UserData = {
@@ -37,6 +36,7 @@ type AllPermissions = Record<string, RolePermissions>;
 type UsersRolesClientProps = {
     initialUsers: UserData[];
     staffRoles: string[];
+    assignableRoles: string[];
     initialPermissions: AllPermissions;
 };
 
@@ -48,6 +48,11 @@ const userSchema = z.object({
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
+
+const newRoleSchema = z.object({
+    name: z.string().min(2, "Role name must be at least 2 characters.").max(20, "Role name is too long."),
+})
+type NewRoleFormValues = z.infer<typeof newRoleSchema>;
 
 
 function ManageUsersTab({ initialUsers, staffRoles }: { initialUsers: UserData[], staffRoles: string[] }) {
@@ -150,6 +155,7 @@ function ManageUsersTab({ initialUsers, staffRoles }: { initialUsers: UserData[]
                                 {staffRoles.map(role => <SelectItem key={role} value={role} className="capitalize">{role.toLowerCase()}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                         <p className="text-xs text-muted-foreground mt-2">Note: Only roles defined in the database schema (Admin, Teacher, Accountant) can be assigned to users.</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditRoleOpen(false)}>Cancel</Button>
@@ -309,10 +315,14 @@ function RoleForm({ roleName, initialPermissions, onClose, onSave }: { roleName:
     );
 }
 
-function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string[], initialPermissions: AllPermissions }) {
+function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: { staffRoles: string[], initialPermissions: AllPermissions }) {
     const { toast } = useToast();
     const [permissions, setPermissions] = useState(initialPermissions);
+    const [staffRoles, setStaffRoles] = useState(initialStaffRoles);
     const [editingRole, setEditingRole] = useState<string | null>(null);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+    const newRoleForm = useForm<NewRoleFormValues>({ resolver: zodResolver(newRoleSchema) });
 
     const handleSavePermissions = async (roleName: string, updatedPermissions: RolePermissions) => {
         const result = await updateRolePermissionsAction(roleName, updatedPermissions);
@@ -324,6 +334,19 @@ function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
     };
+
+    const handleCreateRole = async (data: NewRoleFormValues) => {
+        const result = await createRoleAction(data.name);
+        if (result.success) {
+            setStaffRoles(prev => [...prev, data.name.toUpperCase()]);
+            setPermissions(prev => ({...prev, [data.name.toUpperCase()]: {}}));
+            toast({ title: "Success", description: result.message });
+            setIsCreateDialogOpen(false);
+            newRoleForm.reset();
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+    }
     
     const descriptions: Record<string, string> = {
         ADMIN: "Full access to all modules and settings.",
@@ -340,18 +363,32 @@ function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string
                         Define permissions for each role within the application.
                     </CardDescription>
                 </div>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span tabIndex={0}>
-                                <Button disabled><PlusCircle className="mr-2" />Create New Role</Button>
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Creating new roles requires database changes which are not supported.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild><Button><PlusCircle className="mr-2" />Create New Role</Button></DialogTrigger>
+                    <DialogContent>
+                        <Form {...newRoleForm}>
+                            <form onSubmit={newRoleForm.handleSubmit(handleCreateRole)}>
+                                <DialogHeader>
+                                    <DialogTitle>Create New Role</DialogTitle>
+                                    <DialogDescription>Define a new role. You can set its permissions after creating it.</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <FormField control={newRoleForm.control} name="name" render={({ field }) => (
+                                        <FormItem><FormLabel>Role Name</FormLabel><FormControl><Input placeholder="e.g., Librarian" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                     <p className="text-xs text-muted-foreground mt-2">Note: This only defines the role. To assign it, database changes are required.</p>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                                    <Button type="submit" disabled={newRoleForm.formState.isSubmitting}>
+                                        {newRoleForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                        Create Role
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent className="space-y-4">
                 {staffRoles.map(role => (
@@ -361,7 +398,7 @@ function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string
                                 <Shield className="h-6 w-6 text-primary" />
                                 <div>
                                     <CardTitle className="text-lg capitalize">{role.toLowerCase()}</CardTitle>
-                                    <CardDescription className="text-xs">{descriptions[role]}</CardDescription>
+                                    <CardDescription className="text-xs">{descriptions[role] || "Custom defined role."}</CardDescription>
                                 </div>
                             </div>
                             <Button variant="outline" size="sm" onClick={() => setEditingRole(role)}>
@@ -392,7 +429,7 @@ function ManageRolesTab({ staffRoles, initialPermissions }: { staffRoles: string
     )
 }
 
-export function UsersRolesClient({ initialUsers, staffRoles, initialPermissions }: UsersRolesClientProps) {
+export function UsersRolesClient({ initialUsers, staffRoles, assignableRoles, initialPermissions }: UsersRolesClientProps) {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
@@ -406,10 +443,10 @@ export function UsersRolesClient({ initialUsers, staffRoles, initialPermissions 
                     <TabsTrigger value="permissions">Manage Roles</TabsTrigger>
                 </TabsList>
                 <TabsContent value="manage" className="mt-6">
-                    <ManageUsersTab initialUsers={initialUsers} staffRoles={staffRoles}/>
+                    <ManageUsersTab initialUsers={initialUsers} staffRoles={assignableRoles}/>
                 </TabsContent>
                 <TabsContent value="register" className="mt-6">
-                    <RegisterUserTab staffRoles={staffRoles} />
+                    <RegisterUserTab staffRoles={assignableRoles} />
                 </TabsContent>
                 <TabsContent value="permissions" className="mt-6">
                     <ManageRolesTab staffRoles={staffRoles} initialPermissions={initialPermissions} />

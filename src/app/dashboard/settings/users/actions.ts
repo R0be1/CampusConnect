@@ -82,3 +82,26 @@ export async function updateRolePermissionsAction(roleName: string, permissions:
         return { success: false, error: "Failed to update permissions." };
     }
 }
+
+export async function createRoleAction(roleName: string) {
+    try {
+        const allPermissions = await getRolePermissionsAction();
+        if (!allPermissions) {
+            throw new Error("Could not load permissions file.");
+        }
+        if (allPermissions[roleName.toUpperCase()]) {
+            return { success: false, error: "This role already exists." };
+        }
+
+        // Create with empty permissions
+        allPermissions[roleName.toUpperCase()] = {};
+
+        await fs.writeFile(permissionsFilePath, JSON.stringify(allPermissions, null, 2));
+        revalidatePath('/dashboard/settings/users');
+        return { success: true, message: `Role "${roleName}" created.` };
+
+    } catch(error: any) {
+        console.error("Failed to create role:", error);
+        return { success: false, error: "Failed to create new role." };
+    }
+}
