@@ -29,9 +29,16 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     const fetchStudents = async () => {
       setIsLoading(true);
       const response = await getStudentsForParentPortal();
-      setAvailableStudents(response);
-      if (response.length > 0) {
-        setSelectedStudent(response[0]);
+      
+      const formattedStudents = response.map(s => ({
+        id: s.id,
+        name: `${s.user.firstName} ${s.user.lastName}`,
+        avatar: s.user.photoUrl
+      }));
+
+      setAvailableStudents(formattedStudents);
+      if (formattedStudents.length > 0) {
+        setSelectedStudent(formattedStudents[0]);
       }
       setIsLoading(false);
     };
