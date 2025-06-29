@@ -112,10 +112,10 @@ export function UploadMaterialForm({ grades, schoolId, uploaderId }: UploadMater
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField control={form.control} name="title" render={({ field }) => (
-                            <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="e.g., Introduction to Calculus" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="e.g., Introduction to Calculus" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="description" render={({ field }) => (
-                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the material." {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of the material." {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
 
                         <div className="grid md:grid-cols-3 gap-6">

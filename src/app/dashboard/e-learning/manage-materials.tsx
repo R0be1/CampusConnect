@@ -186,7 +186,7 @@ export function ManageMaterials({ initialMaterials, grades }: ManageMaterialsPro
     )
 }
 
-// Reusable form component for editing materials
+// Reusable form component
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(10, "Description must be at least 10 characters."),
@@ -228,10 +228,10 @@ function MaterialEditForm({ material, grades, onSave, onClose }: MaterialFormPro
             <form onSubmit={form.handleSubmit(handleSubmit)}>
                 <div className="grid gap-4 py-4">
                     <FormField control={form.control} name="title" render={({ field }) => (
-                        <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="description" render={({ field }) => (
-                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="gradeId" render={({ field }) => (

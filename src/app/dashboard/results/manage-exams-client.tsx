@@ -257,14 +257,14 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="grid gap-4 py-4">
                  <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Exam Name</FormLabel><FormControl><Input placeholder="e.g., Mid-term Exam" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Exam Name</FormLabel><FormControl><Input placeholder="e.g., Mid-term Exam" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField control={form.control} name="subject" render={({ field }) => (
                     <FormItem><FormLabel>Subject</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Subject" /></SelectTrigger></FormControl><SelectContent>{subjects.map(subject => (<SelectItem key={subject} value={subject}>{subject}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="weightage" render={({ field }) => (
-                        <FormItem><FormLabel>Weightage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 40" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Weightage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 40" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                      <FormField control={form.control} name="gradingType" render={({ field }) => (
                         <FormItem><FormLabel>Grading Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select Grading Type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="DECIMAL">Decimal</SelectItem><SelectItem value="LETTER">Letter Grade</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -272,7 +272,7 @@ function ExamForm({ onSave, initialData, grades, sections }: { onSave: (data: Ex
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="totalMarks" render={({ field }) => (
-                        <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Total Marks</FormLabel><FormControl><Input type="number" placeholder="e.g., 100" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

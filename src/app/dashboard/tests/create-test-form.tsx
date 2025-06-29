@@ -137,10 +137,10 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
             <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Test Name</FormLabel><FormControl><Input placeholder="e.g., Mid-term Exam" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Test Name</FormLabel><FormControl><Input placeholder="e.g., Mid-term Exam" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="duration" render={({ field }) => (
-                        <FormItem><FormLabel>Duration (in minutes)</FormLabel><FormControl><Input type="number" placeholder="e.g., 90" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Duration (in minutes)</FormLabel><FormControl><Input type="number" placeholder="e.g., 90" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -307,7 +307,7 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                            <div className="flex gap-4 items-baseline">
                              <span className="text-lg font-semibold">{index + 1}.</span>
                              <FormField control={form.control} name={`questions.${index}.text`} render={({ field }) => (
-                                <FormItem className="flex-1"><FormLabel>Question Text</FormLabel><FormControl><Textarea placeholder="What is the capital of France?" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem className="flex-1"><FormLabel>Question Text</FormLabel><FormControl><Textarea placeholder="What is the capital of France?" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                              )} />
                            </div>
                            
@@ -319,7 +319,7 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                                         <FormControl><RadioGroup onValueChange={radioField.onChange} defaultValue={radioField.value} className="space-y-2">
                                             {form.getValues(`questions.${index}.options`)?.map((_, optionIndex) => (
                                             <FormField key={`${field.id}-option-${optionIndex}`} control={form.control} name={`questions.${index}.options.${optionIndex}`} render={({ field: optionField }) => (
-                                                <FormItem className="flex items-center gap-2"><FormControl><RadioGroupItem value={String(optionIndex)} /></FormControl><Input placeholder={`Option ${optionIndex + 1}`} {...optionField} /></FormItem>
+                                                <FormItem className="flex items-center gap-2"><FormControl><RadioGroupItem value={String(optionIndex)} /></FormControl><Input placeholder={`Option ${optionIndex + 1}`} {...optionField} value={optionField.value || ''} /></FormItem>
                                             )} />
                                             ))}
                                         </RadioGroup></FormControl><FormMessage /></FormItem>
@@ -339,14 +339,14 @@ export function CreateTestForm({ grades, sections, teachers, schoolId }: CreateT
                                 {watchQuestionType(index) === "FILL_IN_THE_BLANK" && (
                                     <FormField control={form.control} name={`questions.${index}.correctAnswer`} render={({ field }) => (
                                         <FormItem><FormLabel>Correct Answer</FormLabel>
-                                        <FormControl><Input placeholder="Enter the correct answer" {...field} /></FormControl>
+                                        <FormControl><Input placeholder="Enter the correct answer" {...field} value={field.value || ''} /></FormControl>
                                         <p className="text-xs text-muted-foreground flex items-center gap-1"><HelpCircle className="h-3 w-3"/> In the question text, use three underscores (___) to indicate where the blank should appear.</p>
                                         <FormMessage /></FormItem>
                                     )} />
                                 )}
                                 </div>
                                 <FormField control={form.control} name={`questions.${index}.points`} render={({ field }) => (
-                                    <FormItem><FormLabel>Points</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Points</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
                         </div>

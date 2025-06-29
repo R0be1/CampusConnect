@@ -265,8 +265,8 @@ function FeeSchemeForm({ onSave, initialData, penaltyRules, onClose }: { onSave:
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Fee Name</FormLabel><FormControl><Input placeholder="e.g., Term One Payment" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 2500" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Fee Name</FormLabel><FormControl><Input placeholder="e.g., Term One Payment" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 2500" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="dueDate" render={({ field }) => (
                         <FormItem><FormLabel>First Due Date</FormLabel>
@@ -311,8 +311,8 @@ function PenaltyRuleForm({ onSave, initialData, onClose }: { onSave: (data: Pena
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
                  <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Rule Name</FormLabel><FormControl><Input placeholder="e.g., Standard Tuition Late Fee" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="gracePeriod" render={({ field }) => ( <FormItem><FormLabel>Grace Period (days)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Rule Name</FormLabel><FormControl><Input placeholder="e.g., Standard Tuition Late Fee" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="gracePeriod" render={({ field }) => ( <FormItem><FormLabel>Grace Period (days)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
                  </div>
                  <Separator />
                  <div>
@@ -320,10 +320,10 @@ function PenaltyRuleForm({ onSave, initialData, onClose }: { onSave: (data: Pena
                     <div className="space-y-2 mt-2">
                         {fields.map((field, index) => (
                            <div key={field.id} className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
-                                <FormField control={form.control} name={`tiers.${index}.fromDay`} render={({ field }) => (<FormItem><Label className="text-xs">From Day</Label><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name={`tiers.${index}.toDay`} render={({ field }) => (<FormItem><Label className="text-xs">To Day</Label><FormControl><Input type="number" placeholder="Ongoing" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.fromDay`} render={({ field }) => (<FormItem><Label className="text-xs">From Day</Label><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.toDay`} render={({ field }) => (<FormItem><Label className="text-xs">To Day</Label><FormControl><Input type="number" placeholder="Ongoing" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name={`tiers.${index}.type`} render={({ field }) => (<FormItem><Label className="text-xs">Type</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="FIXED">Fixed</SelectItem><SelectItem value="PERCENTAGE">Percent</SelectItem></SelectContent></Select></FormItem>)} />
-                                <FormField control={form.control} name={`tiers.${index}.value`} render={({ field }) => (<FormItem><Label className="text-xs">Value</Label><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.value`} render={({ field }) => (<FormItem><Label className="text-xs">Value</Label><FormControl><Input type="number" placeholder="e.g., 10" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name={`tiers.${index}.frequency`} render={({ field }) => (<FormItem><Label className="text-xs">Frequency</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="ONE_TIME">One-Time</SelectItem><SelectItem value="DAILY">Daily</SelectItem></SelectContent></Select></FormItem>)} />
                                 <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                            </div>

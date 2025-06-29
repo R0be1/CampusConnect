@@ -201,15 +201,15 @@ function RegisterUserTab({ staffRoles }: { staffRoles: string[] }) {
                     <CardContent className="space-y-6">
                          <div className="grid md:grid-cols-2 gap-6">
                             <FormField control={form.control} name="firstName" render={({ field }) => (
-                                <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="lastName" render={({ field }) => (
-                                <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                             )} />
                          </div>
                          <div className="grid md:grid-cols-2 gap-6">
                               <FormField control={form.control} name="phone" render={({ field }) => (
-                                <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                             )} />
                              <FormField control={form.control} name="role" render={({ field }) => (
                                 <FormItem><FormLabel>Role</FormLabel>
@@ -321,7 +321,7 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
     const [editingRole, setEditingRole] = useState<string | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-    const newRoleForm = useForm<NewRoleFormValues>({ resolver: zodResolver(newRoleSchema) });
+    const newRoleForm = useForm<NewRoleFormValues>({ resolver: zodResolver(newRoleSchema), defaultValues: { name: "" }});
 
     const handleSavePermissions = async (roleName: string, updatedPermissions: RolePermissions) => {
         const result = await updateRolePermissionsAction(roleName, updatedPermissions);
@@ -388,7 +388,7 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
                                 </DialogHeader>
                                 <div className="py-4">
                                     <FormField control={newRoleForm.control} name="name" render={({ field }) => (
-                                        <FormItem><FormLabel>Role Name</FormLabel><FormControl><Input placeholder="e.g., Librarian" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel>Role Name</FormLabel><FormControl><Input placeholder="e.g., Librarian" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                                     )} />
                                      <p className="text-xs text-muted-foreground mt-2">Note: This only defines the role. To assign it, database changes are required.</p>
                                 </div>

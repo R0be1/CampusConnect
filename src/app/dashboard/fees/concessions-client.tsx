@@ -198,7 +198,7 @@ function ConcessionForm({ feeStructures, concession, onSave, onClose }: Concessi
             <form onSubmit={form.handleSubmit(onSave)}>
                 <div className="grid gap-4 py-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-3 gap-4">
                         <FormField control={form.control} name="category" render={({ field }) => (
@@ -208,11 +208,11 @@ function ConcessionForm({ feeStructures, concession, onSave, onClose }: Concessi
                             <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Percentage">Percentage</SelectItem><SelectItem value="Fixed">Fixed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="value" render={({ field }) => (
-                            <FormItem><FormLabel>Value {watchType === 'Percentage' ? '(%)' : '($)'}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Value {watchType === 'Percentage' ? '(%)' : '($)'}</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </div>
                     <FormField control={form.control} name="description" render={({ field }) => (
-                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="applicableFeeStructureIds" render={({ field }) => (
                         <FormItem><FormLabel>Applicable Fee Structures</FormLabel><FormControl><MultiSelectFeeStructures feeStructures={feeStructures} selected={field.value} onChange={field.onChange} /></FormControl><FormMessage /></FormItem>

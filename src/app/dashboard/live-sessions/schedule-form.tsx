@@ -93,10 +93,10 @@ export function ScheduleForm({ grades, schoolId, teacherId }: ScheduleFormProps)
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <FormField control={form.control} name="topic" render={({ field }) => (
-                            <FormItem><FormLabel>Session Topic</FormLabel><FormControl><Input placeholder="e.g., Mastering Quadratic Equations" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Session Topic</FormLabel><FormControl><Input placeholder="e.g., Mastering Quadratic Equations" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="description" render={({ field }) => (
-                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of what will be covered in the session." {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="A brief summary of what will be covered in the session." {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <div className="grid md:grid-cols-2 gap-6">
                              <FormField control={form.control} name="subject" render={({ field }) => (
@@ -132,10 +132,10 @@ export function ScheduleForm({ grades, schoolId, teacherId }: ScheduleFormProps)
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="duration" render={({ field }) => (
-                                <FormItem><FormLabel>Duration (minutes)</FormLabel><FormControl><Input type="number" placeholder="e.g., 60" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Duration (minutes)</FormLabel><FormControl><Input type="number" placeholder="e.g., 60" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="fee" render={({ field }) => (
-                                <FormItem><FormLabel>Additional Fee ($)</FormLabel><FormControl><Input type="number" placeholder="e.g., 25 (0 for free)" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Additional Fee ($)</FormLabel><FormControl><Input type="number" placeholder="e.g., 25 (0 for free)" {...field} value={field.value || 0} /></FormControl><FormMessage /></FormItem>
                             )} />
                         </div>
                         <div className="flex justify-end">
