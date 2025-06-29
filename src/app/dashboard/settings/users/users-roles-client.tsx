@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Loader2, Users, CheckCircle, Shield, PlusCircle } from "lucide-react";
-import { createRoleAction, createUserAction, updateUserRoleAction, deleteUserAction, updateRolePermissionsAction } from "./actions";
+import { createRoleAction, createUserAction, updateUserRoleAction, deleteUserAction, updateRolePermissionsAction, deleteRoleAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -346,6 +346,21 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
     }
+
+    const handleDeleteRole = async (roleName: string) => {
+        const result = await deleteRoleAction(roleName);
+        if (result.success) {
+            setStaffRoles(prev => prev.filter(r => r !== roleName));
+            setPermissions(prev => {
+                const newPerms = { ...prev };
+                delete newPerms[roleName];
+                return newPerms;
+            });
+            toast({ title: "Success", description: result.message });
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+    };
     
     const descriptions: Record<string, string> = {
         ADMIN: "Full access to all modules and settings.",
@@ -390,23 +405,47 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
                 </Dialog>
             </CardHeader>
             <CardContent className="space-y-4">
-                {staffRoles.map(role => (
-                    <Card key={role}>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Shield className="h-6 w-6 text-primary" />
-                                <div>
-                                    <CardTitle className="text-lg capitalize">{role.toLowerCase()}</CardTitle>
-                                    <CardDescription className="text-xs">{descriptions[role] || "Custom defined role."}</CardDescription>
+                {staffRoles.map(role => {
+                    const isCoreRole = ['ADMIN', 'TEACHER', 'ACCOUNTANT'].includes(role);
+                    return (
+                        <Card key={role}>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Shield className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <CardTitle className="text-lg capitalize">{role.toLowerCase()}</CardTitle>
+                                        <CardDescription className="text-xs">{descriptions[role] || "Custom defined role."}</CardDescription>
+                                    </div>
                                 </div>
-                            </div>
-                            <Button variant="outline" size="sm" onClick={() => setEditingRole(role)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Permissions
-                            </Button>
-                        </CardHeader>
-                    </Card>
-                ))}
+                                <div className="flex items-center gap-1">
+                                    <Button variant="outline" size="sm" onClick={() => setEditingRole(role)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit Permissions
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" disabled={isCoreRole} title={isCoreRole ? "Core roles cannot be deleted." : "Delete role"}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the "{role}" role. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDeleteRole(role)}>Delete Role</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </CardHeader>
+                        </Card>
+                    )
+                })}
                  <Dialog open={!!editingRole} onOpenChange={(isOpen) => !isOpen && setEditingRole(null)}>
                     <DialogContent className="sm:max-w-3xl">
                         <DialogHeader>
@@ -416,7 +455,7 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
                         {editingRole && (
                             <RoleForm
                                 roleName={editingRole}
-                                initialPermissions={permissions[editingRole]}
+                                initialPermissions={permissions[editingRole] || {}}
                                 onClose={() => setEditingRole(null)}
                                 onSave={handleSavePermissions}
                             />

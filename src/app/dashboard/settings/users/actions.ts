@@ -105,3 +105,30 @@ export async function createRoleAction(roleName: string) {
         return { success: false, error: "Failed to create new role." };
     }
 }
+
+export async function deleteRoleAction(roleName: string) {
+    try {
+        const allPermissions = await getRolePermissionsAction();
+        if (!allPermissions) {
+            throw new Error("Could not load permissions file.");
+        }
+
+        if (['ADMIN', 'TEACHER', 'ACCOUNTANT'].includes(roleName)) {
+            return { success: false, error: "Core roles cannot be deleted." };
+        }
+
+        if (!allPermissions[roleName]) {
+            return { success: false, error: "This role does not exist." };
+        }
+
+        delete allPermissions[roleName];
+
+        await fs.writeFile(permissionsFilePath, JSON.stringify(allPermissions, null, 2));
+        revalidatePath('/dashboard/settings/users');
+        return { success: true, message: `Role "${roleName}" deleted.` };
+
+    } catch(error: any) {
+        console.error("Failed to delete role:", error);
+        return { success: false, error: "Failed to delete the role." };
+    }
+}
