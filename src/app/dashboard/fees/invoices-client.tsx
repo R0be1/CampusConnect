@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +44,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { submitPaymentForVerificationAction } from "../actions";
+import { submitPaymentForVerificationAction } from "./actions";
 
 type Invoice = {
     id: string;
