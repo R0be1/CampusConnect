@@ -8,8 +8,8 @@ import { Check, X, ArrowLeft, Clock, Info, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useStudent } from "@/context/student-context";
 import { getTestResultAction, StudentPortalTestResultData } from "../../../actions";
-import { getFirstStudent } from "@/lib/data";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ResultsLoadingSkeleton() {
@@ -39,31 +39,16 @@ function ResultsLoadingSkeleton() {
 }
 
 export default function TestResultPage({ params }: { params: { testId: string } }) {
-  const [studentId, setStudentId] = useState<string | null>(null);
+  const { selectedStudent } = useStudent();
   const [resultData, setResultData] = useState<StudentPortalTestResultData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStudent = async () => {
-        // This is a placeholder for fetching the correct school ID
-        const schoolId = 'clzcr6n5t0000kjlz0k1l2g98'; 
-        const student = await getFirstStudent(schoolId);
-        if (student) {
-            setStudentId(student.id);
-        } else {
-            setError("Could not identify the current student.");
-            setIsLoading(false);
-        }
-    };
-    fetchStudent();
-  }, [])
   
   useEffect(() => {
-    if (!studentId || !params.testId) return;
+    if (!selectedStudent?.id || !params.testId) return;
 
     setIsLoading(true);
-    getTestResultAction(params.testId, studentId)
+    getTestResultAction(params.testId, selectedStudent.id)
       .then(res => {
         if(res.success) {
           setResultData(res.data);
@@ -74,7 +59,7 @@ export default function TestResultPage({ params }: { params: { testId: string } 
       .catch(() => setError("An unexpected error occurred."))
       .finally(() => setIsLoading(false));
 
-  }, [studentId, params.testId]);
+  }, [selectedStudent, params.testId]);
 
   if (isLoading) {
     return <ResultsLoadingSkeleton />;

@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { BookCopy, Video, FileText, Download, PlayCircle, Search, Info, Loader2 } from "lucide-react";
+import { BookCopy, Video, FileText, Download, PlayCircle, Search, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getFirstSchool, getFirstStudent } from "@/lib/data";
+import { useStudent } from "@/context/student-context";
 import { getELearningMaterialsAction, StudentPortalELearningData } from "../actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -50,7 +50,7 @@ function ELearningLoadingSkeleton() {
 }
 
 export default function ELearningStudentPage() {
-    const [studentId, setStudentId] = useState<string | null>(null);
+    const { selectedStudent, isLoading: isStudentLoading } = useStudent();
     const [materials, setMaterials] = useState<StudentPortalELearningData>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -59,29 +59,10 @@ export default function ELearningStudentPage() {
     const [subjectFilter, setSubjectFilter] = useState("All Subjects");
 
     useEffect(() => {
-        const fetchStudent = async () => {
-            const school = await getFirstSchool();
-            if (!school) {
-                setError("School configuration not found.");
-                setIsLoading(false);
-                return;
-            }
-            const student = await getFirstStudent(school.id);
-            if (student) {
-                setStudentId(student.id);
-            } else {
-                setError("Could not identify the current student.");
-                setIsLoading(false);
-            }
-        };
-        fetchStudent();
-    }, [])
-
-    useEffect(() => {
-        if (studentId) {
+        if (selectedStudent?.id) {
             setIsLoading(true);
             setError(null);
-            getELearningMaterialsAction(studentId)
+            getELearningMaterialsAction(selectedStudent.id)
                 .then(result => {
                     if (result.success && result.data) {
                         setMaterials(result.data);
@@ -93,7 +74,7 @@ export default function ELearningStudentPage() {
                 .catch(() => setError("An unexpected error occurred."))
                 .finally(() => setIsLoading(false));
         }
-    }, [studentId]);
+    }, [selectedStudent]);
 
     const filteredMaterials = materials.filter(m => {
         const titleMatch = m.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -101,8 +82,18 @@ export default function ELearningStudentPage() {
         return titleMatch && subjectMatch;
     });
     
-    if (isLoading) {
+    if (isStudentLoading || isLoading) {
         return <ELearningLoadingSkeleton />;
+    }
+    
+    if (!selectedStudent) {
+         return (
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No Student Selected</AlertTitle>
+                <AlertDescription>Please select a student to view their E-Learning materials.</AlertDescription>
+            </Alert>
+        )
     }
 
     return (

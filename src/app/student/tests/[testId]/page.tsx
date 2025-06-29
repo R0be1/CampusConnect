@@ -15,9 +15,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { getTestDetailsAction, submitTestAction, StudentPortalTestDetailsData } from "../../actions";
-import { getFirstStudent } from "@/lib/data"; // Need this to get the current student ID
+import { useStudent } from "@/context/student-context";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 
 const answerSchema = z.object({
@@ -97,8 +97,8 @@ const WarningOverlay = ({ onResume }: { onResume: () => void }) => {
 export default function ExamPage({ params }: { params: { testId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { selectedStudent } = useStudent();
 
-  const [studentId, setStudentId] = useState<string | null>(null);
   const [testData, setTestData] = useState<StudentPortalTestDetailsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,27 +109,10 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    // This simulates getting the logged-in student's ID.
-    // In a real app, you'd get this from a session context.
-    const fetchStudent = async () => {
-        // This is a placeholder for fetching the correct school ID
-        const schoolId = 'clzcr6n5t0000kjlz0k1l2g98'; 
-        const student = await getFirstStudent(schoolId);
-        if (student) {
-            setStudentId(student.id);
-        } else {
-            setError("Could not identify the current student.");
-            setIsLoading(false);
-        }
-    };
-    fetchStudent();
-  }, [])
-
-  useEffect(() => {
-    if (!params.testId || !studentId) return;
+    if (!params.testId || !selectedStudent?.id) return;
     
     setIsLoading(true);
-    getTestDetailsAction(params.testId, studentId)
+    getTestDetailsAction(params.testId, selectedStudent.id)
       .then(result => {
         if (result.success && result.data) {
           setTestData(result.data);
@@ -143,7 +126,7 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
       .catch((e) => setError("An unexpected error occurred."))
       .finally(() => setIsLoading(false));
 
-  }, [params.testId, studentId, form]);
+  }, [params.testId, selectedStudent, form]);
 
 
   useEffect(() => {
@@ -190,12 +173,12 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
   };
 
   const onSubmit = useCallback(async (data: ExamFormValues) => {
-    if (!testData || !studentId) return;
+    if (!testData || !selectedStudent) return;
     if(document.fullscreenElement) {
         await document.exitFullscreen();
     }
     
-    const result = await submitTestAction(testData.id, studentId, data.answers);
+    const result = await submitTestAction(testData.id, selectedStudent.id, data.answers);
     if(result.success) {
       toast({title: "Test Submitted", description: "Your answers have been submitted successfully."})
       router.push(`/student/tests/${params.testId}/results`);
@@ -203,7 +186,7 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
       toast({title: "Submission Failed", description: result.error, variant: "destructive"});
     }
 
-  }, [testData, studentId, params.testId, router, toast]);
+  }, [testData, selectedStudent, params.testId, router, toast]);
 
   const handleTimeUp = useCallback(() => {
     toast({ title: "Time's Up!", description: "Submitting your test automatically.", variant: "default" });

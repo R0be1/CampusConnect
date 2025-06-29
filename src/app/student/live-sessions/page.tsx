@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Radio, ArrowRight, DollarSign, Loader2, Info } from "lucide-react";
 import Link from 'next/link';
-import { getFirstSchool, getFirstStudent } from '@/lib/data';
+import { useStudent } from '@/context/student-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getLiveSessionsAction, registerForSessionAction, StudentPortalLiveSessionsData } from '../actions';
@@ -43,37 +43,17 @@ function LiveSessionsLoadingSkeleton() {
 
 export default function StudentLiveSessionsPage() {
   const { toast } = useToast();
-  const [studentId, setStudentId] = useState<string | null>(null);
+  const { selectedStudent, isLoading: isStudentLoading } = useStudent();
   const [sessions, setSessions] = useState<StudentPortalLiveSessionsData>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStudent = async () => {
-      // In a real app, this would come from a session context
-      const school = await getFirstSchool();
-      if (!school) {
-        setError("School configuration not found.");
-        setIsLoading(false);
-        return;
-      }
-      const student = await getFirstStudent(school.id);
-      if (student) {
-        setStudentId(student.id);
-      } else {
-        setError("Could not identify the current student.");
-        setIsLoading(false);
-      }
-    };
-    fetchStudent();
-  }, []);
-
-  useEffect(() => {
-    if (studentId) {
+    if (selectedStudent?.id) {
       setIsLoading(true);
       setError(null);
-      getLiveSessionsAction(studentId)
+      getLiveSessionsAction(selectedStudent.id)
         .then(result => {
           if (result.success && result.data) {
             setSessions(result.data);
@@ -84,12 +64,12 @@ export default function StudentLiveSessionsPage() {
         .catch(() => setError("An unexpected error occurred."))
         .finally(() => setIsLoading(false));
     }
-  }, [studentId]);
+  }, [selectedStudent]);
 
   const handleRegister = async (sessionId: string) => {
-    if (!studentId) return;
+    if (!selectedStudent?.id) return;
     setIsRegistering(sessionId);
-    const result = await registerForSessionAction(sessionId, studentId);
+    const result = await registerForSessionAction(sessionId, selectedStudent.id);
     if (result.success) {
         toast({ title: "Registration Successful", description: result.message });
         // Optimistically update the UI
@@ -103,8 +83,18 @@ export default function StudentLiveSessionsPage() {
   const mySessions = sessions.filter(s => s.isRegistered);
   const availableSessions = sessions.filter(s => !s.isRegistered);
 
-  if (isLoading) {
+  if (isStudentLoading || isLoading) {
     return <LiveSessionsLoadingSkeleton />;
+  }
+
+  if (!selectedStudent) {
+      return (
+            <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No Student Selected</AlertTitle>
+                <AlertDescription>Please select a student to view live sessions.</AlertDescription>
+            </Alert>
+      )
   }
 
   return (
