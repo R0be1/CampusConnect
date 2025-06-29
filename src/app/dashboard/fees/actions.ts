@@ -3,6 +3,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getFirstSchool } from "@/lib/data";
 
 // --- Fee Structure Actions ---
 export async function createFeeStructureAction(data: any, schoolId: string) {
@@ -198,5 +199,33 @@ export async function revokeConcessionAction(assignmentId: string) {
         return { success: true };
     } catch (e) {
         return { success: false, error: "Failed to revoke concession."}
+    }
+}
+
+// --- Payment Actions ---
+export async function submitPaymentForVerificationAction(data: {
+    invoiceId: string;
+    amount: number;
+    method: string;
+    reference: string;
+}) {
+    try {
+        const school = await getFirstSchool();
+        if (!school) throw new Error("School not found");
+        
+        await prisma.feePayment.create({
+            data: {
+                ...data,
+                paymentDate: new Date(),
+                schoolId: school.id,
+                status: 'PENDING_VERIFICATION'
+            }
+        });
+
+        revalidatePath("/dashboard/fees/invoices");
+        return { success: true, message: "Payment submitted for verification." };
+    } catch (e: any) {
+        console.error("Failed to submit payment:", e);
+        return { success: false, error: "Failed to submit payment." };
     }
 }
