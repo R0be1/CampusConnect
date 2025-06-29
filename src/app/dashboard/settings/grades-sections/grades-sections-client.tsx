@@ -56,7 +56,7 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
     const handleAddGrade = async (data: NameFormValues) => {
         const result = await addGradeAction(data);
         if (result.success && result.newGrade) {
-            setGrades(prev => [...prev, result.newGrade!].sort((a,b) => a.name.localeCompare(b.name)));
+            setGrades(prev => [...prev, result.newGrade!].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })));
             toast({ title: "Grade Added", description: `${data.name} has been created.` });
             gradeForm.reset({ name: "" });
         } else {
@@ -106,7 +106,7 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
                     <Form {...gradeForm}>
                         <form onSubmit={gradeForm.handleSubmit(handleAddGrade)} className="flex items-start gap-2">
                             <FormField control={gradeForm.control} name="name" render={({ field }) => (
-                                <FormItem className="flex-1"><FormLabel className="sr-only">Grade Name</FormLabel><FormControl><Input placeholder="e.g., Grade 12" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem className="flex-1"><FormLabel className="sr-only">Grade Name</FormLabel><FormControl><Input placeholder="e.g., Grade 12" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <Button type="submit" disabled={gradeForm.formState.isSubmitting}>
                                 {gradeForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4" />} Add
@@ -120,7 +120,9 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
                                 <span className="font-medium">{grade.name}</span>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive/70" /></Button>
+                                        <div role="button" className="h-8 w-8 flex items-center justify-center rounded-sm hover:bg-destructive/10 cursor-pointer">
+                                            <Trash2 className="h-4 w-4 text-destructive/70" />
+                                        </div>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete this grade. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
@@ -145,7 +147,7 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
                             )} />
                             <div className="flex items-start gap-2">
                                 <FormField control={sectionForm.control} name="name" render={({ field }) => (
-                                    <FormItem className="flex-1"><FormLabel className="sr-only">Section Name</FormLabel><FormControl><Input placeholder="e.g., Section D" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem className="flex-1"><FormLabel className="sr-only">Section Name</FormLabel><FormControl><Input placeholder="e.g., Section D" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <Button type="submit" disabled={sectionForm.formState.isSubmitting}>
                                     {sectionForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4" />} Add
@@ -157,19 +159,21 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
                      <ul className="space-y-2">
                         {sections.map(section => (
                              <li key={section.id} className="flex items-center justify-between rounded-md bg-muted p-2 px-4">
-                                <span className="font-medium">{section.name}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-muted-foreground">{gradeMap.get(section.gradeId)}</span>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive/70" /></Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete this section. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSection(section.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                <div>
+                                    <span className="font-medium">{section.name}</span>
+                                    <p className="text-sm text-muted-foreground">{gradeMap.get(section.gradeId)}</p>
                                 </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <div role="button" className="h-8 w-8 flex items-center justify-center rounded-sm hover:bg-destructive/10 cursor-pointer">
+                                            <Trash2 className="h-4 w-4 text-destructive/70" />
+                                        </div>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete this section. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSection(section.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </li>
                         ))}
                     </ul>
