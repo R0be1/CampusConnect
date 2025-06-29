@@ -10,9 +10,10 @@ export async function createFeeStructureAction(data: any, schoolId: string) {
     try {
         await prisma.feeStructure.create({
             data: {
-                ...data,
-                schoolId,
+                name: data.name,
                 amount: parseFloat(data.amount),
+                interval: data.interval,
+                schoolId,
                 penaltyRuleId: data.penaltyRuleId === 'None' ? null : data.penaltyRuleId,
             },
         });
@@ -28,8 +29,9 @@ export async function updateFeeStructureAction(id: string, data: any) {
         await prisma.feeStructure.update({
             where: { id },
             data: {
-                ...data,
+                name: data.name,
                 amount: parseFloat(data.amount),
+                interval: data.interval,
                 penaltyRuleId: data.penaltyRuleId === 'None' ? null : data.penaltyRuleId,
             },
         });

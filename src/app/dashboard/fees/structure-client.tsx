@@ -22,14 +22,13 @@ import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { createFeeStructureAction, updateFeeStructureAction, deleteFeeStructureAction, createPenaltyRuleAction, updatePenaltyRuleAction, deletePenaltyRuleAction } from "./actions";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 // Schemas
 const feeStructureSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   amount: z.coerce.number().min(0, 'Amount must be positive'),
   interval: z.enum(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUALLY']),
-  dueDate: z.date({ required_error: "A due date is required." }),
   penaltyRuleId: z.string().optional(),
 });
 type FeeStructureFormValues = z.infer<typeof feeStructureSchema>;
@@ -257,7 +256,6 @@ function FeeSchemeForm({ onSave, initialData, penaltyRules, onClose }: { onSave:
             name: initialData?.name || '',
             amount: parseFloat(initialData?.amount.replace(/[$,]/g, '')) || 0,
             interval: initialData?.interval || 'ONE_TIME',
-            dueDate: initialData?.dueDate && initialData.dueDate !== 'N/A' ? new Date(initialData.dueDate) : new Date(),
             penaltyRuleId: penaltyRules.find(p => p.name === initialData?.penalty)?.id || 'None',
         },
     });
@@ -266,15 +264,8 @@ function FeeSchemeForm({ onSave, initialData, penaltyRules, onClose }: { onSave:
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Fee Name</FormLabel><FormControl><Input placeholder="e.g., Term One Payment" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 2500" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="dueDate" render={({ field }) => (
-                        <FormItem><FormLabel>First Due Date</FormLabel>
-                            <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}</Button></FormControl></PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 5} /></PopoverContent>
-                            </Popover><FormMessage />
-                        </FormItem>
-                    )} />
+                    <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 2500" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem> )} />
                     <FormField control={form.control} name="interval" render={({ field }) => (
                         <FormItem><FormLabel>Payment Interval</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUALLY'] as const).map(i => <SelectItem key={i} value={i}>{i.replace('_', '-')}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
