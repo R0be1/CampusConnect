@@ -1,3 +1,4 @@
+
 // src/lib/data.ts
 'use server';
 
@@ -1178,7 +1179,10 @@ export async function getPortalDashboardData(studentId: string, academicYearId: 
 
     // 5. Get Recent Communications
     const recentCommunications = await prisma.communication.findMany({
-        where: { receiverId: parent.userId },
+        where: { 
+            receiverId: parent.userId,
+            studentId: studentId,
+        },
         include: { sender: { select: { firstName: true, lastName: true } } },
         orderBy: { sentAt: 'desc' },
         take: 5
@@ -1340,6 +1344,7 @@ export async function getCommunicationsForParentPortal(studentId: string) {
     return prisma.communication.findMany({
         where: {
             receiverId: parentUserId,
+            studentId: studentId,
         },
         include: {
             sender: {
