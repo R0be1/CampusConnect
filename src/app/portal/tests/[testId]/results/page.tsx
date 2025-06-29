@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudent } from "@/context/student-context";
 import { getTestResultAction, PortalTestResultData } from "../../../actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useParams } from "next/navigation";
 
 function ResultsLoadingSkeleton() {
     return (
@@ -38,7 +39,8 @@ function ResultsLoadingSkeleton() {
     );
 }
 
-export default function TestResultPage({ params }: { params: { testId: string } }) {
+export default function TestResultPage() {
+  const params = useParams<{ testId: string }>();
   const { selectedStudent } = useStudent();
   const [resultData, setResultData] = useState<PortalTestResultData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function TestResultPage({ params }: { params: { testId: string } 
     if (!selectedStudent?.id || !params.testId) return;
 
     setIsLoading(true);
-    getTestResultAction(params.testId, selectedStudent.id)
+    getTestResultAction(params.testId as string, selectedStudent.id)
       .then(res => {
         if(res.success) {
           setResultData(res.data);

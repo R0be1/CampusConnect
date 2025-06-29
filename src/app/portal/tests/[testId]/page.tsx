@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { getTestDetailsAction, submitTestAction, PortalTestDetailsData } from ".
 import { useStudent } from "@/context/student-context";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from 'next/link';
 
 
 const answerSchema = z.object({
@@ -94,8 +95,9 @@ const WarningOverlay = ({ onResume }: { onResume: () => void }) => {
 };
 
 
-export default function ExamPage({ params }: { params: { testId: string } }) {
+export default function ExamPage() {
   const router = useRouter();
+  const params = useParams<{ testId: string }>();
   const { toast } = useToast();
   const { selectedStudent } = useStudent();
 
@@ -111,7 +113,7 @@ export default function ExamPage({ params }: { params: { testId: string } }) {
   useEffect(() => {
     if (!params.testId || !selectedStudent?.id) return;
     setIsLoading(true);
-    getTestDetailsAction(params.testId, selectedStudent.id)
+    getTestDetailsAction(params.testId as string, selectedStudent.id)
       .then(result => {
         if (result.success && result.data) {
           setTestData(result.data);

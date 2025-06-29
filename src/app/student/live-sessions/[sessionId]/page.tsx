@@ -10,8 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getLiveSessionAction } from '../../actions';
 import type { LiveSession } from '@prisma/client';
+import { useParams } from 'next/navigation';
 
-export default function StudentSessionPage({ params }: { params: { sessionId: string } }) {
+export default function StudentSessionPage() {
+    const params = useParams<{ sessionId: string }>();
     const [sessionDetails, setSessionDetails] = useState<LiveSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export default function StudentSessionPage({ params }: { params: { sessionId: st
 
     useEffect(() => {
         if (params.sessionId) {
-            getLiveSessionAction(params.sessionId)
+            getLiveSessionAction(params.sessionId as string)
                 .then(result => {
                     if (result.success && result.data) {
                         setSessionDetails(result.data as LiveSession);
