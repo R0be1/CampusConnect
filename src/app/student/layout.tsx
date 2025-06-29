@@ -75,12 +75,14 @@ function StudentSelector() {
         );
     }
     
+    // For demo purposes, we show a dropdown if there's more than one student in the system.
+    // In a real app, this would likely be locked to the single logged-in student.
     if (availableStudents.length <= 1) {
         return (
              <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
-                    <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    <AvatarImage src={selectedStudent.avatar} data-ai-hint="person portrait" />
+                    <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0] || '').join('')}</AvatarFallback>
                 </Avatar>
                 <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
             </div>
@@ -92,8 +94,8 @@ function StudentSelector() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                         <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
-                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                         <AvatarImage src={selectedStudent.avatar} data-ai-hint="person portrait" />
+                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0] || '').join('')}</AvatarFallback>
                     </Avatar>
                     <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
                     <ChevronDown className="h-4 w-4" />

@@ -1106,19 +1106,13 @@ export async function getParentsWithChildrenForPortal() {
                 include: {
                     user: {
                         select: {
-                            id: true,
                             firstName: true,
                             lastName: true,
-                            photoUrl: true,
                         }
                     },
-                    grade: { select: { name: true } },
-                    section: { select: { name: true } }
                 },
                  orderBy: {
-                    user: {
-                        firstName: 'asc'
-                    }
+                    firstName: 'asc'
                 }
             }
         },
@@ -1349,7 +1343,6 @@ export async function getCommunicationsForParentPortal(studentId: string) {
                 select: {
                     firstName: true,
                     lastName: true,
-                    photoUrl: true,
                 }
             }
         },

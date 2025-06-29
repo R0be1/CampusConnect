@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState } from 'react';
 import Image from 'next/image';
 import {
   UserCircle,
@@ -52,15 +52,11 @@ function ParentSelector() {
     const { availableParents, selectedParent, setSelectedParent, isLoading } = useStudent();
 
     if (isLoading) {
-        return (
-             <div className="flex items-center gap-2">
-                <Skeleton className="h-9 w-32" />
-            </div>
-        )
+        return <Skeleton className="h-9 w-32" />
     }
 
     if (!selectedParent) {
-        return null;
+        return null; // Or a message like "No parents found"
     }
 
     return (
@@ -110,8 +106,8 @@ function StudentSelector() {
             <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                         <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
-                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                         <AvatarImage src={selectedStudent.avatar} data-ai-hint="person portrait" />
+                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0] || '').join('')}</AvatarFallback>
                     </Avatar>
                     <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
                     <ChevronDown className="h-4 w-4" />
