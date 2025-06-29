@@ -92,7 +92,7 @@ export async function getResultsForExamAction(examId: string) {
     }
 }
 
-export async function submitResultsForApprovalAction(examId: string, results: {id: string, score: string, status: string}[]) {
+export async function submitResultsForApprovalAction(examId: string, results: {studentId: string, score: string, status: string}[]) {
     try {
         await prisma.$transaction(async (tx) => {
             for (const result of results) {
@@ -104,9 +104,9 @@ export async function submitResultsForApprovalAction(examId: string, results: {i
 
                 if (newStatus !== result.status) {
                     await tx.examResult.upsert({
-                        where: { examId_studentId: { examId, studentId: result.id } },
+                        where: { examId_studentId: { examId, studentId: result.studentId } },
                         update: { score: result.score, status: newStatus },
-                        create: { examId, studentId: result.id, score: result.score, status: 'PENDING_APPROVAL' },
+                        create: { examId, studentId: result.studentId, score: result.score, status: 'PENDING_APPROVAL' },
                     });
                 }
             }
@@ -148,9 +148,9 @@ export async function updateResultStatusAction(resultId: string, action: 'approv
 
         let newStatus: any = result.status;
         if (action === 'approve') {
-            newStatus = result.status === 'PENDING_APPROVAL' ? 'APPROVED' : 'FINALIZED';
+            newStatus = result.status === 'PENDING_REAPPROVAL' ? 'FINALIZED' : 'APPROVED';
         } else { // reject
-            newStatus = result.status === 'PENDING_APPROVAL' ? 'PENDING' : 'APPROVED';
+            newStatus = result.status === 'PENDING_REAPPROVAL' ? 'APPROVED' : 'PENDING';
         }
 
         await prisma.examResult.update({
@@ -176,9 +176,9 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
             for (const result of resultsToUpdate) {
                  let newStatus: any = result.status;
                 if (action === 'approve') {
-                    newStatus = result.status === 'PENDING_APPROVAL' ? 'APPROVED' : 'FINALIZED';
+                    newStatus = result.status === 'PENDING_REAPPROVAL' ? 'FINALIZED' : 'APPROVED';
                 } else {
-                    newStatus = result.status === 'PENDING_APPROVAL' ? 'PENDING' : 'APPROVED';
+                    newStatus = result.status === 'PENDING_REAPPROVAL' ? 'APPROVED' : 'PENDING';
                 }
                  await tx.examResult.update({
                     where: { id: result.id },
