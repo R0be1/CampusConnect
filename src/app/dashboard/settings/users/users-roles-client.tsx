@@ -36,7 +36,6 @@ type AllPermissions = Record<string, RolePermissions>;
 type UsersRolesClientProps = {
     initialUsers: UserData[];
     staffRoles: string[];
-    assignableRoles: string[];
     initialPermissions: AllPermissions;
 };
 
@@ -155,7 +154,7 @@ function ManageUsersTab({ initialUsers, staffRoles }: { initialUsers: UserData[]
                                 {staffRoles.map(role => <SelectItem key={role} value={role} className="capitalize">{role.toLowerCase()}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                         <p className="text-xs text-muted-foreground mt-2">Note: Only roles defined in the database schema (Admin, Teacher, Accountant) can be assigned to users.</p>
+                         <p className="text-xs text-muted-foreground mt-2">Note: Assigning custom roles is for demonstration only. The database currently only supports saving ADMIN, TEACHER, and ACCOUNTANT roles to users.</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditRoleOpen(false)}>Cancel</Button>
@@ -429,7 +428,7 @@ function ManageRolesTab({ staffRoles: initialStaffRoles, initialPermissions }: {
     )
 }
 
-export function UsersRolesClient({ initialUsers, staffRoles, assignableRoles, initialPermissions }: UsersRolesClientProps) {
+export function UsersRolesClient({ initialUsers, staffRoles, initialPermissions }: UsersRolesClientProps) {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
@@ -443,10 +442,10 @@ export function UsersRolesClient({ initialUsers, staffRoles, assignableRoles, in
                     <TabsTrigger value="permissions">Manage Roles</TabsTrigger>
                 </TabsList>
                 <TabsContent value="manage" className="mt-6">
-                    <ManageUsersTab initialUsers={initialUsers} staffRoles={assignableRoles}/>
+                    <ManageUsersTab initialUsers={initialUsers} staffRoles={staffRoles}/>
                 </TabsContent>
                 <TabsContent value="register" className="mt-6">
-                    <RegisterUserTab staffRoles={assignableRoles} />
+                    <RegisterUserTab staffRoles={staffRoles} />
                 </TabsContent>
                 <TabsContent value="permissions" className="mt-6">
                     <ManageRolesTab staffRoles={staffRoles} initialPermissions={initialPermissions} />

@@ -25,7 +25,6 @@ export default async function UsersAndRolesPage() {
     
     // Roles are now dynamically read from the permissions file.
     const staffRoles = Object.keys(permissions || {});
-    const assignableRoles = ["ADMIN", "TEACHER", "ACCOUNTANT"];
     
     const formattedUsers = users
         .filter(u => u.staffProfile) // Ensure staff profile exists
@@ -41,7 +40,6 @@ export default async function UsersAndRolesPage() {
         <UsersRolesClient
             initialUsers={formattedUsers}
             staffRoles={staffRoles}
-            assignableRoles={assignableRoles}
             initialPermissions={permissions || {}}
         />
     );
