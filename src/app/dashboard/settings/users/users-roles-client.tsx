@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -18,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Loader2, Users, CheckCircle, Shield, PlusCircle } from "lucide-react";
 import { createUserAction, updateUserRoleAction, deleteUserAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 // Types
 type UserData = {
