@@ -12,9 +12,6 @@ export async function registerStudentAction(data: StudentRegistrationFormValues,
     return { success: true, message: `Successfully registered ${result.student.firstName}.` };
   } catch (error: any) {
     console.error("Failed to register student:", error);
-    if (error.code === 'P2002' && error.meta?.target?.includes('phone')) {
-        return { success: false, message: "A user with this parent phone number already exists." };
-    }
     return { success: false, message: "Failed to register student. Please try again." };
   }
 }

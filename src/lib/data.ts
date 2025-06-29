@@ -115,69 +115,97 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
   const hashedPassword = await bcrypt.hash('password123', 10); // Default password
 
   return prisma.$transaction(async (tx) => {
-    // 1. Create Parent User and Profile
-    const parentUser = await tx.user.create({
+    // 1. Find or Create Parent User and Profile
+    let parentUser = await tx.user.findUnique({
+      where: { phone: data.parentPhone },
+    });
+
+    let parent;
+
+    if (parentUser) {
+      // Parent user exists, find their parent profile
+      parent = await tx.parent.findFirst({
+        where: { userId: parentUser.id },
+      });
+      if (!parent) {
+        // This case is unlikely if data is consistent, but good to handle.
+        parent = await tx.parent.create({
+          data: {
+            userId: parentUser.id,
+            firstName: data.parentFirstName,
+            lastName: data.parentLastName,
+            schoolId: schoolId,
+            relationToStudent: data.parentRelation,
+          },
+        });
+      }
+    } else {
+      // Parent user does not exist, create new user and profile
+      parentUser = await tx.user.create({
+        data: {
+          phone: data.parentPhone,
+          password: hashedPassword,
+          role: 'PARENT',
+          schoolId: schoolId,
+          firstName: data.parentFirstName,
+          lastName: data.parentLastName,
+          middleName: data.parentMiddleName,
+          addressLine1: data.addressLine1,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+        },
+      });
+
+      parent = await tx.parent.create({
+        data: {
+          userId: parentUser.id,
+          firstName: data.parentFirstName,
+          lastName: data.parentLastName,
+          schoolId: schoolId,
+          relationToStudent: data.parentRelation,
+        },
+      });
+    }
+
+    if (!parent) {
+      throw new Error('Could not find or create parent profile.');
+    }
+
+    // 2. Create Student User and Profile
+    const studentPhone = `${data.parentPhone}-S${Date.now()}`;
+    const studentUser = await tx.user.create({
       data: {
-        phone: data.parentPhone,
+        phone: studentPhone,
         password: hashedPassword,
-        role: 'PARENT',
+        role: 'STUDENT',
         schoolId: schoolId,
-        firstName: data.parentFirstName,
-        lastName: data.parentLastName,
-        middleName: data.parentMiddleName,
+        firstName: data.studentFirstName,
+        lastName: data.studentLastName,
+        middleName: data.studentMiddleName,
         addressLine1: data.addressLine1,
         city: data.city,
         state: data.state,
         zipCode: data.zipCode,
-        // photoUrl would be handled after file upload
-      }
-    });
-
-    const parent = await tx.parent.create({
-      data: {
-        userId: parentUser.id,
-        firstName: data.parentFirstName,
-        lastName: data.parentLastName,
-        schoolId: schoolId,
-        relationToStudent: data.parentRelation,
-      }
-    });
-
-    // 2. Create Student User and Profile
-    // Using a unique identifier for student phone since it's a unique field in the User model
-    const studentPhone = `${data.parentPhone}-S${Date.now()}`;
-    const studentUser = await tx.user.create({
-        data: {
-            phone: studentPhone, 
-            password: hashedPassword,
-            role: 'STUDENT',
-            schoolId: schoolId,
-            firstName: data.studentFirstName,
-            lastName: data.studentLastName,
-            middleName: data.studentMiddleName,
-            addressLine1: data.addressLine1,
-            city: data.city,
-            state: data.state,
-            zipCode: data.zipCode,
-        }
+      },
     });
 
     const student = await tx.student.create({
-        data: {
-            userId: studentUser.id,
-            firstName: data.studentFirstName,
-            lastName: data.studentLastName,
-            schoolId: schoolId,
-            gradeId: data.grade,
-            sectionId: data.section,
-            dob: data.studentDob,
-            gender: data.studentGender,
-            parents: {
-                connect: { id: parent.id }
-            }
-        }
+      data: {
+        userId: studentUser.id,
+        firstName: data.studentFirstName,
+        lastName: data.studentLastName,
+        schoolId: schoolId,
+        gradeId: data.grade,
+        sectionId: data.section,
+        dob: data.studentDob,
+        gender: data.studentGender,
+        parents: {
+          connect: { id: parent.id },
+        },
+      },
     });
-    
+
     return { student, parent };
   });
 }
@@ -1077,27 +1105,39 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
-    // In a real app, we'd find the students for the logged-in parent.
-    // For this prototype, just get the first two students in the school.
-    const students = await prisma.student.findMany({
-        take: 2,
-        select: {
-            id: true,
+    // In a real app, we'd find the students for the logged-in parent from their session.
+    // For this prototype, let's get the parent of the first student and find all their children.
+    const firstParent = await prisma.parent.findFirst({
+      orderBy: { user: { createdAt: 'asc' } },
+      include: {
+        students: {
+          include: {
             user: {
               select: {
                 firstName: true,
                 lastName: true,
-                photoUrl: true,
+                photoUrl: true
               }
             }
-        },
-        orderBy: {
+          },
+          orderBy: {
             user: {
-                createdAt: 'asc'
+              firstName: 'asc'
             }
+          }
         }
+      }
     });
-    return students.map(s => ({ id: s.id, name: `${s.user.firstName} ${s.user.lastName}`, avatar: s.user.photoUrl }));
+
+    if (!firstParent) {
+      return [];
+    }
+
+    return firstParent.students.map(s => ({ 
+      id: s.id, 
+      name: `${s.user.firstName} ${s.user.lastName}`, 
+      avatar: s.user.photoUrl 
+    }));
 }
 
 export async function getPortalDashboardData(studentId: string, academicYearId: string) {
