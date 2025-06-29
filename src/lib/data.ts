@@ -1,5 +1,3 @@
-
-
 // src/lib/data.ts
 'use server';
 
@@ -216,10 +214,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
             firstName: data.studentFirstName,
             lastName: data.studentLastName,
             middleName: data.studentMiddleName,
-            addressLine1: data.addressLine1,
-            city: data.city,
-            state: data.state,
-            zipCode: data.zipCode,
           }
         });
     }
@@ -1073,34 +1067,8 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
-    // In a real app, this parentId would come from the user's session.
-    // For this prototype, we'll find a parent who is guaranteed to have children from the seed data.
-    const parentWithChildren = await prisma.parent.findFirst({
-        where: {
-            students: {
-                some: {} // Find a parent that has at least one student linked
-            }
-        },
-        orderBy: {
-            user: {
-                createdAt: 'asc'
-            }
-        }
-    });
-
-    if (!parentWithChildren) {
-        return [];
-    }
-
-    // Now fetch all students for that specific parent
+    // For this prototype, we'll fetch all students to display in the portal.
     const students = await prisma.student.findMany({
-        where: {
-            parents: {
-                some: {
-                    id: parentWithChildren.id
-                }
-            }
-        },
         select: {
             id: true,
             user: {
@@ -1120,6 +1088,7 @@ export async function getStudentsForParentPortal() {
 
     return students.map(s => ({ id: s.id, name: `${s.user.firstName} ${s.user.lastName}`, avatar: s.user.photoUrl }));
 }
+
 
 export async function getPortalDashboardData(studentId: string, academicYearId: string) {
     // 1. Get student and parent info
