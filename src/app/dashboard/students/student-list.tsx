@@ -116,6 +116,7 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
             parentMiddleName: parent?.user.middleName || "",
             parentLastName: parent?.lastName || "",
             parentPhone: parent?.user.phone || "",
+            parentAlternatePhone: parent?.user.alternatePhone || "",
             parentRelation: parent?.relationToStudent || "Parent",
 
             addressLine1: student.user.addressLine1 || "",

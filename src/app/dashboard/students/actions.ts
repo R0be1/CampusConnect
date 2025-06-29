@@ -12,6 +12,9 @@ export async function registerStudentAction(data: StudentRegistrationFormValues,
     return { success: true, message: `Successfully registered ${result.student.firstName}.` };
   } catch (error: any) {
     console.error("Failed to register student:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('phone')) {
+        return { success: false, message: "This phone number is already in use by another person." };
+    }
     return { success: false, message: "Failed to register student. Please try again." };
   }
 }
@@ -24,6 +27,9 @@ export async function updateStudentAction(studentId: string, data: StudentRegist
         return { success: true, message: `Successfully updated ${result?.firstName}.`, updatedStudent: result };
     } catch (error: any) {
         console.error("Failed to update student:", error);
+        if (error.code === 'P2002' && error.meta?.target?.includes('phone')) {
+             return { success: false, message: "This phone number is already in use by another person." };
+        }
         return { success: false, message: "Failed to update student. Please try again." };
     }
 }

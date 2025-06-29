@@ -144,6 +144,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
       parentUser = await tx.user.create({
         data: {
           phone: data.parentPhone,
+          alternatePhone: data.parentAlternatePhone,
           password: hashedPassword,
           role: 'PARENT',
           schoolId: schoolId,
@@ -269,6 +270,7 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
           lastName: data.parentLastName,
           middleName: data.parentMiddleName,
           phone: data.parentPhone,
+          alternatePhone: data.parentAlternatePhone,
           addressLine1: data.addressLine1,
           city: data.city,
           state: data.state,
@@ -336,7 +338,7 @@ export async function deleteStudent(studentId: string) {
 export async function getFirstStudent(schoolId: string) {
     return prisma.student.findFirst({
         where: { schoolId },
-        orderBy: { firstName: 'asc' }
+        orderBy: { user: { createdAt: 'asc' } }
     });
 }
 
