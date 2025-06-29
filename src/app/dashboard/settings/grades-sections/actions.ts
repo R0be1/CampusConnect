@@ -33,16 +33,16 @@ export async function deleteGradeAction(id: string) {
     }
 }
 
-export async function addSectionAction(data: NameFormValues) {
+export async function addSectionAction(data: { name: string, gradeId: string }) {
     const school = await getFirstSchool();
     if (!school) return { success: false, error: "No school found." };
     try {
-        const newSection = await createSection(data.name, school.id);
+        const newSection = await createSection(data.name, data.gradeId, school.id);
         revalidatePath('/dashboard/settings/grades-sections');
         return { success: true, newSection };
     } catch (e: any) {
         if (e.code === 'P2002') {
-            return { success: false, error: "This section already exists." };
+            return { success: false, error: "This section already exists for this grade." };
         }
         return { success: false, error: "Failed to create section." };
     }

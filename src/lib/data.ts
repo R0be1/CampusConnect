@@ -1,3 +1,4 @@
+
 // src/lib/data.ts
 'use server';
 
@@ -884,14 +885,28 @@ export async function deleteGrade(id: string) {
     return prisma.grade.delete({ where: { id } });
 }
 
-export async function createSection(name: string, schoolId: string) {
+export async function createSection(name: string, gradeId: string, schoolId: string) {
     return prisma.section.create({
-        data: { name, schoolId }
+        data: { name, gradeId, schoolId }
     });
 }
 
 export async function deleteSection(id: string) {
     return prisma.section.delete({ where: { id } });
+}
+
+export async function getGradesWithSections(schoolId: string) {
+    return prisma.grade.findMany({
+        where: { schoolId },
+        include: {
+            sections: {
+                orderBy: {
+                    name: 'asc'
+                }
+            }
+        },
+        orderBy: { name: 'asc' }
+    });
 }
 
 export async function getCoursesWithDetails(schoolId: string) {
