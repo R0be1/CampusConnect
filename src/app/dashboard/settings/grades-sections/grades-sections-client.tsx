@@ -129,7 +129,9 @@ export default function ManageGradesSectionsClientPage({ initialGrades }: Manage
                                         <span className="font-semibold text-lg">{grade.name}</span>
                                         <AlertDialog onOpenChange={(open) => { if (open) event?.stopPropagation() }}>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                <div role="button" onClick={(e) => e.stopPropagation()} className="p-2 -mr-2 rounded-md hover:bg-muted">
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </div>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
                                                 <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This action will delete the grade and all its sections. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
