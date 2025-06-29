@@ -136,7 +136,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
           <Button
             variant="outline"
             size={isCollapsed ? 'icon' : 'default'}
-            className="w-full"
+            className="w-full text-foreground"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
             {isCollapsed ? (

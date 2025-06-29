@@ -42,7 +42,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="mt-auto p-4 border-t border-sidebar-border">
-          <Button variant="outline" size={isCollapsed ? "icon" : "default"} className="w-full" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <Button variant="outline" size={isCollapsed ? "icon" : "default"} className="w-full text-foreground" onClick={() => setIsCollapsed(!isCollapsed)}>
               {isCollapsed ? <PanelRight className="h-5 w-5" /> : <><PanelLeft className="h-5 w-5" /><span>Collapse</span></>}
               <span className="sr-only">Toggle Sidebar</span>
           </Button>
