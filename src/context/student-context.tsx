@@ -52,7 +52,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
               const formattedParents: Parent[] = result.parents.map(p => ({
                   id: p.id,
                   name: `${p.firstName} ${p.lastName}`,
-                  children: p.students.map(s => ({
+                  children: p.children.map(s => ({
                       id: s.id,
                       name: `${s.firstName} ${s.lastName}`,
                       avatar: s.user.photoUrl || `https://placehold.co/40x40.png`

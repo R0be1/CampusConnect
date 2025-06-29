@@ -1,4 +1,3 @@
-
 // src/lib/data.ts
 'use server';
 
@@ -1095,8 +1094,8 @@ export async function getParentsWithChildrenForPortal() {
     return prisma.parent.findMany({
         where: {
             schoolId: school.id,
-            students: {
-                some: {} // Make sure the parent has children
+            children: {
+                some: {}
             }
         },
         include: {
@@ -1105,7 +1104,7 @@ export async function getParentsWithChildrenForPortal() {
                     photoUrl: true
                 }
             },
-            students: {
+            children: {
                 include: {
                     user: {
                         select: {
