@@ -7,41 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DollarSign, CreditCard, Loader2, Info, Sparkles, FileUp } from "lucide-react";
 import { useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { createFeePaymentAction, PortalFeesData } from "../actions";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-
-
-function FeesLoadingSkeleton() {
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-4">
-                <DollarSign className="h-8 w-8 text-primary" />
-                <div>
-                    <Skeleton className="h-8 w-72 mb-2" />
-                    <Skeleton className="h-5 w-80" />
-                </div>
-            </div>
-            <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card><CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
-                    <Card><CardHeader><Skeleton className="h-8 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
-                </div>
-                <div className="lg:col-span-1">
-                    <Card className="sticky top-6"><CardHeader><Skeleton className="h-20 w-full" /></CardHeader><CardFooter><Skeleton className="h-10 w-full" /></CardFooter></Card>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 type FeesClientPageProps = {
     initialFeesData: PortalFeesData | null;
@@ -93,19 +68,26 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
         setInvoiceForPayment(null);
     } else {
         toast({ title: "Error", description: result.error, variant: "destructive" });
+        setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   }
 
   if (!feesData) {
       return (
-         <Alert>
-            <Info className="h-4 w-4" />
-            <AlertTitle>No Data Available</AlertTitle>
-            <AlertDescription>
-                Fee data is not available for {studentName}. Please check back later.
-            </AlertDescription>
-        </Alert>
+        <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+                <DollarSign className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-bold font-headline">Fee & Payment Details for {studentName}</h1>
+            </div>
+            <p className="text-muted-foreground">Review outstanding invoices and your payment history.</p>
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No Data Available</AlertTitle>
+                <AlertDescription>
+                    Fee data is not available for {studentName}. Please check back later.
+                </AlertDescription>
+            </Alert>
+        </div>
       )
   }
   
