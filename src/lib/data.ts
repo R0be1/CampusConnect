@@ -1089,8 +1089,12 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getParentsWithChildrenForPortal() {
+    const school = await getFirstSchool();
+    if (!school) return [];
+
     return prisma.parent.findMany({
         where: {
+            schoolId: school.id,
             students: {
                 some: {} // Only get parents who have at least one student
             }

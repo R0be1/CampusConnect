@@ -52,11 +52,15 @@ function ParentSelector() {
     const { availableParents, selectedParent, setSelectedParent, isLoading } = useStudent();
 
     if (isLoading) {
-        return <Skeleton className="h-9 w-32" />
+        return <Skeleton className="h-9 w-40" />;
     }
 
-    if (!selectedParent) {
-        return null; // Or a message like "No parents found"
+    if (availableParents.length === 0) {
+        return (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground h-9 px-4">
+                No parents found.
+            </div>
+        );
     }
 
     return (
@@ -64,7 +68,7 @@ function ParentSelector() {
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    <span className="font-semibold hidden sm:inline-block">{selectedParent.name}</span>
+                    <span className="font-semibold hidden sm:inline-block">{selectedParent?.name || 'Select Parent'}</span>
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
@@ -93,7 +97,7 @@ function StudentSelector() {
         )
     }
 
-    if (!selectedStudent) {
+    if (availableStudents.length === 0) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground h-9 px-4">
                 No students for this parent.
@@ -106,10 +110,10 @@ function StudentSelector() {
             <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                         <AvatarImage src={selectedStudent.avatar} data-ai-hint="person portrait" />
-                         <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0] || '').join('')}</AvatarFallback>
+                         <AvatarImage src={selectedStudent?.avatar} data-ai-hint="person portrait" />
+                         <AvatarFallback>{selectedStudent?.name.split(' ').map(n=>n[0] || '').join('')}</AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
+                    <span className="font-semibold hidden sm:inline-block">{selectedStudent?.name}</span>
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
