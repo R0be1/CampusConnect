@@ -23,6 +23,7 @@ export default async function ConcessionsPage() {
         <ConcessionsClientPage
             initialConcessions={formattedConcessions}
             feeStructures={feeStructures.map(f => ({ id: f.id, name: f.name }))}
+            schoolId={school.id}
         />
     );
 }

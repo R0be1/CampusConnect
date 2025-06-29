@@ -47,9 +47,10 @@ type Concession = {
 type ConcessionsClientPageProps = {
     initialConcessions: Concession[];
     feeStructures: { id: string, name: string }[];
+    schoolId: string;
 };
 
-export default function ConcessionsClientPage({ initialConcessions, feeStructures }: ConcessionsClientPageProps) {
+export default function ConcessionsClientPage({ initialConcessions, feeStructures, schoolId }: ConcessionsClientPageProps) {
     const { toast } = useToast();
     const [concessions, setConcessions] = useState(initialConcessions);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -71,7 +72,6 @@ export default function ConcessionsClientPage({ initialConcessions, feeStructure
     };
     
     const handleSaveConcession = async (data: ConcessionFormValues) => {
-        const schoolId = "cmcf3ofm90000kjlz1g767avh";
         const result = editingConcession
             ? await updateConcessionAction(editingConcession.id, data)
             : await createConcessionAction(data, schoolId);
