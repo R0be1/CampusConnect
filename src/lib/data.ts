@@ -323,10 +323,11 @@ export async function getFirstStudent(schoolId: string) {
 }
 
 export async function getAcademicYears(schoolId: string) {
-    return prisma.academicYear.findMany({
+    const years = await prisma.academicYear.findMany({
         where: { schoolId },
         orderBy: { name: 'desc' }
     });
+    return years;
 }
 
 export async function getCurrentAcademicYear(schoolId: string) {
@@ -1860,4 +1861,74 @@ export async function updateSchool(id: string, data: Partial<Omit<School, 'id' |
 
 export async function deleteSchool(id: string) {
     return prisma.school.delete({ where: { id } });
+}
+
+// --- Settings -> Users & Roles ---
+export async function getUsersWithStaffProfile(schoolId: string) {
+    return prisma.user.findMany({
+        where: {
+            schoolId,
+            NOT: {
+                role: {
+                    in: ['PARENT', 'STUDENT']
+                }
+            }
+        },
+        include: {
+            staffProfile: true
+        },
+        orderBy: {
+            firstName: 'asc'
+        }
+    });
+}
+
+export async function createStaffUser(data: { firstName: string, lastName: string, phone: string, role: string }, schoolId: string) {
+    const hashedPassword = await bcrypt.hash('password123', 10); // Default password for new users
+
+    return prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+            data: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phone: data.phone,
+                role: 'TEACHER', // The base UserRole needs a value, let's default to TEACHER for staff
+                password: hashedPassword,
+                schoolId: schoolId,
+            }
+        });
+        
+        await tx.staff.create({
+            data: {
+                userId: user.id,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                staffType: data.role,
+                schoolId: schoolId,
+            }
+        });
+        
+        return user;
+    });
+}
+
+export async function updateUserRole(userId: string, staffId: string, newRole: string) {
+    return prisma.staff.update({
+        where: { id: staffId, userId: userId },
+        data: {
+            staffType: newRole
+        }
+    });
+}
+
+export async function deleteUserAndStaff(userId: string) {
+    return prisma.$transaction(async (tx) => {
+        await tx.staff.deleteMany({
+            where: { userId }
+        });
+
+        await tx.user.delete({
+            where: { id: userId }
+        });
+    });
 }

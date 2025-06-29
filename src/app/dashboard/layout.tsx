@@ -1,8 +1,7 @@
-
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { UserCircle, Menu, PanelLeft, PanelRight, School } from 'lucide-react';
+import { UserCircle, Menu, PanelLeft, PanelRight, School, Users } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -82,6 +81,7 @@ const navItems: NavItem[] = [
       { href: '/dashboard/settings/academic-year', label: 'Academic Year' },
       { href: '/dashboard/settings/grades-sections', label: 'Grades & Sections' },
       { href: '/dashboard/settings/courses', label: 'Courses' },
+      { href: '/dashboard/settings/users', label: 'Users & Roles' },
     ]
   },
   { href: '/portal/dashboard', label: 'Parent Portal' },
