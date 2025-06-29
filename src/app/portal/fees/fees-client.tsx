@@ -256,6 +256,18 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
                             <Input id="reference" name="reference" placeholder="e.g., TRF12345ABC" required value={reference} onChange={(e) => setReference(e.target.value)} />
                         </div>
                     )}
+                    <div className="space-y-2">
+                        <Label htmlFor="evidence">Upload Evidence</Label>
+                        <div className="relative">
+                            <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                <Label htmlFor="evidence" className="cursor-pointer">
+                                    <FileUp className="h-4 w-4" />
+                                </Label>
+                            </Button>
+                            <Input id="evidence" type="file" className="pl-12" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">e.g., a photo of the receipt or a transaction screenshot.</p>
+                    </div>
                 </div>
                 <DialogFooter>
                     <AlertDialog>

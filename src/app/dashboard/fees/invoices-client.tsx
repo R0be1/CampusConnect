@@ -235,31 +235,30 @@ export default function InvoicesClientPage({ invoicesData }: InvoicesClientPageP
                         </div>
 
                         {paymentMethod !== 'CASH' && (
-                            <>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="bank-name">Bank Name / Provider</Label>
-                                        <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., Card Provider'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="ref">Transaction Reference</Label>
-                                        <Input id="ref" placeholder="e.g., TRF12345ABC" value={reference} onChange={(e) => setReference(e.target.value)} required />
-                                    </div>
-                                </div>
-
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="evidence">Upload Evidence</Label>
-                                    <div className="relative">
-                                        <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
-                                            <Label htmlFor="evidence" className="cursor-pointer">
-                                                <FileUp className="h-4 w-4" />
-                                            </Label>
-                                        </Button>
-                                        <Input id="evidence" type="file" className="pl-12" />
-                                    </div>
+                                    <Label htmlFor="bank-name">Bank Name / Provider</Label>
+                                    <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., Card Provider'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
                                 </div>
-                            </>
+                                <div className="space-y-2">
+                                    <Label htmlFor="ref">Transaction Reference</Label>
+                                    <Input id="ref" placeholder="e.g., TRF12345ABC" value={reference} onChange={(e) => setReference(e.target.value)} required />
+                                </div>
+                            </div>
                         )}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="evidence">Upload Evidence</Label>
+                            <div className="relative">
+                                <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                    <Label htmlFor="evidence" className="cursor-pointer">
+                                        <FileUp className="h-4 w-4" />
+                                    </Label>
+                                </Button>
+                                <Input id="evidence" type="file" className="pl-12" />
+                            </div>
+                             <p className="text-xs text-muted-foreground">e.g., a photo of the receipt or a transaction screenshot.</p>
+                        </div>
                     </div>
                     <DialogFooter>
                         <AlertDialog>
