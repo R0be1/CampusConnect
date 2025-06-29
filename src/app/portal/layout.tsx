@@ -11,6 +11,7 @@ import {
   PanelLeft,
   PanelRight,
   ChevronDown,
+  Users,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -23,8 +24,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getParentsAndChildrenAction } from './actions';
-import type { ParentsWithChildren } from '@/lib/data';
 
 
 const navItems: NavItem[] = [
@@ -49,22 +48,48 @@ function SchoolDisplay({ isCollapsed }: { isCollapsed: boolean }) {
     )
 }
 
-function ParentStudentSelector() {
-    const { selectedStudent, setSelectedStudent } = useStudent();
-    const [parents, setParents] = useState<ParentsWithChildren>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        getParentsAndChildrenAction().then(result => {
-            if (result.success && result.parents) {
-                setParents(result.parents);
-            }
-            setIsLoading(false);
-        });
-    }, []);
+function ParentSelector() {
+    const { availableParents, selectedParent, setSelectedParent, isLoading } = useStudent();
 
     if (isLoading) {
         return (
+             <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-32" />
+            </div>
+        )
+    }
+
+    if (!selectedParent) {
+        return null;
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span className="font-semibold hidden sm:inline-block">{selectedParent.name}</span>
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Select Parent</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableParents.map(parent => (
+                    <DropdownMenuItem key={parent.id} onSelect={() => setSelectedParent(parent)}>
+                        {parent.name}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
+function StudentSelector() {
+    const { availableStudents, selectedStudent, setSelectedStudent, isLoading } = useStudent();
+    
+    if (isLoading) {
+         return (
              <div className="flex items-center gap-2">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <Skeleton className="h-5 w-24 hidden sm:block" />
@@ -74,16 +99,16 @@ function ParentStudentSelector() {
 
     if (!selectedStudent) {
         return (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                No students found.
+            <div className="flex items-center gap-2 text-sm text-muted-foreground h-9 px-4">
+                No students for this parent.
             </div>
         );
     }
-    
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
+                 <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                          <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
                          <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
@@ -93,20 +118,12 @@ function ParentStudentSelector() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-                {parents.map((parent, index) => (
-                    <React.Fragment key={parent.id}>
-                        <DropdownMenuLabel>{parent.user.firstName} {parent.user.lastName}'s Children</DropdownMenuLabel>
-                        {parent.students.map(student => (
-                            <DropdownMenuItem key={student.id} onSelect={() => setSelectedStudent({
-                                id: student.id,
-                                name: `${student.user.firstName} ${student.user.lastName}`,
-                                avatar: student.user.photoUrl
-                            })}>
-                                {student.user.firstName} {student.user.lastName}
-                            </DropdownMenuItem>
-                        ))}
-                        {index < parents.length - 1 && <DropdownMenuSeparator />}
-                    </React.Fragment>
+                <DropdownMenuLabel>Select Student</DropdownMenuLabel>
+                 <DropdownMenuSeparator />
+                {availableStudents.map(student => (
+                    <DropdownMenuItem key={student.id} onSelect={() => setSelectedStudent(student)}>
+                        {student.name}
+                    </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
@@ -183,11 +200,14 @@ function InnerLayout({ children }: { children: ReactNode }) {
               </nav>
             </SheetContent>
           </Sheet>
+          <div className="flex items-center gap-2">
+            <ParentSelector />
+            <StudentSelector />
+          </div>
           <div className="w-full flex-1">
             <AcademicYearDisplay />
           </div>
           <div className="flex items-center gap-4 md:gap-2 lg:gap-4">
-            <ParentStudentSelector />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Notifications</span>
