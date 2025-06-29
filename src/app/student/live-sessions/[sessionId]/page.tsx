@@ -11,13 +11,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getLiveSessionAction } from '../../actions';
 import type { LiveSession } from '@prisma/client';
 import { useParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function StudentSessionPage() {
     const params = useParams<{ sessionId: string }>();
+    const { toast } = useToast();
     const [sessionDetails, setSessionDetails] = useState<LiveSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Interactive State
     const [handRaised, setHandRaised] = useState(false);
+    const [message, setMessage] = useState("");
+    const [chat, setChat] = useState<{ from: 'You' | string, text: string }[]>([]);
 
     useEffect(() => {
         if (params.sessionId) {
@@ -33,6 +40,22 @@ export default function StudentSessionPage() {
                 .finally(() => setIsLoading(false));
         }
     }, [params.sessionId]);
+
+    const handleSendMessage = () => {
+      if (message.trim()) {
+        setChat(prev => [...prev, { from: 'You', text: message }]);
+        setMessage("");
+        toast({ title: "Message Sent", description: "Your message has been sent to the teacher." });
+      }
+    };
+
+    const handleToggleHand = () => {
+        setHandRaised(prev => {
+            const newStatus = !prev;
+            toast({ title: newStatus ? "Hand Raised" : "Hand Lowered", description: newStatus ? "The teacher has been notified." : "" });
+            return newStatus;
+        });
+    };
 
     if (isLoading) {
         return (
@@ -98,7 +121,7 @@ export default function StudentSessionPage() {
                         <CardTitle>Session Controls</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col gap-4">
-                       <Button variant={handRaised ? "default" : "outline"} onClick={() => setHandRaised(!handRaised)}>
+                       <Button variant={handRaised ? "default" : "outline"} onClick={handleToggleHand}>
                             <Hand className="mr-2"/>
                             {handRaised ? 'Lower Hand' : 'Raise Hand'}
                        </Button>
@@ -108,11 +131,29 @@ export default function StudentSessionPage() {
                        </div>
 
                        <div className="flex-1 border-t pt-4 flex flex-col">
-                            <h3 className="font-semibold mb-2">Ask a Question</h3>
-                            <Textarea placeholder="Type your question here..." className="flex-1"/>
-                            <Button className="mt-2">
-                                <Send className="mr-2"/> Send
-                            </Button>
+                            <h3 className="font-semibold mb-2">Session Chat</h3>
+                            <ScrollArea className="h-48 border rounded-md p-4 mb-2">
+                                <div className="space-y-3">
+                                {chat.length > 0 ? chat.map((c, i) => (
+                                    <div key={i}>
+                                        <p className="font-bold text-sm">{c.from}</p>
+                                        <p className="text-sm text-muted-foreground">{c.text}</p>
+                                    </div>
+                                )) : (
+                                    <p className="text-xs text-center text-muted-foreground py-4">Chat history will appear here.</p>
+                                )}
+                                </div>
+                            </ScrollArea>
+                            <div className="flex gap-2">
+                                <Textarea 
+                                    placeholder="Ask a question..." 
+                                    className="flex-1"
+                                    rows={1}
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                />
+                                <Button onClick={handleSendMessage}><Send className="h-4 w-4"/></Button>
+                            </div>
                        </div>
                     </CardContent>
                 </Card>
