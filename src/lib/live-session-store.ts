@@ -36,11 +36,11 @@ function getSession(sessionId: string): SessionState {
   return sessionStore.get(sessionId)!;
 }
 
-export function getSessionState(sessionId: string) {
+export async function getSessionState(sessionId: string) {
   return getSession(sessionId);
 }
 
-export function joinSession(sessionId: string, studentId: string, studentName: string) {
+export async function joinSession(sessionId: string, studentId: string, studentName: string) {
   const session = getSession(sessionId);
   if (!session.participants.find(p => p.id === studentId)) {
     session.participants.push({ id: studentId, name: studentName, handRaised: false });
@@ -48,13 +48,13 @@ export function joinSession(sessionId: string, studentId: string, studentName: s
   return session;
 }
 
-export function leaveSession(sessionId: string, studentId: string) {
+export async function leaveSession(sessionId: string, studentId: string) {
   const session = getSession(sessionId);
   session.participants = session.participants.filter(p => p.id !== studentId);
   return session;
 }
 
-export function toggleHand(sessionId: string, studentId: string, raised: boolean) {
+export async function toggleHand(sessionId: string, studentId: string, raised: boolean) {
     const session = getSession(sessionId);
     const participant = session.participants.find(p => p.id === studentId);
     if (participant) {
@@ -63,7 +63,7 @@ export function toggleHand(sessionId: string, studentId: string, raised: boolean
     return session;
 }
 
-export function addMessage(sessionId: string, from: string, text: string) {
+export async function addMessage(sessionId: string, from: string, text: string) {
     const session = getSession(sessionId);
     session.messages.push({
         id: crypto.randomUUID(),
