@@ -1,7 +1,7 @@
 
 'use client';
 
-import { getAvailableStudentsAction } from '@/app/portal/actions';
+import { getStudentsForParentPortal } from "@/lib/data";
 import { createContext, useState, ReactNode, useContext, useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,12 +28,10 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchStudents = async () => {
       setIsLoading(true);
-      const response = await getAvailableStudentsAction();
-      if (response.success && response.students) {
-        setAvailableStudents(response.students);
-        if (response.students.length > 0) {
-          setSelectedStudent(response.students[0]);
-        }
+      const response = await getStudentsForParentPortal();
+      setAvailableStudents(response);
+      if (response.length > 0) {
+        setSelectedStudent(response[0]);
       }
       setIsLoading(false);
     };

@@ -2,7 +2,28 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getLiveSessionById } from "@/lib/data";
+import { getFirstSchool, getCurrentAcademicYear, getStudentDashboardData, getAttendanceForStudentPortal, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getLiveSessionById } from "@/lib/data";
+import type { StudentDashboardData } from "@/lib/data";
+
+export async function getDashboardDataAction(studentId: string) {
+  try {
+    if (!studentId) {
+        return { success: false, error: "Student ID is required." };
+    }
+    const school = await getFirstSchool();
+    if (!school) throw new Error("School not found");
+    
+    const academicYear = await getCurrentAcademicYear(school.id);
+    if (!academicYear) throw new Error("Current academic year not set");
+
+    const data = await getStudentDashboardData(studentId, academicYear.id);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Failed to get dashboard data:", error);
+    return { success: false, error: error.message || "Failed to fetch dashboard data." };
+  }
+}
+
 
 export async function getStudentAttendanceAction(studentId: string, month: number, year: number) {
     try {
