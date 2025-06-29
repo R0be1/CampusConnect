@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { School } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function SchoolLoginPage() {
@@ -12,8 +12,8 @@ export default function SchoolLoginPage() {
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary p-3">
-              <School className="h-8 w-8 text-primary-foreground" />
+            <div className="mx-auto mb-4 flex items-center justify-center">
+              <Image src="https://play-lh.googleusercontent.com/bXqMt9ROsGd0H9vPhib5hG-0NB-EJcAwZy6UUDhvlP-ykE595IMQtzr14R6IRWtJiGTh" width={64} height={64} alt="CampusConnect Logo" className="rounded-full" />
             </div>
             <CardTitle className="font-headline text-3xl">CampusConnect</CardTitle>
             <CardDescription>Welcome! Please login to your respective portal.</CardDescription>
