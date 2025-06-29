@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress, getParentsWithChildrenForPortal } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress, getParentsWithChildrenForPortal } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getParentsAndChildrenAction() {
@@ -12,16 +12,6 @@ export async function getParentsAndChildrenAction() {
     } catch (error: any) {
         console.error("Failed to fetch parents and children:", error);
         return { success: false, error: "Failed to fetch parents and children." };
-    }
-}
-
-export async function getAvailableStudentsAction() {
-    try {
-        const students = await getStudentsForParentPortal();
-        return { success: true, students };
-    } catch (error: any) {
-        console.error("Failed to fetch available students:", error);
-        return { success: false, error: "Failed to fetch students." };
     }
 }
 

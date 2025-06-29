@@ -1071,28 +1071,6 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 
 // --- Parent Portal Data ---
 
-export async function getStudentsForParentPortal() {
-    // This is a prototype simplification.
-    // In a real app, you would get the logged-in parent and their specific children.
-    return prisma.student.findMany({
-        select: {
-            id: true,
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                photoUrl: true,
-              }
-            }
-        },
-        orderBy: {
-            user: {
-                createdAt: 'asc'
-            }
-        }
-    });
-}
-
 export async function getParentsWithChildrenForPortal() {
     return prisma.parent.findMany({
         where: {
