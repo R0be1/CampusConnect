@@ -1,4 +1,5 @@
 
+
 // src/lib/data.ts
 'use server';
 
@@ -144,7 +145,7 @@ export async function createStudentWithParent(data: StudentRegistrationFormValue
       parentUser = await tx.user.create({
         data: {
           phone: data.parentPhone,
-          alternatePhone: data.parentAlternatePhone,
+          alternatePhone: data.parentAlternatePhone || null,
           password: hashedPassword,
           role: 'PARENT',
           schoolId: schoolId,
@@ -1107,38 +1108,55 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
-    // In a real app, we'd find the students for the logged-in parent from their session.
-    // For this prototype, let's get the parent of the first student and find all their children.
-    const firstParent = await prisma.parent.findFirst({
-      orderBy: { user: { createdAt: 'asc' } },
-      include: {
-        students: {
-          include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                photoUrl: true
-              }
+    // In a real app, we'd find students for the logged-in parent.
+    // For this prototype, find the first student who has a parent,
+    // and then use that parent to fetch all their associated children.
+    const studentWithParent = await prisma.student.findFirst({
+        where: {
+            parents: {
+                some: {} // Ensure the student has at least one parent
             }
-          },
-          orderBy: {
-            user: {
-              firstName: 'asc'
+        },
+        include: {
+            parents: {
+                include: {
+                    students: {
+                        include: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                    photoUrl: true,
+                                }
+                            }
+                        },
+                        orderBy: {
+                             user: {
+                                firstName: 'asc'
+                            }
+                        }
+                    }
+                }
             }
-          }
+        },
+        orderBy: {
+            user: {
+                createdAt: 'asc'
+            }
         }
-      }
     });
 
-    if (!firstParent) {
-      return [];
+    if (!studentWithParent || !studentWithParent.parents.length) {
+        return [];
     }
+    
+    // Use the first parent of that student to get all their children
+    const parentWithAllStudents = studentWithParent.parents[0];
 
-    return firstParent.students.map(s => ({ 
-      id: s.id, 
-      name: `${s.user.firstName} ${s.user.lastName}`, 
-      avatar: s.user.photoUrl 
+    return parentWithAllStudents.students.map(s => ({
+        id: s.id,
+        name: `${s.user.firstName} ${s.user.lastName}`,
+        avatar: s.user.photoUrl
     }));
 }
 
