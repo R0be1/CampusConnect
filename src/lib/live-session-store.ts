@@ -22,6 +22,10 @@ export type Message = {
 export type SessionState = {
   participants: Participant[];
   messages: Message[];
+  teacherStreams: {
+    cameraOn: boolean;
+    screenOn: boolean;
+  };
 };
 
 const sessionStore = new Map<string, SessionState>();
@@ -31,6 +35,7 @@ function getSession(sessionId: string): SessionState {
     sessionStore.set(sessionId, {
       participants: [],
       messages: [],
+      teacherStreams: { cameraOn: false, screenOn: false },
     });
   }
   return sessionStore.get(sessionId)!;
@@ -75,5 +80,17 @@ export async function addMessage(sessionId: string, from: string, text: string) 
     if(session.messages.length > 50) {
         session.messages.splice(0, session.messages.length - 50);
     }
+    return session;
+}
+
+export async function setCameraState(sessionId: string, isOn: boolean) {
+    const session = getSession(sessionId);
+    session.teacherStreams.cameraOn = isOn;
+    return session;
+}
+
+export async function setScreenState(sessionId: string, isOn: boolean) {
+    const session = getSession(sessionId);
+    session.teacherStreams.screenOn = isOn;
     return session;
 }

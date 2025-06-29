@@ -37,3 +37,11 @@ export async function toggleHandAction(sessionId: string, studentId: string, rai
 export async function sendMessageAction(sessionId: string, from: string, text: string) {
     return store.addMessage(sessionId, from, text);
 }
+
+export async function setTeacherCameraStateAction(sessionId: string, isOn: boolean) {
+    return store.setCameraState(sessionId, isOn);
+}
+
+export async function setTeacherScreenStateAction(sessionId: string, isOn: boolean) {
+    return store.setScreenState(sessionId, isOn);
+}

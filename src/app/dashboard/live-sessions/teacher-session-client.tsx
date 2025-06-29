@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LiveSessionForPage } from '@/lib/data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-import { getSessionStateAction, toggleHandAction, sendMessageAction } from './actions';
+import { getSessionStateAction, toggleHandAction, setTeacherCameraStateAction, setTeacherScreenStateAction } from './actions';
 import type { Participant, Message } from '@/lib/live-session-store';
 
 type TeacherSessionClientProps = {
@@ -76,6 +76,7 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
             cameraStreamRef.current = null;
             if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
             setIsCameraOn(false);
+            await setTeacherCameraStateAction(session.id, false);
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -85,6 +86,7 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
                 }
                 setHasCameraPermission(true);
                 setIsCameraOn(true);
+                await setTeacherCameraStateAction(session.id, true);
             } catch (error) {
                 toast({ variant: 'destructive', title: 'Camera Access Denied', description: 'Please enable camera permissions in your browser.'});
                 setHasCameraPermission(false);
@@ -98,6 +100,7 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
             screenStreamRef.current = null;
             if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
             setIsSharingScreen(false);
+            await setTeacherScreenStateAction(session.id, false);
         } else {
              try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -106,10 +109,13 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
                     screenVideoRef.current.srcObject = stream;
                 }
                 setIsSharingScreen(true);
+                await setTeacherScreenStateAction(session.id, true);
+                
                 // When screen sharing ends (e.g., user clicks browser's "Stop sharing" button)
-                stream.getVideoTracks()[0].addEventListener('ended', () => {
+                stream.getVideoTracks()[0].addEventListener('ended', async () => {
                     setIsSharingScreen(false);
                     if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
+                    await setTeacherScreenStateAction(session.id, false);
                 });
             } catch (error) {
                 toast({ variant: 'destructive', title: 'Screen Share Failed', description: 'Could not start screen sharing.'});

@@ -15,7 +15,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudent } from '@/context/student-context';
-import type { Message } from '@/lib/live-session-store';
+import type { Message, SessionState } from '@/lib/live-session-store';
 
 export default function StudentSessionPage() {
     const params = useParams<{ sessionId: string }>();
@@ -31,6 +31,7 @@ export default function StudentSessionPage() {
     const [handRaised, setHandRaised] = useState(false);
     const [message, setMessage] = useState("");
     const [chat, setChat] = useState<Message[]>([]);
+    const [teacherStreams, setTeacherStreams] = useState<SessionState['teacherStreams']>({ cameraOn: false, screenOn: false });
 
     const sessionId = params.sessionId as string;
 
@@ -54,22 +55,19 @@ export default function StudentSessionPage() {
     useEffect(() => {
         if (!sessionId || !selectedStudent) return;
 
-        // Join the session
         joinSessionAction(sessionId, selectedStudent.id, selectedStudent.name);
 
-        // Polling for chat messages
         const intervalId = setInterval(async () => {
             const state = await getSessionStateAction(sessionId);
             setChat(state.messages);
+            setTeacherStreams(state.teacherStreams);
         }, 3000);
 
-        // Handler to leave session on page unload
         const handleBeforeUnload = () => {
             leaveSessionAction(sessionId, selectedStudent.id);
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
 
-        // Cleanup on component unmount
         return () => {
             leaveSessionAction(sessionId, selectedStudent.id);
             clearInterval(intervalId);
@@ -142,11 +140,30 @@ export default function StudentSessionPage() {
                             </Link>
                         </Button>
                     </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center bg-muted/30 rounded-b-lg">
-                        <div className="text-center text-muted-foreground">
-                            <Monitor className="h-16 w-16 mx-auto" />
-                            <p className="mt-4 font-semibold">Waiting for teacher to share screen...</p>
-                        </div>
+                    <CardContent className="flex-1 flex items-center justify-center bg-black rounded-b-lg p-0 relative">
+                        {teacherStreams.screenOn ? (
+                            <div className="text-center text-white">
+                                <Monitor className="h-16 w-16 mx-auto" />
+                                <p className="mt-4 font-semibold">Teacher is sharing their screen</p>
+                            </div>
+                        ) : teacherStreams.cameraOn ? (
+                            <div className="text-center text-white">
+                                <Video className="h-16 w-16 mx-auto" />
+                                <p className="mt-4 font-semibold">Teacher's Camera</p>
+                            </div>
+                        ) : (
+                            <div className="text-center text-muted-foreground">
+                                <Monitor className="h-16 w-16 mx-auto" />
+                                <p className="mt-4 font-semibold">Waiting for teacher to start session...</p>
+                            </div>
+                        )}
+
+                        {teacherStreams.screenOn && teacherStreams.cameraOn && (
+                            <div className="absolute bottom-4 right-4 h-32 w-48 bg-muted/80 border-2 border-background rounded-md flex flex-col items-center justify-center text-center p-2">
+                                <Video className="h-8 w-8 text-muted-foreground" />
+                                <p className="text-xs text-muted-foreground mt-2">Teacher's Camera</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
