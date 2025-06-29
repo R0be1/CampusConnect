@@ -1111,7 +1111,9 @@ export async function getParentsWithChildrenForPortal() {
                             lastName: true,
                             photoUrl: true,
                         }
-                    }
+                    },
+                    grade: { select: { name: true } },
+                    section: { select: { name: true } }
                 },
                  orderBy: {
                     user: {
