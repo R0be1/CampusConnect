@@ -9,56 +9,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Grade, Section } from "@prisma/client";
 import { addGradeAction, deleteGradeAction, addSectionAction, deleteSectionAction } from "./actions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 
-const nameSchema = z.object({
+const gradeSchema = z.object({
   name: z.string().min(1, "Name cannot be empty.").max(20, "Name is too long."),
 });
-type NameFormValues = z.infer<typeof nameSchema>;
+type GradeFormValues = z.infer<typeof gradeSchema>;
 
 const sectionSchema = z.object({
-  name: z.string().min(1, "Section name is required.").max(20, "Name is too long."),
-  gradeId: z.string().min(1, "Please select a grade."),
+  name: z.string().min(1, "Name cannot be empty.").max(1, "Section should be a single letter.").regex(/^[A-Z]$/, "Section must be a single uppercase letter."),
 });
 type SectionFormValues = z.infer<typeof sectionSchema>;
 
+type GradeWithSections = Grade & { sections: Section[] };
+
 type ManageGradesSectionsClientPageProps = {
-    initialGrades: Grade[];
-    initialSections: Section[];
+    initialGradesWithSections: GradeWithSections[];
 }
 
-export default function ManageGradesSectionsClientPage({ initialGrades, initialSections }: ManageGradesSectionsClientPageProps) {
+const sortGrades = (grades: GradeWithSections[]) => {
+    return [...grades].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+}
+
+export default function ManageGradesSectionsClientPage({ initialGradesWithSections }: ManageGradesSectionsClientPageProps) {
     const { toast } = useToast();
-    const [grades, setGrades] = useState(initialGrades);
-    const [sections, setSections] = useState(initialSections);
+    const [grades, setGrades] = useState(() => sortGrades(initialGradesWithSections));
+    const [isAddGradeOpen, setIsAddGradeOpen] = useState(false);
     
-    const gradeForm = useForm<NameFormValues>({ resolver: zodResolver(nameSchema), defaultValues: { name: "" } });
-    const sectionForm = useForm<SectionFormValues>({ resolver: zodResolver(sectionSchema), defaultValues: { name: "", gradeId: "" } });
+    const gradeForm = useForm<GradeFormValues>({ resolver: zodResolver(gradeSchema), defaultValues: { name: "" } });
+    const sectionForm = useForm<SectionFormValues>({ resolver: zodResolver(sectionSchema), defaultValues: { name: "" }});
 
-    const gradeMap = new Map(grades.map(g => [g.id, g.name]));
-
-    const handleAddGrade = async (data: NameFormValues) => {
+    const handleAddGrade = async (data: GradeFormValues) => {
         const result = await addGradeAction(data);
         if (result.success && result.newGrade) {
-            setGrades(prev => [...prev, result.newGrade!].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })));
+            const newGradeWithSections: GradeWithSections = { ...result.newGrade, sections: [] };
+            setGrades(prev => sortGrades([...prev, newGradeWithSections]));
             toast({ title: "Grade Added", description: `${data.name} has been created.` });
             gradeForm.reset({ name: "" });
+            setIsAddGradeOpen(false);
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
@@ -74,21 +68,36 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
         }
     };
 
-    const handleAddSection = async (data: SectionFormValues) => {
-       const result = await addSectionAction(data);
+    const handleAddSection = async (data: SectionFormValues, gradeId: string) => {
+       const result = await addSectionAction({name: data.name, gradeId});
         if (result.success && result.newSection) {
-            setSections(prev => [...prev, result.newSection!].sort((a,b) => a.name.localeCompare(b.name)));
+            setGrades(prevGrades => {
+                return prevGrades.map(g => {
+                    if (g.id === gradeId) {
+                        const updatedSections = [...g.sections, result.newSection!].sort((a,b) => a.name.localeCompare(b.name));
+                        return { ...g, sections: updatedSections };
+                    }
+                    return g;
+                });
+            });
             toast({ title: "Section Added", description: `Section ${data.name} has been created.` });
-            sectionForm.reset({ name: "", gradeId: "" });
+            sectionForm.reset({ name: "" });
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
     };
 
-     const handleDeleteSection = async (sectionId: string) => {
+     const handleDeleteSection = async (sectionId: string, gradeId: string) => {
         const result = await deleteSectionAction(sectionId);
         if (result.success) {
-            setSections(prev => prev.filter(s => s.id !== sectionId));
+            setGrades(prevGrades => {
+                return prevGrades.map(g => {
+                    if (g.id === gradeId) {
+                        return { ...g, sections: g.sections.filter(s => s.id !== sectionId) };
+                    }
+                    return g;
+                });
+            });
             toast({ title: "Success", description: "Section deleted." });
         } else {
              toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -96,89 +105,115 @@ export default function ManageGradesSectionsClientPage({ initialGrades, initialS
     };
     
     return (
-        <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Manage Grades</CardTitle>
-                    <CardDescription>Add or remove grades available in the school.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Form {...gradeForm}>
-                        <form onSubmit={gradeForm.handleSubmit(handleAddGrade)} className="flex items-start gap-2">
-                            <FormField control={gradeForm.control} name="name" render={({ field }) => (
-                                <FormItem className="flex-1"><FormLabel className="sr-only">Grade Name</FormLabel><FormControl><Input placeholder="e.g., Grade 12" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <Button type="submit" disabled={gradeForm.formState.isSubmitting}>
-                                {gradeForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4" />} Add
-                            </Button>
-                        </form>
-                    </Form>
-                    <Separator />
-                    <ul className="space-y-2">
-                        {grades.map(grade => (
-                             <li key={grade.id} className="flex items-center justify-between rounded-md bg-muted p-2 px-4">
-                                <span className="font-medium">{grade.name}</span>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <div role="button" className="h-8 w-8 flex items-center justify-center rounded-sm hover:bg-destructive/10 cursor-pointer">
-                                            <Trash2 className="h-4 w-4 text-destructive/70" />
-                                        </div>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete this grade. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteGrade(grade.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Sections</CardTitle>
-                    <CardDescription>Define sections and assign them to a grade.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <Form {...sectionForm}>
-                        <form onSubmit={sectionForm.handleSubmit(handleAddSection)} className="space-y-4">
-                            <FormField control={sectionForm.control} name="gradeId" render={({ field }) => (
-                                <FormItem><FormLabel>Grade</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a grade" /></SelectTrigger></FormControl><SelectContent>{grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                            )} />
-                            <div className="flex items-start gap-2">
-                                <FormField control={sectionForm.control} name="name" render={({ field }) => (
-                                    <FormItem className="flex-1"><FormLabel className="sr-only">Section Name</FormLabel><FormControl><Input placeholder="e.g., Section D" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <Button type="submit" disabled={sectionForm.formState.isSubmitting}>
-                                    {sectionForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4" />} Add
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
-                    <Separator />
-                     <ul className="space-y-2">
-                        {sections.map(section => (
-                             <li key={section.id} className="flex items-center justify-between rounded-md bg-muted p-2 px-4">
-                                <div>
-                                    <span className="font-medium">{section.name}</span>
-                                    <p className="text-sm text-muted-foreground">{gradeMap.get(section.gradeId)}</p>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Manage Grades & Sections</CardTitle>
+                    <CardDescription>Add or remove grades, and manage sections within each grade.</CardDescription>
+                </div>
+                <Dialog open={isAddGradeOpen} onOpenChange={setIsAddGradeOpen}>
+                    <DialogTrigger asChild><Button><PlusCircle className="mr-2"/> Add Grade</Button></DialogTrigger>
+                     <DialogContent className="sm:max-w-[425px]">
+                        <Form {...gradeForm}>
+                            <form onSubmit={gradeForm.handleSubmit(handleAddGrade)}>
+                                <DialogHeader>
+                                    <DialogTitle>Add New Grade</DialogTitle>
+                                    <DialogDescription>Enter the name of the new grade (e.g., Grade 1, Grade 12).</DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <FormField control={gradeForm.control} name="name" render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl><Input placeholder="e.g., Grade 10" {...field} value={field.value || ''} /></FormControl><FormMessage />
+                                        </FormItem>
+                                    )} />
                                 </div>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <div role="button" className="h-8 w-8 flex items-center justify-center rounded-sm hover:bg-destructive/10 cursor-pointer">
-                                            <Trash2 className="h-4 w-4 text-destructive/70" />
-                                        </div>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete this section. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSection(section.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
-        </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={gradeForm.formState.isSubmitting}>
+                                        {gradeForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Save Grade
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {grades.map((grade) => (
+                    <div key={grade.id} className="rounded-lg border p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">{grade.name}</h3>
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>This will delete {grade.name} and all its sections. This action cannot be undone.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteGrade(grade.id)}>Delete Grade</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {grade.sections.length > 0 ? (
+                                grade.sections.map(section => (
+                                    <div key={section.id} className="flex items-center justify-between rounded-md bg-muted/50 p-2 px-3">
+                                        <span className="font-medium">Section {section.name}</span>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Section {section.name}?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This will delete Section {section.name} from {grade.name}. This action cannot be undone.</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteSection(section.id, grade.id)}>Delete Section</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-2">No sections defined for this grade.</p>
+                            )}
+                        </div>
+
+                        <Separator className="my-4"/>
+
+                        <Form {...sectionForm}>
+                            <form onSubmit={sectionForm.handleSubmit((data) => handleAddSection(data, grade.id))} className="flex items-start gap-2">
+                                <FormField control={sectionForm.control} name="name" render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                        <FormControl><Input placeholder="Add new section (e.g., C)" {...field} value={field.value || ''} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <Button type="submit" variant="secondary" disabled={sectionForm.formState.isSubmitting}>
+                                    {sectionForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Add Section'}
+                                </Button>
+                            </form>
+                        </Form>
+                    </div>
+                ))}
+                 {grades.length === 0 && (
+                     <div className="text-center p-8 text-muted-foreground">
+                        No grades defined. Please add a grade to begin.
+                    </div>
+                 )}
+            </CardContent>
+        </Card>
     );
 }

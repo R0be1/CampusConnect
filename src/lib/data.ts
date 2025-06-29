@@ -80,6 +80,23 @@ export async function getGrades(schoolId: string) {
     });
 }
 
+export async function getGradesWithSections(schoolId: string) {
+    if (!schoolId) return [];
+    return prisma.grade.findMany({
+        where: { schoolId },
+        include: {
+            sections: {
+                orderBy: {
+                    name: 'asc'
+                }
+            }
+        },
+        orderBy: {
+            name: 'asc'
+        }
+    });
+}
+
 export async function getSections(schoolId: string) {
     return prisma.section.findMany({
         where: { schoolId },
