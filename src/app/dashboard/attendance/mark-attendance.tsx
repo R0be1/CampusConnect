@@ -191,7 +191,7 @@ export function MarkAttendance({ grades, sections }: MarkAttendanceProps) {
                                 <Button size="sm" variant={attendance[student.id]?.status === 'PRESENT' ? 'default' : 'outline'} onClick={() => handleStatusChange(student.id, 'PRESENT')}>Present</Button>
                                 <Button size="sm" variant={attendance[student.id]?.status === 'ABSENT' ? 'destructive' : 'outline'} onClick={() => handleStatusChange(student.id, 'ABSENT')}>Absent</Button>
                                 <Button size="sm" variant={attendance[student.id]?.status === 'LATE' ? 'secondary' : 'outline'} onClick={() => handleStatusChange(student.id, 'LATE')}>Late</Button>
-                                <Button size="sm" variant={attendance[student.id]?.status === 'EXCUSED' ? 'outline' : 'outline'} className={cn(attendance[student.id]?.status === 'EXCUSED' && 'bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500')} onClick={() => handleStatusChange(student.id, 'EXCUSED')}>Excused</Button>
+                                <Button size="sm" variant={attendance[student.id]?.status === 'EXCUSED' ? 'default' : 'outline'} className={cn(attendance[student.id]?.status === 'EXCUSED' && 'bg-accent text-accent-foreground hover:bg-accent/90')} onClick={() => handleStatusChange(student.id, 'EXCUSED')}>Excused</Button>
                             </div>
                         </div>
                       ))}
