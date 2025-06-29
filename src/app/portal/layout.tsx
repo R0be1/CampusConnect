@@ -185,9 +185,12 @@ function InnerLayout({ children }: { children: ReactNode }) {
               variant="secondary"
               size="icon"
               className="h-8 w-8 rounded-full"
+              asChild
             >
-              <UserCircle className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
+              <Link href="/portal/profile">
+                <UserCircle className="h-5 w-5" />
+                <span className="sr-only">View Profile</span>
+              </Link>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
               <Link href="/">

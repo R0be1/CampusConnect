@@ -153,9 +153,11 @@ function InnerLayout({ children }: { children: ReactNode }) {
           <div className="w-full flex-1">
             <AcademicYearDisplay />
           </div>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <UserCircle className="h-5 w-5" />
-            <span className="sr-only">Toggle user menu</span>
+          <Button variant="secondary" size="icon" className="rounded-full" asChild>
+            <Link href="/dashboard/settings/school-profile">
+                <UserCircle className="h-5 w-5" />
+                <span className="sr-only">View Profile</span>
+            </Link>
           </Button>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
