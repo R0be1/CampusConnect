@@ -136,7 +136,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" {...field} />
+                        <Input placeholder="John" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -149,7 +149,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Michael" {...field} value={field.value ?? ''} />
+                        <Input placeholder="Michael" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -162,7 +162,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} />
+                        <Input placeholder="Doe" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -309,7 +309,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jane" {...field} />
+                        <Input placeholder="Jane" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -322,7 +322,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Anne" {...field} value={field.value ?? ''} />
+                        <Input placeholder="Anne" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -335,7 +335,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} />
+                        <Input placeholder="Doe" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -370,7 +370,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(123) 456-7890" {...field} />
+                        <Input type="tel" placeholder="(123) 456-7890" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -383,7 +383,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Alternate Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(098) 765-4321" {...field} value={field.value ?? ''} />
+                        <Input type="tel" placeholder="(098) 765-4321" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -406,7 +406,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                   <FormItem>
                     <FormLabel>Address Line 1</FormLabel>
                     <FormControl>
-                      <Input placeholder="123 Main St" {...field} />
+                      <Input placeholder="123 Main St" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -420,7 +420,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Input placeholder="Anytown" {...field} />
+                        <Input placeholder="Anytown" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -433,7 +433,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>State / Province</FormLabel>
                       <FormControl>
-                        <Input placeholder="CA" {...field} />
+                        <Input placeholder="CA" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -446,7 +446,7 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                     <FormItem>
                       <FormLabel>Zip / Postal Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="12345" {...field} />
+                        <Input placeholder="12345" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
