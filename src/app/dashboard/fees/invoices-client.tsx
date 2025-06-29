@@ -216,51 +216,55 @@ export default function InvoicesClientPage({ invoicesData }: InvoicesClientPageP
                     </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-6 py-4">
-                    <div className="space-y-3">
-                        <Label>Payment Method</Label>
-                        <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="flex flex-wrap gap-4">
-                            <Label htmlFor="method-bank" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                <RadioGroupItem value="BANK_TRANSFER" id="method-bank" />
-                                Bank
-                            </Label>
-                            <Label htmlFor="method-card" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                <RadioGroupItem value="CARD" id="method-card" />
-                                Card
-                            </Label>
-                             <Label htmlFor="method-cash" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                <RadioGroupItem value="CASH" id="method-cash" />
-                                Cash
-                            </Label>
-                        </RadioGroup>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="bank-name">Bank Name / Provider</Label>
-                            <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., Cash Desk'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="ref">Transaction Reference</Label>
-                            <Input id="ref" placeholder="e.g., TRF12345ABC" value={reference} onChange={(e) => setReference(e.target.value)} required />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="evidence">Upload Evidence</Label>
-                        <div className="relative">
-                            <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
-                                <Label htmlFor="evidence" className="cursor-pointer">
-                                    <FileUp className="h-4 w-4" />
+                        <div className="space-y-3">
+                            <Label>Payment Method</Label>
+                            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="flex flex-wrap gap-4">
+                                <Label htmlFor="method-bank" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                    <RadioGroupItem value="BANK_TRANSFER" id="method-bank" />
+                                    Bank
                                 </Label>
-                            </Button>
-                            <Input id="evidence" type="file" className="pl-12" />
+                                <Label htmlFor="method-card" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                    <RadioGroupItem value="CARD" id="method-card" />
+                                    Card
+                                </Label>
+                                <Label htmlFor="method-cash" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                    <RadioGroupItem value="CASH" id="method-cash" />
+                                    Cash
+                                </Label>
+                            </RadioGroup>
                         </div>
-                    </div>
+
+                        {paymentMethod !== 'CASH' && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bank-name">Bank Name / Provider</Label>
+                                        <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., Card Provider'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="ref">Transaction Reference</Label>
+                                        <Input id="ref" placeholder="e.g., TRF12345ABC" value={reference} onChange={(e) => setReference(e.target.value)} required />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="evidence">Upload Evidence</Label>
+                                    <div className="relative">
+                                        <Button size="icon" variant="outline" className="absolute left-0 top-0 rounded-r-none" asChild>
+                                            <Label htmlFor="evidence" className="cursor-pointer">
+                                                <FileUp className="h-4 w-4" />
+                                            </Label>
+                                        </Button>
+                                        <Input id="evidence" type="file" className="pl-12" />
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                     <DialogFooter>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button className="w-full" disabled={isSubmitting || !reference}>
+                                <Button className="w-full" disabled={isSubmitting || (paymentMethod !== 'CASH' && !reference)}>
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Submit for Verification
                                 </Button>

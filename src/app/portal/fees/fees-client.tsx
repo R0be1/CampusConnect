@@ -51,8 +51,18 @@ type FeesClientPageProps = {
 export default function FeesClientPage({ initialFeesData, studentName }: FeesClientPageProps) {
   const { toast } = useToast();
   const [feesData] = useState(initialFeesData);
-  const [selectedMethod, setSelectedMethod] = useState("BANK_TRANSFER");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for the payment dialog
+  const [invoiceForPayment, setInvoiceForPayment] = useState<PortalFeesData['invoices'][0] | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState("BANK_TRANSFER");
+  const [reference, setReference] = useState("");
+
+  const handleOpenDialog = (invoice: PortalFeesData['invoices'][0]) => {
+      setInvoiceForPayment(invoice);
+      setSelectedMethod("BANK_TRANSFER");
+      setReference("");
+  };
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
@@ -64,19 +74,23 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
     return acc;
   }, 0) ?? 0;
   
-  const handlePaymentSubmit = async (invoiceId: string, amount: number, form: HTMLFormElement) => {
+  const handlePaymentSubmit = async () => {
+    if (!invoiceForPayment) return;
+    
     setIsSubmitting(true);
-    const formData = new FormData(form);
+    const totalAmount = (invoiceForPayment.amount - (invoiceForPayment.concession?.amount ?? 0)) + invoiceForPayment.lateFee;
+    
     const result = await createFeePaymentAction({
-        invoiceId,
-        amount,
-        method: formData.get('payment_method') as string,
-        reference: formData.get('reference') as string,
+        invoiceId: invoiceForPayment.id,
+        amount: totalAmount,
+        method: selectedMethod,
+        reference: selectedMethod === 'CASH' ? `CASH_PAYMENT_${Date.now()}` : reference,
     });
     
     if (result.success) {
         toast({ title: "Payment Submitted", description: result.message });
         window.location.reload();
+        setInvoiceForPayment(null);
     } else {
         toast({ title: "Error", description: result.error, variant: "destructive" });
     }
@@ -94,6 +108,8 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
         </Alert>
       )
   }
+  
+  const totalDueForDialog = invoiceForPayment ? (invoiceForPayment.amount - (invoiceForPayment.concession?.amount ?? 0)) + invoiceForPayment.lateFee : 0;
 
   return (
     <TooltipProvider>
@@ -157,50 +173,9 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
                                           ) : (formatCurrency(invoice.lateFee))}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button size="sm" disabled={invoice.status === 'PAID' || invoice.status === 'PENDING_VERIFICATION'} className="font-semibold">
-                                                        <CreditCard className="mr-2 h-4 w-4" /> {formatCurrency(total)}
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-[480px]">
-                                                    <form onSubmit={(e) => { e.preventDefault(); handlePaymentSubmit(invoice.id, total, e.currentTarget); }}>
-                                                        <DialogHeader>
-                                                            <DialogTitle>Make Payment for {invoice.feeStructure.name}</DialogTitle>
-                                                            <DialogDescription>You are paying a total of <span className="font-bold text-foreground">{formatCurrency(total)}</span>.</DialogDescription>
-                                                        </DialogHeader>
-                                                        <div className="grid gap-6 py-4">
-                                                            <div className="space-y-3">
-                                                                <Label>Payment Method</Label>
-                                                                <RadioGroup name="payment_method" value={selectedMethod} onValueChange={setSelectedMethod} className="flex flex-wrap gap-4">
-                                                                    <Label htmlFor={`method-bank-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="BANK_TRANSFER" id={`method-bank-${invoice.id}`} />Bank</Label>
-                                                                    <Label htmlFor={`method-card-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CARD" id={`method-card-${invoice.id}`} />Card</Label>
-                                                                    <Label htmlFor={`method-cash-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CASH" id={`method-cash-${invoice.id}`} />Cash</Label>
-                                                                </RadioGroup>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <Label htmlFor={`ref-${invoice.id}`}>Transaction Reference</Label>
-                                                                <Input id={`ref-${invoice.id}`} name="reference" placeholder="e.g., TRF12345ABC" required/>
-                                                            </div>
-                                                        </div>
-                                                        <DialogFooter>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild><Button className="w-full" type="button" disabled={isSubmitting}>Submit for Verification</Button></AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>This will mark the invoice as 'Pending Verification'. An administrator will review the payment evidence. This action cannot be undone.</AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction asChild><Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Confirm and Submit</Button></AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </DialogFooter>
-                                                    </form>
-                                                </DialogContent>
-                                            </Dialog>
+                                            <Button size="sm" onClick={() => handleOpenDialog(invoice)} disabled={invoice.status === 'PAID' || invoice.status === 'PENDING_VERIFICATION'} className="font-semibold">
+                                                <CreditCard className="mr-2 h-4 w-4" /> {formatCurrency(total)}
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                     )
@@ -260,6 +235,53 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
             </Card>
         </div>
       </div>
+        <Dialog open={!!invoiceForPayment} onOpenChange={(isOpen) => !isOpen && setInvoiceForPayment(null)}>
+            <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                    <DialogTitle>Make Payment for {invoiceForPayment?.feeStructure.name}</DialogTitle>
+                    <DialogDescription>You are paying a total of <span className="font-bold text-foreground">{formatCurrency(totalDueForDialog)}</span>.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                    <div className="space-y-3">
+                        <Label>Payment Method</Label>
+                        <RadioGroup name="payment_method" value={selectedMethod} onValueChange={setSelectedMethod} className="flex flex-wrap gap-4">
+                            <Label htmlFor="method-bank" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="BANK_TRANSFER" id="method-bank" />Bank</Label>
+                            <Label htmlFor="method-card" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CARD" id="method-card" />Card</Label>
+                            <Label htmlFor="method-cash" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CASH" id="method-cash" />Cash</Label>
+                        </RadioGroup>
+                    </div>
+                    {selectedMethod !== 'CASH' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="reference">Transaction Reference</Label>
+                            <Input id="reference" name="reference" placeholder="e.g., TRF12345ABC" required value={reference} onChange={(e) => setReference(e.target.value)} />
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button className="w-full" type="button" disabled={isSubmitting || (selectedMethod !== 'CASH' && !reference)}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Submit for Verification
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>This will mark the invoice as 'Pending Verification'. An administrator will review the payment evidence. This action cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handlePaymentSubmit} disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Confirm and Submit
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
     </TooltipProvider>
   );
