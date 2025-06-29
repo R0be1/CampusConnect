@@ -174,12 +174,11 @@ function InnerLayout({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           
-          <StudentSelector />
-
           <div className="w-full flex-1">
             <AcademicYearDisplay />
           </div>
           <div className="flex items-center gap-4 md:gap-2 lg:gap-4">
+            <StudentSelector />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Notifications</span>
