@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   UserCircle,
@@ -20,9 +20,11 @@ import { cn } from '@/lib/utils';
 import { StudentProvider, useStudent } from '@/context/student-context';
 import { SchoolProvider, useSchool } from '@/context/school-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AcademicYearProvider, useAcademicYear } from '@/context/academic-year-context';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getParentsAndChildrenAction } from './actions';
+import type { ParentsWithChildren } from '@/lib/data';
 
 
 const navItems: NavItem[] = [
@@ -47,9 +49,20 @@ function SchoolDisplay({ isCollapsed }: { isCollapsed: boolean }) {
     )
 }
 
-function StudentSelector() {
-    const { availableStudents, selectedStudent, setSelectedStudent, isLoading } = useStudent();
-    
+function ParentStudentSelector() {
+    const { selectedStudent, setSelectedStudent } = useStudent();
+    const [parents, setParents] = useState<ParentsWithChildren>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getParentsAndChildrenAction().then(result => {
+            if (result.success && result.parents) {
+                setParents(result.parents);
+            }
+            setIsLoading(false);
+        });
+    }, []);
+
     if (isLoading) {
         return (
              <div className="flex items-center gap-2">
@@ -67,18 +80,6 @@ function StudentSelector() {
         );
     }
     
-    if (availableStudents.length <= 1) {
-        return (
-             <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={selectedStudent.avatar || `https://placehold.co/40x40.png`} data-ai-hint="person portrait" />
-                    <AvatarFallback>{selectedStudent.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <span className="font-semibold hidden sm:inline-block">{selectedStudent.name}</span>
-            </div>
-        )
-    }
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -91,11 +92,21 @@ function StudentSelector() {
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {availableStudents.map(student => (
-                    <DropdownMenuItem key={student.id} onSelect={() => setSelectedStudent(student)}>
-                        {student.name}
-                    </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+                {parents.map((parent, index) => (
+                    <React.Fragment key={parent.id}>
+                        <DropdownMenuLabel>{parent.user.firstName} {parent.user.lastName}'s Children</DropdownMenuLabel>
+                        {parent.students.map(student => (
+                            <DropdownMenuItem key={student.id} onSelect={() => setSelectedStudent({
+                                id: student.id,
+                                name: `${student.user.firstName} ${student.user.lastName}`,
+                                avatar: student.user.photoUrl
+                            })}>
+                                {student.user.firstName} {student.user.lastName}
+                            </DropdownMenuItem>
+                        ))}
+                        {index < parents.length - 1 && <DropdownMenuSeparator />}
+                    </React.Fragment>
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
@@ -176,7 +187,7 @@ function InnerLayout({ children }: { children: ReactNode }) {
             <AcademicYearDisplay />
           </div>
           <div className="flex items-center gap-4 md:gap-2 lg:gap-4">
-            <StudentSelector />
+            <ParentStudentSelector />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Notifications</span>

@@ -2,8 +2,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getStudentsForParentPortal, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress, getParentsWithChildrenForPortal } from "@/lib/data";
 import { format } from "date-fns";
+
+export async function getParentsAndChildrenAction() {
+    try {
+        const parents = await getParentsWithChildrenForPortal();
+        return { success: true, parents };
+    } catch (error: any) {
+        console.error("Failed to fetch parents and children:", error);
+        return { success: false, error: "Failed to fetch parents and children." };
+    }
+}
 
 export async function getAvailableStudentsAction() {
     try {

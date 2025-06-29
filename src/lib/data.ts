@@ -1082,8 +1082,7 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
-    // For this prototype, we'll fetch all students to display in the portal.
-    const students = await prisma.student.findMany({
+    return prisma.student.findMany({
         select: {
             id: true,
             user: {
@@ -1100,9 +1099,48 @@ export async function getStudentsForParentPortal() {
             }
         }
     });
-
-    return students.map(s => ({ id: s.id, name: `${s.user.firstName} ${s.user.lastName}`, avatar: s.user.photoUrl }));
 }
+
+export async function getParentsWithChildrenForPortal() {
+    return prisma.parent.findMany({
+        where: {
+            students: {
+                some: {} // Only get parents who have at least one student
+            }
+        },
+        include: {
+            user: {
+                select: {
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            students: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            photoUrl: true,
+                        }
+                    }
+                },
+                 orderBy: {
+                    user: {
+                        firstName: 'asc'
+                    }
+                }
+            }
+        },
+        orderBy: {
+            user: {
+                firstName: 'asc'
+            }
+        }
+    });
+}
+export type ParentsWithChildren = Awaited<ReturnType<typeof getParentsWithChildrenForPortal>>;
 
 
 export async function getPortalDashboardData(studentId: string, academicYearId: string) {
