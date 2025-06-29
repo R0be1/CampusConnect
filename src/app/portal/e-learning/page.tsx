@@ -141,7 +141,12 @@ export default function ELearningPortalPage() {
                                 </CardContent>
                                 <CardFooter>
                                     <Button asChild className="w-full">
-                                        <a href={mat.url} target="_blank" rel="noopener noreferrer">
+                                        <a 
+                                            href={mat.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            download={mat.type === 'DOCUMENT' ? mat.title.replace(/\s+/g, '_') : undefined}
+                                        >
                                             {mat.type === 'VIDEO' ? <PlayCircle className="mr-2" /> : <Download className="mr-2" />}
                                             {mat.type === 'VIDEO' ? 'Watch Video' : 'Download Document'}
                                         </a>

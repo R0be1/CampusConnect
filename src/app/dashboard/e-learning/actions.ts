@@ -6,10 +6,6 @@ import { revalidatePath } from "next/cache";
 
 export async function createLearningMaterialAction(data: any, schoolId: string, uploaderId: string) {
     try {
-        // In a real app, you would handle file upload here and get a URL.
-        // For now, we'll just store a placeholder.
-        const url = "/placeholder.pdf";
-
         await prisma.learningMaterial.create({
             data: {
                 title: data.title,
@@ -17,7 +13,7 @@ export async function createLearningMaterialAction(data: any, schoolId: string, 
                 subject: data.subject,
                 gradeId: data.gradeId,
                 type: data.type,
-                url: url,
+                url: data.url, // Use the data URI from the form
                 schoolId: schoolId,
                 uploaderId: uploaderId,
             }
@@ -26,6 +22,9 @@ export async function createLearningMaterialAction(data: any, schoolId: string, 
         return { success: true, message: `Material "${data.title}" has been published.` };
     } catch (error: any) {
         console.error("Failed to create learning material:", error);
+         if (error.message.includes('too long')) {
+             return { success: false, error: "The uploaded file is too large." };
+        }
         return { success: false, error: "Failed to create material." };
     }
 }

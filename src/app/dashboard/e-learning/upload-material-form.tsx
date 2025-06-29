@@ -38,6 +38,14 @@ type UploadMaterialFormProps = {
     uploaderId: string;
 }
 
+const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+});
+
+
 export function UploadMaterialForm({ grades, schoolId, uploaderId }: UploadMaterialFormProps) {
     const { toast } = useToast();
     const router = useRouter();
@@ -55,18 +63,40 @@ export function UploadMaterialForm({ grades, schoolId, uploaderId }: UploadMater
     const materialType = form.watch("type");
 
     async function onSubmit(data: UploadFormValues) {
-        const result = await createLearningMaterialAction(data, schoolId, uploaderId);
-        if (result.success) {
-            toast({
-                title: "Upload Successful",
-                description: result.message,
-            });
-            form.reset();
-            router.push('/dashboard/e-learning/manage');
-        } else {
-            toast({
+        try {
+            const file = data.file[0];
+            const url = await toBase64(file);
+
+            const payload = {
+                title: data.title,
+                description: data.description,
+                gradeId: data.gradeId,
+                subject: data.subject,
+                type: data.type,
+                url,
+                fileName: file.name,
+            };
+
+            const result = await createLearningMaterialAction(payload, schoolId, uploaderId);
+
+            if (result.success) {
+                toast({
+                    title: "Upload Successful",
+                    description: result.message,
+                });
+                form.reset();
+                router.push('/dashboard/e-learning/manage');
+            } else {
+                toast({
+                    title: "Upload Failed",
+                    description: result.error,
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+             toast({
                 title: "Upload Failed",
-                description: result.error,
+                description: "Could not read the file.",
                 variant: "destructive"
             });
         }
