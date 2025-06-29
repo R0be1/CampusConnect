@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,12 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Loader2, Users, CheckCircle, Shield } from "lucide-react";
+import { Edit, Trash2, Loader2, Users, CheckCircle, Shield, PlusCircle } from "lucide-react";
 import { createUserAction, updateUserRoleAction, deleteUserAction } from "./actions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
 type UserData = {
@@ -40,27 +42,6 @@ const userSchema = z.object({
 
 type UserFormValues = z.infer<typeof userSchema>;
 
-// Role permissions (hardcoded as the schema is static)
-const rolePermissions: Record<string, string[]> = {
-    ADMIN: [
-        "Full access to all modules and settings",
-        "Can manage users, roles, and school settings",
-        "Can approve results and manage system-wide configurations",
-    ],
-    TEACHER: [
-        "Manage assigned courses and view student rosters",
-        "Mark attendance for their classes",
-        "Create and manage tests and e-learning materials",
-        "Enter and submit exam results for approval",
-        "Communicate with parents of their students",
-    ],
-    ACCOUNTANT: [
-        "Manage fee structures, concessions, and penalty rules",
-        "Generate and view student invoices",
-        "Record and verify fee payments",
-        "Access financial reports and summaries",
-    ],
-};
 
 function ManageUsersTab({ initialUsers, staffRoles }: UsersRolesClientProps) {
     const { toast } = useToast();
@@ -190,8 +171,6 @@ function RegisterUserTab({ staffRoles }: { staffRoles: string[] }) {
         if (result.success) {
             toast({ title: "User Registered", description: result.message });
             form.reset();
-            // In a real app, you might re-fetch the user list or add the new user to state.
-            // For now, a page reload would be the simplest way to see the new user.
             window.location.reload();
         } else {
             toast({ title: "Registration Failed", description: result.error, variant: "destructive" });
@@ -244,34 +223,140 @@ function RegisterUserTab({ staffRoles }: { staffRoles: string[] }) {
     );
 }
 
-function RolesAndPermissionsTab() {
+const modules = [
+    { id: 'students', name: 'Students' },
+    { id: 'academics', name: 'Academics' },
+    { id: 'attendance', name: 'Attendance' },
+    { id: 'communication', name: 'Communication' },
+    { id: 'fees', name: 'Fees &amp; Invoices' },
+    { id: 'results', name: 'Results & Exams' },
+    { id: 'tests', name: 'Tests & Quizzes' },
+    { id: 'elearning', name: 'E-Learning' },
+    { id: 'livesessions', name: 'Live Sessions' },
+    { id: 'settings', name: 'Settings' },
+];
+type Permission = 'create' | 'read' | 'update' | 'delete';
+
+function RoleForm({ roleName: initialRoleName, onClose }: { roleName?: string, onClose: () => void }) {
+    const { toast } = useToast();
+    const [roleName, setRoleName] = useState(initialRoleName || "");
+    
+    // In a real implementation, this would come from the database for the given role
+    const [permissions, setPermissions] = useState<Record<string, Record<Permission, boolean>>>(() => {
+        const initial: Record<string, Record<Permission, boolean>> = {};
+        modules.forEach(m => {
+            initial[m.id] = { create: false, read: false, update: false, delete: false };
+        });
+        return initial;
+    });
+
+    const handlePermissionChange = (moduleId: string, permission: Permission, value: boolean) => {
+        setPermissions(prev => ({
+            ...prev,
+            [moduleId]: { ...prev[moduleId], [permission]: value }
+        }));
+    };
+
+    const handleSave = () => {
+        // In a real app, this would be a server action to save the role and permissions.
+        toast({
+            title: "Prototype Feature",
+            description: "Role management is a prototype. Your changes have not been saved.",
+        });
+        onClose();
+    };
+
+    return (
+        <>
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-2">
+                <div className="space-y-2">
+                    <Label htmlFor="role-name">Role Name</Label>
+                    <Input id="role-name" value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g., Librarian" />
+                </div>
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Module</TableHead>
+                                <TableHead className="text-center">Create</TableHead>
+                                <TableHead className="text-center">Read</TableHead>
+                                <TableHead className="text-center">Update</TableHead>
+                                <TableHead className="text-center">Delete</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {modules.map(module => (
+                                <TableRow key={module.id}>
+                                    <TableCell className="font-medium">{module.name}</TableCell>
+                                    {(['create', 'read', 'update', 'delete'] as Permission[]).map(p => (
+                                        <TableCell key={p} className="text-center">
+                                            <Checkbox
+                                                checked={permissions[module.id]?.[p]}
+                                                onCheckedChange={(checked) => handlePermissionChange(module.id, p, !!checked)}
+                                            />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={onClose}>Cancel</Button>
+                <Button onClick={handleSave}>Save Role</Button>
+            </DialogFooter>
+        </>
+    );
+}
+
+function ManageRolesTab() {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    
+    const rolePermissions: Record<string, string[]> = {
+        ADMIN: ["Full access to all modules and settings"],
+        TEACHER: ["Manage assigned courses, mark attendance, create tests, enter results"],
+        ACCOUNTANT: ["Manage fee structures, invoices, and payments"],
+    };
+
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Roles &amp; Permissions</CardTitle>
-                <CardDescription>
-                    This is a summary of permissions for each role. This is for informational purposes and cannot be changed here.
-                </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                 <div>
+                    <CardTitle>Role Management</CardTitle>
+                    <CardDescription>
+                        Define custom roles and their specific permissions within the application.
+                    </CardDescription>
+                </div>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                         <Button><PlusCircle className="mr-2" />Create New Role</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Create New Role</DialogTitle>
+                            <DialogDescription>Define a name and set permissions for this new role.</DialogDescription>
+                        </DialogHeader>
+                        <RoleForm onClose={() => setIsDialogOpen(false)} />
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent className="space-y-4">
                 {Object.entries(rolePermissions).map(([role, permissions]) => (
-                    <Card key={role} className="bg-muted/40">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg capitalize">
-                                <Shield className="h-5 w-5 text-primary" />
-                                {role.toLowerCase()}
-                            </CardTitle>
+                    <Card key={role}>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Shield className="h-6 w-6 text-primary" />
+                                <div>
+                                    <CardTitle className="text-lg capitalize">{role.toLowerCase()}</CardTitle>
+                                    <CardDescription className="text-xs">{permissions[0]}</CardDescription>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm" disabled>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit (Default Role)
+                            </Button>
                         </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {permissions.map((perm, index) => (
-                                    <li key={index} className="flex items-start gap-3">
-                                        <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0 text-green-600" />
-                                        <span className="text-sm text-muted-foreground">{perm}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
                     </Card>
                 ))}
             </CardContent>
@@ -290,7 +375,7 @@ export function UsersRolesClient({ initialUsers, staffRoles }: UsersRolesClientP
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="manage">Manage Users</TabsTrigger>
                     <TabsTrigger value="register">Register User</TabsTrigger>
-                    <TabsTrigger value="permissions">Roles &amp; Permissions</TabsTrigger>
+                    <TabsTrigger value="permissions">Manage Roles</TabsTrigger>
                 </TabsList>
                 <TabsContent value="manage" className="mt-6">
                     <ManageUsersTab initialUsers={initialUsers} staffRoles={staffRoles}/>
@@ -299,7 +384,7 @@ export function UsersRolesClient({ initialUsers, staffRoles }: UsersRolesClientP
                     <RegisterUserTab staffRoles={staffRoles} />
                 </TabsContent>
                 <TabsContent value="permissions" className="mt-6">
-                    <RolesAndPermissionsTab />
+                    <ManageRolesTab />
                 </TabsContent>
             </Tabs>
         </div>
