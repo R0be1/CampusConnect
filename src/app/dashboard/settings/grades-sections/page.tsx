@@ -1,5 +1,5 @@
 
-import { getFirstSchool, getGradesWithSections } from "@/lib/data";
+import { getFirstSchool, getGrades, getSections } from "@/lib/data";
 import { redirect } from "next/navigation";
 import ManageGradesSectionsClientPage from "./grades-sections-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,11 +19,15 @@ export default async function ManageGradesSectionsPage() {
         )
     }
 
-    const gradesWithSections = await getGradesWithSections(school.id);
+    const [grades, sections] = await Promise.all([
+        getGrades(school.id),
+        getSections(school.id),
+    ]);
     
     return (
         <ManageGradesSectionsClientPage
-            initialGrades={gradesWithSections}
+            initialGrades={grades}
+            initialSections={sections}
         />
     );
 }

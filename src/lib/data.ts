@@ -215,6 +215,10 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
             firstName: data.studentFirstName,
             lastName: data.studentLastName,
             middleName: data.studentMiddleName,
+            addressLine1: data.addressLine1,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
           }
         });
     }
@@ -895,20 +899,6 @@ export async function deleteSection(id: string) {
     return prisma.section.delete({ where: { id } });
 }
 
-export async function getGradesWithSections(schoolId: string) {
-    return prisma.grade.findMany({
-        where: { schoolId },
-        include: {
-            sections: {
-                orderBy: {
-                    name: 'asc'
-                }
-            }
-        },
-        orderBy: { name: 'asc' }
-    });
-}
-
 export async function getCoursesWithDetails(schoolId: string) {
     return prisma.course.findMany({
         where: { schoolId },
@@ -1082,6 +1072,8 @@ export async function bulkUpdateResultStatusAction(examId: string, action: 'appr
 // --- Parent Portal Data ---
 
 export async function getStudentsForParentPortal() {
+    // This is a prototype simplification.
+    // In a real app, you would get the logged-in parent and their specific children.
     return prisma.student.findMany({
         select: {
             id: true,
