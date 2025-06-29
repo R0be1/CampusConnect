@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { createFeePaymentAction, PortalFeesData } from "../actions";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
@@ -175,7 +175,7 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
                                                                 <RadioGroup name="payment_method" value={selectedMethod} onValueChange={setSelectedMethod} className="flex flex-wrap gap-4">
                                                                     <Label htmlFor={`method-bank-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="BANK_TRANSFER" id={`method-bank-${invoice.id}`} />Bank</Label>
                                                                     <Label htmlFor={`method-card-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CARD" id={`method-card-${invoice.id}`} />Card</Label>
-                                                                    <Label htmlFor={`method-wallet-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="WALLET" id={`method-wallet-${invoice.id}`} />Wallet</Label>
+                                                                    <Label htmlFor={`method-cash-${invoice.id}`} className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1"><RadioGroupItem value="CASH" id={`method-cash-${invoice.id}`} />Cash</Label>
                                                                 </RadioGroup>
                                                             </div>
                                                             <div className="space-y-2">

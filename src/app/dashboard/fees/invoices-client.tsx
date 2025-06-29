@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -226,17 +227,17 @@ export default function InvoicesClientPage({ invoicesData }: InvoicesClientPageP
                                 <RadioGroupItem value="CARD" id="method-card" />
                                 Card
                             </Label>
-                             <Label htmlFor="method-wallet" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
-                                <RadioGroupItem value="WALLET" id="method-wallet" />
-                                Wallet
+                             <Label htmlFor="method-cash" className="flex cursor-pointer items-center gap-2 rounded-md border p-3 has-[:checked]:border-primary flex-1">
+                                <RadioGroupItem value="CASH" id="method-cash" />
+                                Cash
                             </Label>
                         </RadioGroup>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="bank-name">Bank Name / Wallet Provider</Label>
-                            <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., PayTM'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
+                            <Label htmlFor="bank-name">Bank Name / Provider</Label>
+                            <Input id="bank-name" placeholder={paymentMethod === 'BANK_TRANSFER' ? 'e.g., Central Bank' : 'e.g., Cash Desk'} value={bankName} onChange={(e) => setBankName(e.target.value)}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="ref">Transaction Reference</Label>
