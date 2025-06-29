@@ -28,13 +28,13 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <div><Label>First Name</Label><Input readOnly value={profileData.student.firstName} /></div>
-                    <div><Label>Last Name</Label><Input readOnly value={profileData.student.lastName} /></div>
+                    <div><Label>First Name</Label><Input readOnly value={profileData.student.firstName || ''} /></div>
+                    <div><Label>Last Name</Label><Input readOnly value={profileData.student.lastName || ''} /></div>
                 </div>
-                 <div><Label>Date of Birth</Label><Input readOnly value={profileData.student.dob} /></div>
+                 <div><Label>Date of Birth</Label><Input readOnly value={profileData.student.dob || ''} /></div>
                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Grade</Label><Input readOnly value={profileData.student.grade} /></div>
-                    <div><Label>Section</Label><Input readOnly value={profileData.student.section} /></div>
+                    <div><Label>Grade</Label><Input readOnly value={profileData.student.grade || ''} /></div>
+                    <div><Label>Section</Label><Input readOnly value={profileData.student.section || ''} /></div>
                  </div>
             </CardContent>
         </Card>
@@ -46,11 +46,11 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div><Label>First Name</Label><Input readOnly defaultValue={profileData.parent.firstName} /></div>
-                        <div><Label>Last Name</Label><Input readOnly defaultValue={profileData.parent.lastName} /></div>
+                        <div><Label>First Name</Label><Input readOnly value={profileData.parent.firstName || ''} /></div>
+                        <div><Label>Last Name</Label><Input readOnly value={profileData.parent.lastName || ''} /></div>
                     </div>
-                    <div><Label>Relation</Label><Input readOnly defaultValue={profileData.parent.relation} /></div>
-                    <div><Label>Phone Number</Label><Input type="tel" readOnly defaultValue={profileData.parent.phone} /></div>
+                    <div><Label>Relation</Label><Input readOnly value={profileData.parent.relation || ''} /></div>
+                    <div><Label>Phone Number</Label><Input type="tel" readOnly value={profileData.parent.phone || ''} /></div>
                 </CardContent>
             </Card>
         )}
@@ -61,11 +61,11 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
                 <CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" /> Contact Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div><Label>Address Line 1</Label><Input readOnly defaultValue={profileData.address.line1 || ''} /></div>
+                 <div><Label>Address Line 1</Label><Input readOnly value={profileData.address.line1 || ''} /></div>
                 <div className="grid grid-cols-3 gap-4">
-                    <div><Label>City</Label><Input readOnly defaultValue={profileData.address.city || ''} /></div>
-                    <div><Label>State / Province</Label><Input readOnly defaultValue={profileData.address.state || ''} /></div>
-                    <div><Label>Zip / Postal Code</Label><Input readOnly defaultValue={profileData.address.zipCode || ''} /></div>
+                    <div><Label>City</Label><Input readOnly value={profileData.address.city || ''} /></div>
+                    <div><Label>State / Province</Label><Input readOnly value={profileData.address.state || ''} /></div>
+                    <div><Label>Zip / Postal Code</Label><Input readOnly value={profileData.address.zipCode || ''} /></div>
                 </div>
             </CardContent>
         </Card>
