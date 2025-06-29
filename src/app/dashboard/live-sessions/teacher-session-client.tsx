@@ -12,26 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { LiveSessionForPage } from '@/lib/data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-
-type Participant = {
-  id: string;
-  name: string;
-  handRaised: boolean;
-};
-
-type Message = {
-  id: string;
-  participantName: string;
-  text: string;
-};
-
-// Dummy participants for simulation
-const allParticipants: Participant[] = [
-  { id: 'student-1', name: 'Alice Doe', handRaised: false },
-  { id: 'student-2', name: 'Bob Smith', handRaised: false },
-  { id: 'student-3', name: 'Charlie Brown', handRaised: false },
-  { id: 'student-4', name: 'Diana Prince', handRaised: false },
-];
+import { getSessionStateAction, toggleHandAction, sendMessageAction } from './actions';
+import type { Participant, Message } from '@/lib/live-session-store';
 
 type TeacherSessionClientProps = {
     session: LiveSessionForPage;
@@ -53,36 +35,21 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
     const screenStreamRef = useRef<MediaStream | null>(null);
     const cameraStreamRef = useRef<MediaStream | null>(null);
 
-    // Simulation Effect
+    // Poll for session state updates
     useEffect(() => {
-        // Simulate participants joining one by one
-        const joinInterval = setInterval(() => {
-          setParticipants(current => {
-            if (current.length < allParticipants.length) {
-              return [...current, allParticipants[current.length]];
+        const intervalId = setInterval(async () => {
+            try {
+                const state = await getSessionStateAction(session.id);
+                setParticipants(state.participants);
+                setMessages(state.messages);
+            } catch (error) {
+                console.error("Failed to fetch session state:", error);
             }
-            clearInterval(joinInterval);
-            return current;
-          });
-        }, 1500);
-    
-        // Simulate a hand raise
-        const handRaiseTimeout = setTimeout(() => {
-          setParticipants(current => current.map(p => p.id === 'student-2' ? { ...p, handRaised: true } : p));
-          toast({ title: "Hand Raised", description: "Bob Smith has raised their hand." });
-        }, 6000);
-    
-        // Simulate a message
-        const messageTimeout = setTimeout(() => {
-          setMessages(current => [...current, { id: 'msg-1', participantName: 'Alice Doe', text: 'Can you please explain that last part again?' }]);
-        }, 9000);
-    
-        return () => {
-          clearInterval(joinInterval);
-          clearTimeout(handRaiseTimeout);
-          clearTimeout(messageTimeout);
-        };
-    }, [toast]);
+        }, 3000); // Poll every 3 seconds
+
+        return () => clearInterval(intervalId);
+    }, [session.id]);
+
 
     useEffect(() => {
         const getCameraPermission = async () => {
@@ -148,6 +115,11 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
                 toast({ variant: 'destructive', title: 'Screen Share Failed', description: 'Could not start screen sharing.'});
             }
         }
+    };
+
+    const handleLowerHand = async (studentId: string) => {
+        await toggleHandAction(session.id, studentId, false);
+        setParticipants(prev => prev.map(p => p.id === studentId ? { ...p, handRaised: false } : p));
     };
 
     const raisedHands = participants.filter(p => p.handRaised);
@@ -216,7 +188,12 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
                     <CardContent>
                         {raisedHands.length > 0 ? (
                             <ul className="space-y-2">
-                                {raisedHands.map(p => <li key={p.id} className="text-sm font-medium">{p.name}</li>)}
+                                {raisedHands.map(p => (
+                                    <li key={p.id} className="text-sm font-medium flex items-center justify-between">
+                                        <span>{p.name}</span>
+                                        <Button size="sm" variant="ghost" onClick={() => handleLowerHand(p.id)}>Lower Hand</Button>
+                                    </li>
+                                ))}
                             </ul>
                         ) : (
                             <p className="text-sm text-muted-foreground">No students have raised their hand.</p>
@@ -253,7 +230,7 @@ export function TeacherSessionClient({ session }: TeacherSessionClientProps) {
                             <div className="space-y-4">
                                {messages.length > 0 ? messages.map(msg => (
                                  <div key={msg.id}>
-                                   <p className="font-bold text-sm">{msg.participantName}</p>
+                                   <p className="font-bold text-sm">{msg.from}</p>
                                    <p className="text-sm text-muted-foreground">{msg.text}</p>
                                  </div>
                                )) : (

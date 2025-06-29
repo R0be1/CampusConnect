@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Monitor, Hand, Mic, Video, Send, Loader2 } from "lucide-react";
@@ -9,14 +9,20 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getLiveSessionAction } from '../../actions';
+import { getSessionStateAction, joinSessionAction, leaveSessionAction, sendMessageAction, toggleHandAction } from '@/app/dashboard/live-sessions/actions';
 import type { LiveSession } from '@prisma/client';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStudent } from '@/context/student-context';
+import type { Message } from '@/lib/live-session-store';
 
 export default function StudentSessionPage() {
     const params = useParams<{ sessionId: string }>();
+    const router = useRouter();
     const { toast } = useToast();
+    const { selectedStudent, isLoading: isStudentLoading } = useStudent();
+
     const [sessionDetails, setSessionDetails] = useState<LiveSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,11 +30,14 @@ export default function StudentSessionPage() {
     // Interactive State
     const [handRaised, setHandRaised] = useState(false);
     const [message, setMessage] = useState("");
-    const [chat, setChat] = useState<{ from: 'You' | string, text: string }[]>([]);
+    const [chat, setChat] = useState<Message[]>([]);
 
+    const sessionId = params.sessionId as string;
+
+    // Fetch initial session details
     useEffect(() => {
-        if (params.sessionId) {
-            getLiveSessionAction(params.sessionId as string)
+        if (sessionId) {
+            getLiveSessionAction(sessionId)
                 .then(result => {
                     if (result.success && result.data) {
                         setSessionDetails(result.data as LiveSession);
@@ -39,25 +48,52 @@ export default function StudentSessionPage() {
                 .catch(() => setError("Failed to load session details."))
                 .finally(() => setIsLoading(false));
         }
-    }, [params.sessionId]);
+    }, [sessionId]);
 
-    const handleSendMessage = () => {
-      if (message.trim()) {
-        setChat(prev => [...prev, { from: 'You', text: message }]);
+    // Effect for joining, leaving, and polling
+    useEffect(() => {
+        if (!sessionId || !selectedStudent) return;
+
+        // Join the session
+        joinSessionAction(sessionId, selectedStudent.id, selectedStudent.name);
+
+        // Polling for chat messages
+        const intervalId = setInterval(async () => {
+            const state = await getSessionStateAction(sessionId);
+            setChat(state.messages);
+        }, 3000);
+
+        // Handler to leave session on page unload
+        const handleBeforeUnload = () => {
+            leaveSessionAction(sessionId, selectedStudent.id);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Cleanup on component unmount
+        return () => {
+            leaveSessionAction(sessionId, selectedStudent.id);
+            clearInterval(intervalId);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [sessionId, selectedStudent]);
+
+
+    const handleSendMessage = useCallback(async () => {
+      if (message.trim() && selectedStudent) {
+        await sendMessageAction(sessionId, selectedStudent.name, message);
         setMessage("");
-        toast({ title: "Message Sent", description: "Your message has been sent to the teacher." });
       }
-    };
+    }, [message, sessionId, selectedStudent]);
 
-    const handleToggleHand = () => {
-        setHandRaised(prev => {
-            const newStatus = !prev;
-            toast({ title: newStatus ? "Hand Raised" : "Hand Lowered", description: newStatus ? "The teacher has been notified." : "" });
-            return newStatus;
-        });
-    };
+    const handleToggleHand = useCallback(async () => {
+        if (!selectedStudent) return;
+        const newStatus = !handRaised;
+        await toggleHandAction(sessionId, selectedStudent.id, newStatus);
+        setHandRaised(newStatus);
+        toast({ title: newStatus ? "Hand Raised" : "Hand Lowered", description: newStatus ? "The teacher has been notified." : "" });
+    }, [handRaised, sessionId, selectedStudent, toast]);
 
-    if (isLoading) {
+    if (isLoading || isStudentLoading) {
         return (
              <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -134,8 +170,8 @@ export default function StudentSessionPage() {
                             <h3 className="font-semibold mb-2">Session Chat</h3>
                             <ScrollArea className="h-48 border rounded-md p-4 mb-2">
                                 <div className="space-y-3">
-                                {chat.length > 0 ? chat.map((c, i) => (
-                                    <div key={i}>
+                                {chat.length > 0 ? chat.map((c) => (
+                                    <div key={c.id}>
                                         <p className="font-bold text-sm">{c.from}</p>
                                         <p className="text-sm text-muted-foreground">{c.text}</p>
                                     </div>
@@ -151,8 +187,14 @@ export default function StudentSessionPage() {
                                     rows={1}
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSendMessage();
+                                        }
+                                    }}
                                 />
-                                <Button onClick={handleSendMessage}><Send className="h-4 w-4"/></Button>
+                                <Button onClick={handleSendMessage} disabled={!message.trim()}><Send className="h-4 w-4"/></Button>
                             </div>
                        </div>
                     </CardContent>
