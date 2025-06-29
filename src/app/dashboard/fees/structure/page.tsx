@@ -21,7 +21,6 @@ export default async function FeeStructurePage() {
         amount: `$${fs.amount.toFixed(2)}`,
         penalty: fs.penaltyRule?.name || 'None',
         academicYear: academicYear.name, // Assuming it applies to current, needs refinement
-        dueDate: 'N/A', // Needs to be added to the model
         interval: fs.interval as any,
     }));
 
@@ -30,6 +29,7 @@ export default async function FeeStructurePage() {
             feeSchemes={formattedFeeSchemes}
             penaltyRules={penaltyRules}
             academicYear={academicYear.name}
+            schoolId={school.id}
         />
     );
 }

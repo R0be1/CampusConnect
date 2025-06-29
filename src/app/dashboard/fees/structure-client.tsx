@@ -7,18 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, PlusCircle, Trash2, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Pencil, PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { createFeeStructureAction, updateFeeStructureAction, deleteFeeStructureAction, createPenaltyRuleAction, updatePenaltyRuleAction, deletePenaltyRuleAction } from "./actions";
@@ -49,17 +45,17 @@ type PenaltyRuleFormValues = z.infer<typeof penaltyRuleSchema>;
 
 // Types
 type FeeScheme = {
-    id: string; name: string; amount: string; penalty: string; academicYear: string; dueDate: string; interval: 'ONE_TIME' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY';
+    id: string; name: string; amount: string; penalty: string; academicYear: string; interval: 'ONE_TIME' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY';
 };
 type PenaltyTier = { id: string; fromDay: number; toDay: number | null; type: 'FIXED' | 'PERCENTAGE'; value: number; frequency: 'ONE_TIME' | 'DAILY'; };
 type PenaltyRule = { id: string; name: string; gracePeriod: number; tiers: PenaltyTier[]; };
 
 type StructureClientPageProps = {
-    feeSchemes: FeeScheme[]; penaltyRules: PenaltyRule[]; academicYear: string;
+    feeSchemes: FeeScheme[]; penaltyRules: PenaltyRule[]; academicYear: string; schoolId: string;
 };
 
 // Main Component
-export default function StructureClientPage({ feeSchemes: initialFeeSchemes, penaltyRules: initialPenaltyRules, academicYear }: StructureClientPageProps) {
+export default function StructureClientPage({ feeSchemes: initialFeeSchemes, penaltyRules: initialPenaltyRules, academicYear, schoolId }: StructureClientPageProps) {
   const { toast } = useToast();
   const [feeSchemes, setFeeSchemes] = useState(initialFeeSchemes);
   const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyRules);
@@ -67,7 +63,6 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [editingScheme, setEditingScheme] = useState<FeeScheme | null>(null);
   const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
-  const schoolId = "cmcf3ofm90000kjlz1g767avh"; // Placeholder
 
   const openSchemeDialog = (scheme: FeeScheme | null) => {
     setEditingScheme(scheme);
