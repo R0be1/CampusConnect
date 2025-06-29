@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { BookCopy, Video, FileText, Download, PlayCircle, Search, Info, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getFirstStudent } from "@/lib/data";
+import { getFirstSchool, getFirstStudent } from "@/lib/data";
 import { getELearningMaterialsAction, StudentPortalELearningData } from "../actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
