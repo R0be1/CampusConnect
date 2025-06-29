@@ -24,12 +24,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 const concessionSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  category: z.enum(['Scholarship', 'Discount']),
-  type: z.enum(['Percentage', 'Fixed']),
+  type: z.enum(['PERCENTAGE', 'FIXED']),
   value: z.coerce.number().min(0, 'Value must be non-negative'),
   description: z.string().optional(),
   applicableFeeStructureIds: z.array(z.string()).min(1, 'At least one fee structure must be selected'),
-}).refine(data => data.type === 'Percentage' ? data.value <= 100 : true, {
+}).refine(data => data.type === 'PERCENTAGE' ? data.value <= 100 : true, {
     message: 'Percentage value cannot exceed 100',
     path: ['value'],
 });
@@ -39,8 +38,7 @@ type ConcessionFormValues = z.infer<typeof concessionSchema>;
 type Concession = {
   id: string;
   name: string;
-  category: 'Scholarship' | 'Discount';
-  type: 'Percentage' | 'Fixed';
+  type: 'PERCENTAGE' | 'FIXED';
   value: number;
   description: string;
   applicableFeeStructureIds: string[];
@@ -103,7 +101,6 @@ export default function ConcessionsClientPage({ initialConcessions, feeStructure
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Name</TableHead>
-                                <TableHead>Category</TableHead>
                                 <TableHead>Value</TableHead>
                                 <TableHead>Applies To</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -113,11 +110,10 @@ export default function ConcessionsClientPage({ initialConcessions, feeStructure
                             {concessions.map(c => (
                                 <TableRow key={c.id}>
                                     <TableCell className="font-medium">{c.name}</TableCell>
-                                    <TableCell><Badge variant="outline">{c.category}</Badge></TableCell>
                                     <TableCell className="font-semibold flex items-center">
-                                        {c.type === 'Fixed' && <DollarSign className="h-4 w-4 mr-1 text-muted-foreground"/>}
+                                        {c.type === 'FIXED' && <DollarSign className="h-4 w-4 mr-1 text-muted-foreground"/>}
                                         {c.value}
-                                        {c.type === 'Percentage' && <Percent className="h-4 w-4 ml-1 text-muted-foreground"/>}
+                                        {c.type === 'PERCENTAGE' && <Percent className="h-4 w-4 ml-1 text-muted-foreground"/>}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
@@ -183,8 +179,7 @@ function ConcessionForm({ feeStructures, concession, onSave, onClose }: Concessi
         resolver: zodResolver(concessionSchema),
         defaultValues: {
             name: concession?.name || '',
-            category: concession?.category || 'Discount',
-            type: concession?.type || 'Percentage',
+            type: concession?.type || 'PERCENTAGE',
             value: concession?.value || 0,
             description: concession?.description || '',
             applicableFeeStructureIds: concession?.applicableFeeStructureIds || [],
@@ -200,15 +195,12 @@ function ConcessionForm({ feeStructures, concession, onSave, onClose }: Concessi
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <div className="grid grid-cols-3 gap-4">
-                        <FormField control={form.control} name="category" render={({ field }) => (
-                            <FormItem><FormLabel>Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Scholarship">Scholarship</SelectItem><SelectItem value="Discount">Discount</SelectItem></SelectContent></Select><FormMessage /></FormItem>
-                        )} />
+                    <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="type" render={({ field }) => (
-                            <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Percentage">Percentage</SelectItem><SelectItem value="Fixed">Fixed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="PERCENTAGE">Percentage</SelectItem><SelectItem value="FIXED">Fixed</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="value" render={({ field }) => (
-                            <FormItem><FormLabel>Value {watchType === 'Percentage' ? '(%)' : '($)'}</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Value {watchType === 'PERCENTAGE' ? '(%)' : '($)'}</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </div>
                     <FormField control={form.control} name="description" render={({ field }) => (

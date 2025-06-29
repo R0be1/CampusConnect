@@ -13,7 +13,6 @@ export default async function ConcessionsPage() {
     const formattedConcessions = concessions.map(c => ({
         id: c.id,
         name: c.name,
-        category: 'Discount' as any, // This field needs to be added to schema
         type: c.type as any,
         value: c.value,
         description: c.description || "",

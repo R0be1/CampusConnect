@@ -122,12 +122,14 @@ export async function deletePenaltyRuleAction(id: string) {
 // --- Concession Actions ---
 export async function createConcessionAction(data: any, schoolId: string) {
   try {
-    const { applicableFeeStructureIds, ...concessionData } = data;
+    const { name, type, value, description, applicableFeeStructureIds } = data;
     await prisma.concession.create({
       data: {
-        ...concessionData,
+        name,
+        type,
+        value: parseFloat(value),
+        description,
         schoolId,
-        value: parseFloat(concessionData.value),
         feeStructures: {
           connect: applicableFeeStructureIds.map((id: string) => ({ id })),
         },
@@ -143,12 +145,14 @@ export async function createConcessionAction(data: any, schoolId: string) {
 
 export async function updateConcessionAction(id: string, data: any) {
      try {
-        const { applicableFeeStructureIds, ...concessionData } = data;
+        const { name, type, value, description, applicableFeeStructureIds } = data;
         await prisma.concession.update({
             where: { id },
             data: {
-                ...concessionData,
-                value: parseFloat(concessionData.value),
+                name,
+                type,
+                value: parseFloat(value),
+                description,
                 feeStructures: {
                     set: applicableFeeStructureIds.map((id: string) => ({ id })),
                 },
