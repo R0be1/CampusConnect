@@ -1,156 +1,134 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Calendar as CalendarIcon
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pencil, PlusCircle, Trash2, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { createFeeStructureAction, updateFeeStructureAction, deleteFeeStructureAction, createPenaltyRuleAction, updatePenaltyRuleAction, deletePenaltyRuleAction } from "./actions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+// Schemas
+const feeStructureSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  amount: z.coerce.number().min(0, 'Amount must be positive'),
+  interval: z.enum(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUALLY']),
+  dueDate: z.date({ required_error: "A due date is required." }),
+  penaltyRuleId: z.string().optional(),
+});
+type FeeStructureFormValues = z.infer<typeof feeStructureSchema>;
+
+const penaltyTierSchema = z.object({
+  fromDay: z.coerce.number().min(1),
+  toDay: z.coerce.number().optional().nullable(),
+  type: z.enum(['FIXED', 'PERCENTAGE']),
+  value: z.coerce.number().min(0),
+  frequency: z.enum(['ONE_TIME', 'DAILY']),
+});
+const penaltyRuleSchema = z.object({
+  name: z.string().min(1, 'Rule name is required'),
+  gracePeriod: z.coerce.number().min(0),
+  tiers: z.array(penaltyTierSchema).min(1, 'At least one tier is required.'),
+});
+type PenaltyRuleFormValues = z.infer<typeof penaltyRuleSchema>;
+
+// Types
 type FeeScheme = {
-    id: string;
-    name: string;
-    grade: string;
-    section: string;
-    amount: string;
-    penalty: string;
-    academicYear: string;
-    dueDate: string;
-    interval: 'One-Time' | 'Monthly' | 'Quarterly' | 'Annually';
+    id: string; name: string; amount: string; penalty: string; academicYear: string; dueDate: string; interval: 'ONE_TIME' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY';
 };
-
-type PenaltyTier = {
-    id: string;
-    fromDay: number;
-    toDay: number | null; // null for infinity
-    type: 'Percentage' | 'Fixed';
-    value: number;
-    frequency: 'Daily' | 'One-Time';
-};
-
-type PenaltyRule = {
-    id: string;
-    name: string;
-    gracePeriod: number;
-    tiers: PenaltyTier[];
-};
-
-const grades = Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`);
-const sections = ["A", "B", "C", "D", "All"];
-const intervals: FeeScheme['interval'][] = ['One-Time', 'Monthly', 'Quarterly', 'Annually'];
+type PenaltyTier = { id: string; fromDay: number; toDay: number | null; type: 'FIXED' | 'PERCENTAGE'; value: number; frequency: 'ONE_TIME' | 'DAILY'; };
+type PenaltyRule = { id: string; name: string; gracePeriod: number; tiers: PenaltyTier[]; };
 
 type StructureClientPageProps = {
-    feeSchemes: FeeScheme[];
-    penaltyRules: PenaltyRule[];
-    academicYear: string;
+    feeSchemes: FeeScheme[]; penaltyRules: PenaltyRule[]; academicYear: string;
 };
 
+// Main Component
 export default function StructureClientPage({ feeSchemes: initialFeeSchemes, penaltyRules: initialPenaltyRules, academicYear }: StructureClientPageProps) {
+  const { toast } = useToast();
   const [feeSchemes, setFeeSchemes] = useState(initialFeeSchemes);
-  const [editingScheme, setEditingScheme] = useState<FeeScheme | null>(null);
-
   const [penalties, setPenalties] = useState<PenaltyRule[]>(initialPenaltyRules);
+  const [isSchemeDialogOpen, setIsSchemeDialogOpen] = useState(false);
+  const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
+  const [editingScheme, setEditingScheme] = useState<FeeScheme | null>(null);
   const [editingPenalty, setEditingPenalty] = useState<PenaltyRule | null>(null);
+  const schoolId = "cmcf3ofm90000kjlz1g767avh"; // Placeholder
 
-  const filteredFeeSchemes = feeSchemes.filter(scheme => scheme.academicYear === academicYear);
-
-  const handleDeleteScheme = (id: string) => {
-    setFeeSchemes(feeSchemes.filter(scheme => scheme.id !== id));
+  const openSchemeDialog = (scheme: FeeScheme | null) => {
+    setEditingScheme(scheme);
+    setIsSchemeDialogOpen(true);
   };
-
-  const handleDeletePenalty = (id: string) => {
-    setPenalties(penalties.filter(penalty => penalty.id !== id));
-  };
-  
-  const handleEditPenaltyChange = <K extends keyof PenaltyRule>(field: K, value: PenaltyRule[K]) => {
-      if (!editingPenalty) return;
-      setEditingPenalty(prev => prev ? { ...prev, [field]: value } : null);
+  const openRuleDialog = (rule: PenaltyRule | null) => {
+    setEditingPenalty(rule);
+    setIsRuleDialogOpen(true);
   };
   
-  const handleEditTierChange = (index: number, field: keyof PenaltyTier, value: any) => {
-      if (!editingPenalty) return;
-      const updatedTiers = [...editingPenalty.tiers];
-      updatedTiers[index] = { ...updatedTiers[index], [field]: value };
-      handleEditPenaltyChange('tiers', updatedTiers);
-  }
+  const handleSaveScheme = async (data: FeeStructureFormValues) => {
+    const result = editingScheme 
+        ? await updateFeeStructureAction(editingScheme.id, data)
+        : await createFeeStructureAction(data, schoolId);
 
-  const addTierToEditForm = () => {
-    if (!editingPenalty) return;
-    const newTier: PenaltyTier = {
-        id: `new-${Date.now()}`,
-        fromDay: (editingPenalty.tiers[editingPenalty.tiers.length - 1]?.toDay || 0) + 1,
-        toDay: null,
-        type: 'Fixed',
-        value: 0,
-        frequency: 'One-Time'
-    };
-    handleEditPenaltyChange('tiers', [...editingPenalty.tiers, newTier]);
-  }
+    if (result.success) {
+      toast({ title: "Success", description: result.message });
+      window.location.reload();
+    } else {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+  };
 
-  const removeTierFromEditForm = (index: number) => {
-    if (!editingPenalty) return;
-    const updatedTiers = [...editingPenalty.tiers];
-    updatedTiers.splice(index, 1);
-    handleEditPenaltyChange('tiers', updatedTiers);
-  }
+  const handleDeleteScheme = async (id: string) => {
+    const result = await deleteFeeStructureAction(id);
+    if(result.success) {
+        setFeeSchemes(prev => prev.filter(s => s.id !== id));
+        toast({ title: "Success", description: "Fee scheme deleted."});
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleSaveRule = async (data: PenaltyRuleFormValues) => {
+    const result = editingPenalty
+        ? await updatePenaltyRuleAction(editingPenalty.id, data)
+        : await createPenaltyRuleAction(data, schoolId);
+
+    if (result.success) {
+        toast({ title: "Success", description: result.message });
+        window.location.reload();
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleDeletePenalty = async (id: string) => {
+    const result = await deletePenaltyRuleAction(id);
+    if(result.success) {
+        setPenalties(prev => prev.filter(p => p.id !== id));
+        toast({ title: "Success", description: "Penalty rule deleted."});
+    } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+  };
 
   const renderTierDetails = (tier: PenaltyTier) => {
-    const valuePrefix = tier.type === 'Fixed' ? '$' : '';
-    const valueSuffix = tier.type === 'Percentage' ? '%' : '';
-    const frequency = tier.frequency === 'Daily' ? ' / day' : ' (one-time)';
+    const valuePrefix = tier.type === 'FIXED' ? '$' : '';
+    const valueSuffix = tier.type === 'PERCENTAGE' ? '%' : '';
+    const frequency = tier.frequency === 'DAILY' ? ' / day' : ' (one-time)';
     const period = `Days ${tier.fromDay} - ${tier.toDay ?? 'onwards'}`;
     return `${period}: ${valuePrefix}${tier.value}${valueSuffix}${frequency}`;
   };
@@ -163,113 +141,9 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle>Fee Schemes</CardTitle>
-                    <CardDescription>
-                      Define fee structures for the selected academic year.
-                    </CardDescription>
+                    <CardDescription>Define fee structures for the {academicYear} academic year.</CardDescription>
                   </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Scheme
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Fee Scheme</DialogTitle>
-                        <DialogDescription>
-                          Fill in the details for the new fee structure. It will be associated with the academic year: {academicYear}.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="feeName">Fee Name</Label>
-                          <Input
-                            id="feeName"
-                            placeholder="e.g., Term One Payment"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="feeAmount">Amount</Label>
-                          <Input
-                            id="feeAmount"
-                            type="number"
-                            placeholder="e.g., 2500"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="feeGrade">Grade</Label>
-                            <Select>
-                              <SelectTrigger id="feeGrade">
-                                <SelectValue placeholder="Select Grade" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {grades.map((g) => (
-                                  <SelectItem key={g} value={g}>
-                                    {g}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="feeSection">Section</Label>
-                            <Select>
-                              <SelectTrigger id="feeSection">
-                                <SelectValue placeholder="Select Section" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {sections.map((s) => (
-                                  <SelectItem key={s} value={s}>
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="feeDueDate">First Due Date</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" /><span>Pick a date</span></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" initialFocus captionLayout="dropdown-buttons" fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 5} /></PopoverContent>
-                                </Popover>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="feeInterval">Payment Interval</Label>
-                                <Select>
-                                    <SelectTrigger id="feeInterval"><SelectValue placeholder="Select Interval" /></SelectTrigger>
-                                    <SelectContent>
-                                        {intervals.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="feePenalty">Penalty Rule</Label>
-                            <Select>
-                              <SelectTrigger id="feePenalty">
-                                <SelectValue placeholder="Select a rule" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="None">None</SelectItem>
-                                {penalties.map((p) => (
-                                  <SelectItem key={p.id} value={p.name}>
-                                    {p.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit">Save Scheme</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <Button size="sm" onClick={() => openSchemeDialog(null)}><PlusCircle className="mr-2 h-4 w-4" /> Add Scheme</Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -278,46 +152,23 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
                     <TableRow>
                       <TableHead>Fee Name</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Due Date</TableHead>
                       <TableHead>Interval</TableHead>
-                      <TableHead>Applies To</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredFeeSchemes.map((fee) => (
+                    {feeSchemes.map((fee) => (
                       <TableRow key={fee.id}>
                         <TableCell className="font-medium">{fee.name}</TableCell>
                         <TableCell>{fee.amount}</TableCell>
-                        <TableCell>{fee.dueDate}</TableCell>
                         <TableCell>{fee.interval}</TableCell>
-                        <TableCell>
-                          {fee.grade}
-                          {fee.section !== 'All' && `, Sec ${fee.section}`}
-                        </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => setEditingScheme(fee)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => openSchemeDialog(fee)}><Pencil className="h-4 w-4" /></Button>
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
+                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                             <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this fee scheme.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteScheme(fee.id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
+                              <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteScheme(fee.id)}>Continue</AlertDialogAction></AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
                         </TableCell>
@@ -325,89 +176,15 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
                     ))}
                   </TableBody>
                 </Table>
-                 {filteredFeeSchemes.length === 0 && (
-                    <div className="text-center p-8 text-muted-foreground">
-                        No fee schemes defined for the academic year {academicYear}.
-                    </div>
-                )}
+                 {feeSchemes.length === 0 && (<div className="text-center p-8 text-muted-foreground">No fee schemes defined for {academicYear}.</div>)}
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Penalty Rules</CardTitle>
-                    <CardDescription>
-                      Define sequential penalties for late payments.
-                    </CardDescription>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Rule
-                      </Button>
-                    </DialogTrigger>
-                     <DialogContent className="sm:max-w-3xl">
-                      <DialogHeader>
-                        <DialogTitle>Add New Penalty Rule</DialogTitle>
-                        <DialogDescription>
-                          Define the conditions and charges for late fees, with sequential tiers.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="ruleName">Rule Name</Label>
-                                <Input id="ruleName" placeholder="e.g., Standard Tuition Late Fee" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="gracePeriod">Grace Period (days)</Label>
-                                <Input id="gracePeriod" type="number" placeholder="e.g., 3" />
-                            </div>
-                        </div>
-                         <Separator />
-                         <div>
-                            <Label className="text-base font-medium">Penalty Tiers</Label>
-                            <div className="space-y-2 mt-2">
-                                {/* This would be a dynamic list in a real implementation */}
-                                <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
-                                    <div className="space-y-1">
-                                        <Label className="text-xs">From Day</Label>
-                                        <Input type="number" defaultValue="1" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-xs">To Day</Label>
-                                        <Input type="number" placeholder="Ongoing" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-xs">Type</Label>
-                                        <Select defaultValue="Fixed">
-                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                            <SelectContent><SelectItem value="Fixed">Fixed</SelectItem><SelectItem value="Percentage">Percent</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                     <div className="space-y-1">
-                                        <Label className="text-xs">Value</Label>
-                                        <Input type="number" placeholder="e.g., 10 or 5" />
-                                    </div>
-                                     <div className="space-y-1">
-                                        <Label className="text-xs">Frequency</Label>
-                                        <Select defaultValue="One-Time">
-                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                            <SelectContent><SelectItem value="One-Time">One-Time</SelectItem><SelectItem value="Daily">Daily</SelectItem></SelectContent>
-                                        </Select>
-                                    </div>
-                                    <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                </div>
-                            </div>
-                            <Button variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Tier</Button>
-                         </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit">Save Rule</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <div><CardTitle>Penalty Rules</CardTitle><CardDescription>Define sequential penalties for late payments.</CardDescription></div>
+                  <Button size="sm" onClick={() => openRuleDialog(null)}><PlusCircle className="mr-2 h-4 w-4" /> Add Rule</Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -423,122 +200,23 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
                   <TableBody>
                     {penalties.map((penalty) => (
                       <TableRow key={penalty.id}>
-                        <TableCell className="font-medium">
-                          {penalty.name}
-                        </TableCell>
+                        <TableCell className="font-medium">{penalty.name}</TableCell>
                         <TableCell>{penalty.gracePeriod} days</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                             <Tooltip>
-                                <TooltipTrigger>
-                                    <span className="cursor-help border-b border-dashed">
-                                        {penalty.tiers.length} Tier(s)
-                                    </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <div className="space-y-1">
-                                        {penalty.tiers.map(tier => <p key={tier.id}>{renderTierDetails(tier)}</p>)}
-                                    </div>
-                                </TooltipContent>
+                                <TooltipTrigger><span className="cursor-help border-b border-dashed">{penalty.tiers.length} Tier(s)</span></TooltipTrigger>
+                                <TooltipContent><div className="space-y-1">{penalty.tiers.map(tier => <p key={tier.id}>{renderTierDetails(tier)}</p>)}</div></TooltipContent>
                             </Tooltip>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Dialog open={editingPenalty?.id === penalty.id} onOpenChange={(isOpen) => !isOpen && setEditingPenalty(null)}>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => setEditingPenalty(JSON.parse(JSON.stringify(penalty)))}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                             <DialogContent className="sm:max-w-3xl">
-                              <DialogHeader>
-                                <DialogTitle>Edit Penalty Rule</DialogTitle>
-                                <DialogDescription>
-                                  Make changes to this penalty rule and its tiers.
-                                </DialogDescription>
-                              </DialogHeader>
-                              {editingPenalty && (
-                                <>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="editRuleName">Rule Name</Label>
-                                            <Input id="editRuleName" value={editingPenalty.name} onChange={(e) => handleEditPenaltyChange('name', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="editGracePeriod">Grace Period (days)</Label>
-                                            <Input id="editGracePeriod" type="number" value={editingPenalty.gracePeriod} onChange={(e) => handleEditPenaltyChange('gracePeriod', parseInt(e.target.value))} />
-                                        </div>
-                                    </div>
-                                    <Separator />
-                                    <div>
-                                        <Label className="text-base font-medium">Penalty Tiers</Label>
-                                        <div className="space-y-2 mt-2">
-                                            {editingPenalty.tiers.map((tier, index) => (
-                                                <div key={index} className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs">From Day</Label>
-                                                        <Input type="number" value={tier.fromDay} onChange={(e) => handleEditTierChange(index, 'fromDay', parseInt(e.target.value))} />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs">To Day</Label>
-                                                        <Input type="number" placeholder="Ongoing" value={tier.toDay ?? ''} onChange={(e) => handleEditTierChange(index, 'toDay', e.target.value ? parseInt(e.target.value) : null)} />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs">Type</Label>
-                                                        <Select value={tier.type} onValueChange={(val) => handleEditTierChange(index, 'type', val)}>
-                                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                                            <SelectContent><SelectItem value="Fixed">Fixed</SelectItem><SelectItem value="Percentage">Percent</SelectItem></SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs">Value</Label>
-                                                        <Input type="number" value={tier.value} onChange={(e) => handleEditTierChange(index, 'value', parseFloat(e.target.value))}/>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <Label className="text-xs">Frequency</Label>
-                                                        <Select value={tier.frequency} onValueChange={(val) => handleEditTierChange(index, 'frequency', val)}>
-                                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                                            <SelectContent><SelectItem value="One-Time">One-Time</SelectItem><SelectItem value="Daily">Daily</SelectItem></SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <Button variant="ghost" size="icon" onClick={() => removeTierFromEditForm(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <Button variant="outline" size="sm" className="mt-2" onClick={addTierToEditForm}><PlusCircle className="mr-2 h-4 w-4"/> Add Tier</Button>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit" onClick={() => {
-                                        if (!editingPenalty) return;
-                                        setPenalties(penalties.map(p => p.id === editingPenalty.id ? editingPenalty : p));
-                                        setEditingPenalty(null);
-                                    }}>Save Changes</Button>
-                                </DialogFooter>
-                                </>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this penalty rule.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeletePenalty(penalty.id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                            <Button variant="ghost" size="icon" onClick={() => openRuleDialog(penalty)}><Pencil className="h-4 w-4" /></Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeletePenalty(penalty.id)}>Continue</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -547,81 +225,118 @@ export default function StructureClientPage({ feeSchemes: initialFeeSchemes, pen
               </CardContent>
             </Card>
           </div>
-        {editingScheme && (
-            <Dialog open={!!editingScheme} onOpenChange={(isOpen) => !isOpen && setEditingScheme(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                    <DialogTitle>Edit Fee Scheme</DialogTitle>
-                    <DialogDescription>
-                        Make changes to the fee structure.
-                    </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                        <Label>Academic Year</Label>
-                        <Input readOnly disabled value={editingScheme.academicYear} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor={`edit-feeName-${editingScheme.id}`}>Fee Name</Label>
-                        <Input id={`edit-feeName-${editingScheme.id}`} defaultValue={editingScheme.name} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor={`edit-feeAmount-${editingScheme.id}`}>Amount</Label>
-                        <Input id={`edit-feeAmount-${editingScheme.id}`} type="number" defaultValue={editingScheme.amount.replace(/[$,]/g, '')} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                        <Label htmlFor={`edit-feeGrade-${editingScheme.id}`}>Grade</Label>
-                        <Select defaultValue={editingScheme.grade}>
-                            <SelectTrigger id={`edit-feeGrade-${editingScheme.id}`}><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                            <SelectContent>{grades.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}</SelectContent>
-                        </Select>
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor={`edit-feeSection-${editingScheme.id}`}>Section</Label>
-                        <Select defaultValue={editingScheme.section}>
-                            <SelectTrigger id={`edit-feeSection-${editingScheme.id}`}><SelectValue placeholder="Select Section" /></SelectTrigger>
-                            <SelectContent>{sections.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="edit-feeDueDate">First Due Date</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" /><span>{editingScheme.dueDate}</span></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(editingScheme.dueDate)} initialFocus captionLayout="dropdown-buttons" fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 5} /></PopoverContent>
-                                </Popover>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="edit-feeInterval">Payment Interval</Label>
-                                <Select defaultValue={editingScheme.interval}>
-                                    <SelectTrigger id="edit-feeInterval"><SelectValue placeholder="Select Interval" /></SelectTrigger>
-                                    <SelectContent>
-                                        {intervals.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    <div className="space-y-2">
-                        <Label htmlFor={`edit-feePenalty-${editingScheme.id}`}>Penalty Rule</Label>
-                        <Select defaultValue={editingScheme.penalty}>
-                        <SelectTrigger id={`edit-feePenalty-${editingScheme.id}`}><SelectValue placeholder="Select a rule" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="None">None</SelectItem>
-                            {penalties.map((p) => (<SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>))}
-                        </SelectContent>
-                        </Select>
-                    </div>
-                    </div>
-                    <DialogFooter>
-                    <Button type="submit" onClick={() => setEditingScheme(null)}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )}
+
+        <Dialog open={isSchemeDialogOpen} onOpenChange={setIsSchemeDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingScheme ? 'Edit' : 'Add'} Fee Scheme</DialogTitle>
+                    <DialogDescription>It will be associated with the academic year: {academicYear}.</DialogDescription>
+                </DialogHeader>
+                <FeeSchemeForm key={editingScheme?.id} onSave={handleSaveScheme} initialData={editingScheme} penaltyRules={penalties} onClose={() => setIsSchemeDialogOpen(false)} />
+            </DialogContent>
+        </Dialog>
+        
+         <Dialog open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
+            <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>{editingPenalty ? 'Edit' : 'Add'} Penalty Rule</DialogTitle>
+                    <DialogDescription>Define the conditions and charges for late fees.</DialogDescription>
+                </DialogHeader>
+                <PenaltyRuleForm key={editingPenalty?.id} onSave={handleSaveRule} initialData={editingPenalty} onClose={() => setIsRuleDialogOpen(false)} />
+            </DialogContent>
+        </Dialog>
         </TooltipProvider>
     )
+}
+
+// Fee Scheme Form
+function FeeSchemeForm({ onSave, initialData, penaltyRules, onClose }: { onSave: (data: FeeStructureFormValues) => Promise<void>, initialData: FeeScheme | null, penaltyRules: PenaltyRule[], onClose: () => void }) {
+    const form = useForm<FeeStructureFormValues>({
+        resolver: zodResolver(feeStructureSchema),
+        defaultValues: {
+            name: initialData?.name || '',
+            amount: parseFloat(initialData?.amount.replace(/[$,]/g, '')) || 0,
+            interval: initialData?.interval || 'ONE_TIME',
+            dueDate: initialData?.dueDate && initialData.dueDate !== 'N/A' ? new Date(initialData.dueDate) : new Date(),
+            penaltyRuleId: penaltyRules.find(p => p.name === initialData?.penalty)?.id || 'None',
+        },
+    });
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
+                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Fee Name</FormLabel><FormControl><Input placeholder="e.g., Term One Payment" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="e.g., 2500" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="dueDate" render={({ field }) => (
+                        <FormItem><FormLabel>First Due Date</FormLabel>
+                            <Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}</Button></FormControl></PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={new Date().getFullYear()} toYear={new Date().getFullYear() + 5} /></PopoverContent>
+                            </Popover><FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="interval" render={({ field }) => (
+                        <FormItem><FormLabel>Payment Interval</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUALLY'] as const).map(i => <SelectItem key={i} value={i}>{i.replace('_', '-')}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                    )} />
+                </div>
+                <FormField control={form.control} name="penaltyRuleId" render={({ field }) => (
+                    <FormItem><FormLabel>Penalty Rule</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a rule" /></SelectTrigger></FormControl><SelectContent><SelectItem value="None">None</SelectItem>{penaltyRules.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                )} />
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Save Scheme</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    )
+}
+
+// Penalty Rule Form
+function PenaltyRuleForm({ onSave, initialData, onClose }: { onSave: (data: PenaltyRuleFormValues) => Promise<void>, initialData: PenaltyRule | null, onClose: () => void }) {
+    const form = useForm<PenaltyRuleFormValues>({
+        resolver: zodResolver(penaltyRuleSchema),
+        defaultValues: {
+            name: initialData?.name || '',
+            gracePeriod: initialData?.gracePeriod || 0,
+            tiers: initialData?.tiers || [],
+        },
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "tiers",
+    });
+    
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Rule Name</FormLabel><FormControl><Input placeholder="e.g., Standard Tuition Late Fee" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="gracePeriod" render={({ field }) => ( <FormItem><FormLabel>Grace Period (days)</FormLabel><FormControl><Input type="number" placeholder="e.g., 3" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                 </div>
+                 <Separator />
+                 <div>
+                    <Label className="text-base font-medium">Penalty Tiers</Label>
+                    <div className="space-y-2 mt-2">
+                        {fields.map((field, index) => (
+                           <div key={field.id} className="grid grid-cols-[1fr_1fr_auto_1fr_auto_auto] gap-2 items-end rounded-lg border p-2">
+                                <FormField control={form.control} name={`tiers.${index}.fromDay`} render={({ field }) => (<FormItem><Label className="text-xs">From Day</Label><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.toDay`} render={({ field }) => (<FormItem><Label className="text-xs">To Day</Label><FormControl><Input type="number" placeholder="Ongoing" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.type`} render={({ field }) => (<FormItem><Label className="text-xs">Type</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="FIXED">Fixed</SelectItem><SelectItem value="PERCENTAGE">Percent</SelectItem></SelectContent></Select></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.value`} render={({ field }) => (<FormItem><Label className="text-xs">Value</Label><FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name={`tiers.${index}.frequency`} render={({ field }) => (<FormItem><Label className="text-xs">Frequency</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="ONE_TIME">One-Time</SelectItem><SelectItem value="DAILY">Daily</SelectItem></SelectContent></Select></FormItem>)} />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                           </div>
+                        ))}
+                    </div>
+                     {form.formState.errors.tiers && <p className="text-sm font-medium text-destructive mt-2">{form.formState.errors.tiers.message || form.formState.errors.tiers.root?.message}</p>}
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({fromDay: (fields[fields.length-1]?.toDay || 0) + 1, toDay: null, type: 'FIXED', value: 0, frequency: 'ONE_TIME'})}><PlusCircle className="mr-2 h-4 w-4"/> Add Tier</Button>
+                 </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Save Rule</Button>
+                </DialogFooter>
+            </form>
+        </Form>
+    );
 }

@@ -32,10 +32,11 @@ type AssignClientPageProps = {
     studentsData: Student[];
     concessionSchemes: Concession[];
     initialAssignedConcessions: Assignment[];
-    academicYear: string;
+    academicYearId: string;
+    academicYearName: string;
 };
 
-export default function AssignClientPage({ studentsData, concessionSchemes, initialAssignedConcessions, academicYear }: AssignClientPageProps) {
+export default function AssignClientPage({ studentsData, concessionSchemes, initialAssignedConcessions, academicYearId, academicYearName }: AssignClientPageProps) {
     const { toast } = useToast();
     const [assignedConcessions, setAssignedConcessions] = useState(initialAssignedConcessions);
     const [isLoading, setIsLoading] = useState(false);
@@ -48,17 +49,13 @@ export default function AssignClientPage({ studentsData, concessionSchemes, init
     const [selectedConcession, setSelectedConcession] = useState<string | null>(null);
 
     const handleAssign = async () => {
-        if (!selectedStudent || !selectedConcession || !academicYear) return;
+        if (!selectedStudent || !selectedConcession || !academicYearId) return;
 
         setIsLoading(true);
-        // This is a placeholder for the actual academic year ID.
-        // In a real app, this would be passed down from the server component.
-        const academicYearId = "clzcq5nve0001kjlz1p1g5g2w";
         const result = await assignConcessionAction(selectedStudent, selectedConcession, academicYearId);
         setIsLoading(false);
 
         if (result.success) {
-            // Optimistically update UI or re-fetch data. For now, re-fetch.
             window.location.reload(); 
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -79,7 +76,7 @@ export default function AssignClientPage({ studentsData, concessionSchemes, init
             <Card>
                 <CardHeader>
                     <CardTitle>Assign Concession to Student</CardTitle>
-                    <CardDescription>Select a student and a concession scheme to apply for the academic year: {academicYear}</CardDescription>
+                    <CardDescription>Select a student and a concession scheme to apply for the academic year: {academicYearName}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-3">
                      <div className="space-y-2">
@@ -147,7 +144,7 @@ export default function AssignClientPage({ studentsData, concessionSchemes, init
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Current Assignments for {academicYear}</CardTitle>
+                    <CardTitle>Current Assignments for {academicYearName}</CardTitle>
                     <CardDescription>A list of all students with concessions for the selected academic year.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -204,4 +201,3 @@ export default function AssignClientPage({ studentsData, concessionSchemes, init
         </div>
     );
 }
-

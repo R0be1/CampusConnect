@@ -1,8 +1,8 @@
 
 "use server";
 
-import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 // --- Fee Structure Actions ---
 export async function createFeeStructureAction(data: any, schoolId: string) {
@@ -12,15 +12,43 @@ export async function createFeeStructureAction(data: any, schoolId: string) {
                 ...data,
                 schoolId,
                 amount: parseFloat(data.amount),
+                penaltyRuleId: data.penaltyRuleId === 'None' ? null : data.penaltyRuleId,
             },
         });
         revalidatePath("/dashboard/fees/structure");
         return { success: true, message: "Fee structure created." };
-    } catch (e) {
+    } catch (e: any) {
+        console.error(e);
         return { success: false, error: "Failed to create fee structure." };
     }
 }
-// Add update/delete later
+export async function updateFeeStructureAction(id: string, data: any) {
+    try {
+        await prisma.feeStructure.update({
+            where: { id },
+            data: {
+                ...data,
+                amount: parseFloat(data.amount),
+                penaltyRuleId: data.penaltyRuleId === 'None' ? null : data.penaltyRuleId,
+            },
+        });
+        revalidatePath("/dashboard/fees/structure");
+        return { success: true, message: "Fee structure updated." };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to update fee structure." };
+    }
+}
+
+export async function deleteFeeStructureAction(id: string) {
+    try {
+        await prisma.feeStructure.delete({ where: { id } });
+        revalidatePath("/dashboard/fees/structure");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete fee structure. It may be in use." };
+    }
+}
 
 // --- Penalty Rule Actions ---
 export async function createPenaltyRuleAction(data: any, schoolId: string) {
@@ -45,10 +73,48 @@ export async function createPenaltyRuleAction(data: any, schoolId: string) {
         revalidatePath("/dashboard/fees/structure");
         return { success: true, message: "Penalty rule created." };
     } catch (e: any) {
+        console.error(e);
         return { success: false, error: e.message || "Failed to create penalty rule." };
     }
 }
-// Add update/delete later
+
+export async function updatePenaltyRuleAction(id: string, data: any) {
+    try {
+        const { tiers, ...ruleData } = data;
+        await prisma.penaltyRule.update({
+            where: { id },
+            data: {
+                ...ruleData,
+                gracePeriod: parseInt(ruleData.gracePeriod),
+                tiers: {
+                    deleteMany: {}, // Delete existing tiers
+                    create: tiers.map((t: any) => ({ // Re-create with new data
+                        fromDay: parseInt(t.fromDay),
+                        toDay: t.toDay ? parseInt(t.toDay) : null,
+                        value: parseFloat(t.value),
+                        type: t.type,
+                        frequency: t.frequency,
+                    })),
+                },
+            },
+        });
+        revalidatePath("/dashboard/fees/structure");
+        return { success: true, message: "Penalty rule updated." };
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: e.message || "Failed to update penalty rule." };
+    }
+}
+
+export async function deletePenaltyRuleAction(id: string) {
+    try {
+        await prisma.penaltyRule.delete({ where: { id } });
+        revalidatePath("/dashboard/fees/structure");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete penalty rule. It may be in use." };
+    }
+}
 
 // --- Concession Actions ---
 export async function createConcessionAction(data: any, schoolId: string) {
@@ -67,6 +133,7 @@ export async function createConcessionAction(data: any, schoolId: string) {
     revalidatePath('/dashboard/fees/concessions');
     return { success: true, message: 'Concession created successfully.' };
   } catch (error) {
+    console.error(error);
     return { success: false, error: 'Failed to create concession.' };
   }
 }
@@ -87,6 +154,7 @@ export async function updateConcessionAction(id: string, data: any) {
         revalidatePath('/dashboard/fees/concessions');
         return { success: true, message: 'Concession updated successfully.' };
     } catch (error) {
+        console.error(error);
         return { success: false, error: 'Failed to update concession.' };
     }
 }
@@ -105,13 +173,21 @@ export async function deleteConcessionAction(id: string) {
 // --- Concession Assignment Actions ---
 export async function assignConcessionAction(studentId: string, concessionId: string, academicYearId: string) {
     try {
+        // Prevent duplicate assignments
+        const existing = await prisma.concessionAssignment.findFirst({
+            where: { studentId, concessionId, academicYearId }
+        });
+        if(existing) {
+            return { success: false, error: "This concession is already assigned to this student for this year."}
+        }
         await prisma.concessionAssignment.create({
             data: { studentId, concessionId, academicYearId }
         });
         revalidatePath('/dashboard/fees/assign');
         return { success: true };
-    } catch (e) {
-        return { success: false, error: "Failed to assign concession. It may already be assigned."}
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, error: "Failed to assign concession."}
     }
 }
 

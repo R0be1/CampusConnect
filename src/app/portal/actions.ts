@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getInvoicesForStudent, getPaymentHistory, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress, getParentsWithChildrenForPortal } from "@/lib/data";
+import { getCurrentAcademicYear, getFirstSchool, getPortalDashboardData, getAcademicDataForStudentPortal, getAttendanceForStudentPortal, getFeesDataForPortal, getCommunicationsForParentPortal, markCommunicationAsRead as markAsReadDb, getTestsForStudentPortal, getTestDetailsForStudent, submitTestForStudent, getTestResultForStudent, getLearningMaterialsForPortal, getLiveSessionsForPortal, registerForLiveSession, getProfileDataForPortal, updateParentContactInfo, updateParentAddress, getParentsWithChildrenForPortal, createFeePayment } from "@/lib/data";
 import { format } from "date-fns";
 
 export async function getParentsAndChildrenAction() {
@@ -73,18 +73,28 @@ export async function getFeesDataAction(studentId: string) {
         if (!studentId) {
             return { success: false, error: "Student ID is required." };
         }
-        const invoices = await getInvoicesForStudent(studentId);
-        const paymentHistory = await getPaymentHistory(studentId);
-        return { success: true, data: { invoices, paymentHistory } };
+        const data = await getFeesDataForPortal(studentId);
+        return { success: true, data };
     } catch (error: any) {
         console.error("Failed to get fees data:", error);
         return { success: false, error: "Failed to fetch fees data." };
     }
 }
-export type PortalFeesData = {
-    invoices: Awaited<ReturnType<typeof getInvoicesForStudent>>;
-    paymentHistory: Awaited<ReturnType<typeof getPaymentHistory>>;
-};
+export type PortalFeesData = Awaited<ReturnType<typeof getFeesDataForPortal>>;
+
+export async function createFeePaymentAction(data: { invoiceId: string; amount: number; method: string; reference: string; }) {
+    try {
+        const school = await getFirstSchool();
+        if(!school) throw new Error("School not found.");
+
+        await createFeePayment({ ...data, schoolId: school.id });
+        revalidatePath("/portal/fees");
+        return { success: true, message: "Payment submitted for verification." };
+    } catch (error: any) {
+        console.error("Failed to create fee payment:", error);
+        return { success: false, error: "Failed to submit payment." };
+    }
+}
 
 export async function getCommunicationAction(studentId: string) {
     try {

@@ -45,7 +45,8 @@ export default async function AssignConcessionPage() {
             studentsData={formattedStudents}
             concessionSchemes={formattedConcessions}
             initialAssignedConcessions={formattedAssignments}
-            academicYear={academicYear.name}
+            academicYearId={academicYear.id}
+            academicYearName={academicYear.name}
        />
     );
 }
