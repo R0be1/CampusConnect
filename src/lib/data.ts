@@ -256,7 +256,6 @@ export async function updateStudentWithParent(studentId: string, data: StudentRe
           lastName: data.parentLastName,
           middleName: data.parentMiddleName,
           phone: data.parentPhone,
-          alternatePhone: data.parentAlternatePhone || null,
           addressLine1: data.addressLine1,
           city: data.city,
           state: data.state,
@@ -1116,9 +1115,12 @@ export async function getParentsWithChildrenForPortal() {
                     firstName: 'asc'
                 }
             }
+        },
+        orderBy: {
+           firstName: 'asc'
         }
     });
-    return parents.sort((a,b) => a.firstName.localeCompare(b.firstName));
+    return parents;
 }
 export type ParentsWithChildren = Awaited<ReturnType<typeof getParentsWithChildrenForPortal>>;
 
@@ -1654,7 +1656,6 @@ export async function getProfileDataForPortal(studentId: string) {
             lastName: parent.lastName,
             relation: parent.relationToStudent,
             phone: parent.user.phone,
-            alternatePhone: parent.user.alternatePhone
         },
         address: {
             line1: student.user.addressLine1,
@@ -1717,12 +1718,11 @@ export async function getStudentProfileForStudentPortal(studentId: string) {
 export type StudentProfileData = NonNullable<Awaited<ReturnType<typeof getStudentProfileForStudentPortal>>>;
 
 
-export async function updateParentContactInfo(userId: string, data: { phone: string; alternatePhone?: string | null }) {
+export async function updateParentContactInfo(userId: string, data: { phone: string }) {
     return prisma.user.update({
         where: { id: userId },
         data: {
             phone: data.phone,
-            alternatePhone: data.alternatePhone,
         }
     });
 }

@@ -199,7 +199,7 @@ export async function getProfileAction(studentId: string) {
 export type PortalProfileData = NonNullable<Awaited<ReturnType<typeof getProfileDataForPortal>>>;
 
 
-export async function updateParentContactAction(userId: string, data: { phone: string; alternatePhone?: string | null }) {
+export async function updateParentContactAction(userId: string, data: { phone: string }) {
     try {
         await updateParentContactInfo(userId, data);
         revalidatePath('/portal/profile');

@@ -47,7 +47,6 @@ const studentRegistrationSchema = z.object({
   parentLastName: z.string().min(1, "Last name is required"),
   parentRelation: z.string().min(1, "Relationship is required"),
   parentPhone: z.string().min(10, "Phone number must be at least 10 digits"),
-  parentAlternatePhone: z.string().min(10, "Must be at least 10 digits").optional().or(z.literal('')),
   
   // Address info
   addressLine1: z.string().min(1, "Address is required"),
@@ -82,7 +81,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
       parentMiddleName: "",
       parentLastName: "",
       parentPhone: "",
-      parentAlternatePhone: "",
       addressLine1: "",
       city: "",
       state: "",
@@ -371,19 +369,6 @@ export function StudentForm({ initialData, onSubmit, submitButtonText = "Registe
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
                         <Input type="tel" placeholder="(123) 456-7890" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="parentAlternatePhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alternate Phone Number</FormLabel>
-                      <FormControl>
-                        <Input type="tel" placeholder="(098) 765-4321" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

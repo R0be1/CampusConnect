@@ -63,7 +63,6 @@ export default function ProfilePortalPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [parentPhone, setParentPhone] = useState("");
-  const [parentAlternatePhone, setParentAlternatePhone] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -78,7 +77,6 @@ export default function ProfilePortalPage() {
                 if (result.success && result.data) {
                     setProfileData(result.data);
                     setParentPhone(result.data.parent.phone || "");
-                    setParentAlternatePhone(result.data.parent.alternatePhone || "");
                     setAddressLine1(result.data.address.line1 || "");
                     setCity(result.data.address.city || "");
                     setState(result.data.address.state || "");
@@ -95,7 +93,7 @@ export default function ProfilePortalPage() {
   const handleContactUpdate = async () => {
     if (!profileData) return;
     setIsUpdatingContact(true);
-    const result = await updateParentContactAction(profileData.parent.userId, { phone: parentPhone, alternatePhone: parentAlternatePhone });
+    const result = await updateParentContactAction(profileData.parent.userId, { phone: parentPhone });
     if(result.success) {
         toast({ title: "Success", description: result.message });
     } else {
@@ -164,8 +162,7 @@ export default function ProfilePortalPage() {
                     <div><Label>Last Name</Label><Input readOnly value={profileData.parent.lastName} /></div>
                 </div>
                  <div><Label>Phone Number</Label><Input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} /></div>
-                 <div><Label>Alternate Phone Number</Label><Input type="tel" value={parentAlternatePhone} onChange={(e) => setParentAlternatePhone(e.target.value)} /></div>
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-4">
                     <Button onClick={handleContactUpdate} disabled={isUpdatingContact}>
                         {isUpdatingContact && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         <Edit className="mr-2 h-4 w-4" />
