@@ -1096,7 +1096,7 @@ export async function getParentsWithChildrenForPortal() {
         where: {
             schoolId: school.id,
             students: {
-                some: {} // Only get parents who have at least one student
+                some: {} // Make sure the parent has children
             }
         },
         include: {
@@ -1112,6 +1112,7 @@ export async function getParentsWithChildrenForPortal() {
                         select: {
                             firstName: true,
                             lastName: true,
+                            photoUrl: true
                         }
                     },
                 },
@@ -1121,9 +1122,7 @@ export async function getParentsWithChildrenForPortal() {
             }
         },
         orderBy: {
-            user: {
-                firstName: 'asc'
-            }
+            firstName: 'asc'
         }
     });
 }

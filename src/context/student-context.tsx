@@ -46,7 +46,6 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     const fetchData = async () => {
       setIsLoading(true);
       
-      // Logic for the Parent Portal
       if (isParentPortal) {
           const result = await getParentsAndChildrenAction();
           if (result.success && result.parents) {
@@ -56,7 +55,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
                   children: p.students.map(s => ({
                       id: s.id,
                       name: `${s.user.firstName} ${s.user.lastName}`,
-                      avatar: `https://placehold.co/40x40.png`
+                      avatar: s.user.photoUrl || `https://placehold.co/40x40.png`
                   }))
               }));
               setAvailableParents(formattedParents);
@@ -66,7 +65,13 @@ export function StudentProvider({ children }: { children: ReactNode }) {
                   setAvailableStudents(firstParent.children);
                   if (firstParent.children.length > 0) {
                       setSelectedStudent(firstParent.children[0]);
+                  } else {
+                      setSelectedStudent(null);
                   }
+              } else {
+                  setSelectedParent(null);
+                  setAvailableStudents([]);
+                  setSelectedStudent(null);
               }
           }
       } else { // Logic for the Student Portal (and others if needed)
@@ -82,6 +87,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
                setAvailableStudents(formattedStudents);
                if (formattedStudents.length > 0) {
                    setSelectedStudent(formattedStudents[0]);
+               } else {
+                   setSelectedStudent(null);
                }
            }
            setAvailableParents([]);
