@@ -23,7 +23,6 @@ export async function updateStudentAction(studentId: string, data: StudentRegist
     try {
         const result = await updateStudentWithParent(studentId, data);
         revalidatePath("/dashboard/students/list");
-        revalidatePath(`/dashboard/students/${studentId}`);
         return { success: true, message: `Successfully updated ${result?.firstName}.`, updatedStudent: result };
     } catch (error: any) {
         console.error("Failed to update student:", error);

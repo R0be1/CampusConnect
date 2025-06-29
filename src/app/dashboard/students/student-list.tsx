@@ -101,7 +101,8 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
     const getInitialFormValues = (student: DetailedStudent | null): Partial<StudentRegistrationFormValues> | undefined => {
         if (!student) return undefined;
         
-        const parent = student.parents[0]; // Assuming one parent for simplicity
+        const parent = student.parents[0];
+        const contactUser = parent?.user || student.user;
 
         return {
             studentFirstName: student.firstName || "",
@@ -119,10 +120,10 @@ export function StudentList({ students: initialStudents, grades, sections }: Stu
             parentAlternatePhone: parent?.user.alternatePhone || "",
             parentRelation: parent?.relationToStudent || "Parent",
 
-            addressLine1: student.user.addressLine1 || "",
-            city: student.user.city || "",
-            state: student.user.state || "",
-            zipCode: student.user.zipCode || "",
+            addressLine1: contactUser.addressLine1 || "",
+            city: contactUser.city || "",
+            state: contactUser.state || "",
+            zipCode: contactUser.zipCode || "",
         };
     }
     
