@@ -128,15 +128,13 @@ async function main() {
   const parentUser1 = await prisma.user.create({ data: { phone: '2000000001', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Jane', lastName: 'Doe' } });
   const parent1 = await prisma.parent.create({ data: { userId: parentUser1.id, firstName: 'Jane', lastName: 'Doe', schoolId: school1.id, relationToStudent: 'Mother' } });
 
-  const parentUser2 = await prisma.user.create({ data: { phone: '2000000002', password: hashedPassword, role: 'PARENT', schoolId: school1.id, firstName: 'Robert', lastName: 'Smith' } });
-  const parent2 = await prisma.parent.create({ data: { userId: parentUser2.id, firstName: 'Robert', lastName: 'Smith', schoolId: school1.id, relationToStudent: 'Father' } });
-
   // Students
   const studentUser1 = await prisma.user.create({ data: { phone: '3000000001', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'John', lastName: 'Doe' } });
   const student1 = await prisma.student.create({ data: { userId: studentUser1.id, firstName: 'John', lastName: 'Doe', dob: new Date('2008-05-12'), gender: 'MALE', schoolId: school1.id, gradeId: grade10.id, sectionId: section10A.id, parents: { connect: { id: parent1.id } } } });
 
-  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'Alice', lastName: 'Smith' } });
-  const student2 = await prisma.student.create({ data: { userId: studentUser2.id, firstName: 'Alice', lastName: 'Smith', dob: new Date('2009-02-20'), gender: 'FEMALE', schoolId: school1.id, gradeId: grade9.id, sectionId: section9B.id, parents: { connect: { id: parent2.id } } } });
+  // Make Alice Doe the sister of John Doe, under the same parent
+  const studentUser2 = await prisma.user.create({ data: { phone: '3000000002', password: hashedPassword, role: 'STUDENT', schoolId: school1.id, firstName: 'Alice', lastName: 'Doe' } });
+  const student2 = await prisma.student.create({ data: { userId: studentUser2.id, firstName: 'Alice', lastName: 'Doe', dob: new Date('2009-02-20'), gender: 'FEMALE', schoolId: school1.id, gradeId: grade9.id, sectionId: section9B.id, parents: { connect: { id: parent1.id } } } });
   
   console.log('Finished creating users and profiles.');
 
