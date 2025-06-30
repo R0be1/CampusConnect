@@ -229,7 +229,7 @@ export async function submitPaymentForVerificationAction(data: {
                 ...data,
                 paymentDate: new Date(),
                 schoolId: school.id,
-                status: 'PENDING_VERIFICATION'
+                status: 'PENDING'
             }
         });
 

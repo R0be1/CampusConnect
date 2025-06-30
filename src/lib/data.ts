@@ -700,7 +700,7 @@ export async function createFeePayment(data: {
             reference: data.reference,
             schoolId: data.schoolId,
             paymentDate: new Date(),
-            status: 'PENDING_VERIFICATION' // Default status
+            status: 'PENDING' // Default status
         }
     })
 }

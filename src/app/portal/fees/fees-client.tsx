@@ -190,7 +190,7 @@ export default function FeesClientPage({ initialFeesData, studentName }: FeesCli
                                         <TableCell>{format(new Date(payment.paymentDate), 'PPP')}</TableCell>
                                         <TableCell className="font-medium">{payment.invoice.feeStructure.name}</TableCell>
                                         <TableCell>{payment.method}</TableCell>
-                                        <TableCell><Badge variant={payment.status === 'VERIFIED' ? 'default' : 'outline'}>{payment.status}</Badge></TableCell>
+                                        <TableCell><Badge variant={payment.status === 'COMPLETED' ? 'default' : 'outline'}>{payment.status}</Badge></TableCell>
                                         <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
                                     </TableRow>
                                 )) : (

@@ -166,7 +166,7 @@ async function main() {
         amount: 2250, // Paid with 10% concession
         paymentDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
         method: 'BANK_TRANSFER',
-        status: 'VERIFIED',
+        status: 'COMPLETED',
         reference: 'TRN-SEED-PAID',
         schoolId: school1.id
     }
@@ -178,7 +178,7 @@ async function main() {
         amount: 500, // Partial payment
         paymentDate: new Date(),
         method: 'BANK_TRANSFER',
-        status: 'PENDING_VERIFICATION',
+        status: 'PENDING',
         reference: 'TRN-SEED-PENDING',
         schoolId: school1.id
     }
